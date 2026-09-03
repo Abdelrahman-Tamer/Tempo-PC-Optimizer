@@ -23,8 +23,8 @@ SetupIconFile=..\publish_tempo\tempo_v2.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
-PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
+PrivilegesRequired=admin
+PrivilegesRequiredOverridesAllowed=
 CloseApplications=force
 RestartApplications=no
 UninstallDisplayIcon={app}\{#MyAppExeName}
@@ -47,7 +47,7 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\tempo_v2.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
 
 [Code]
 function IsDotNet10DesktopInstalled(): Boolean;
@@ -83,6 +83,32 @@ begin
         end;
       end;
     end;
+  end;
+end;
+
+procedure CleanOldAppDataInstallation();
+var
+  OldDir: String;
+  OldUninst: String;
+  ResultCode: Integer;
+begin
+  OldDir := ExpandConstant('{localappdata}\Programs\Tempo PC Optimizer');
+  OldUninst := OldDir + '\unins000.exe';
+  if FileExists(OldUninst) then
+  begin
+    Exec(OldUninst, '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  end;
+  if DirExists(OldDir) then
+  begin
+    DelTree(OldDir, True, True, True);
+  end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+  begin
+    CleanOldAppDataInstallation();
   end;
 end;
 
