@@ -80,9 +80,9 @@ Verify installer integrity using PowerShell before running:
 Get-FileHash .\Tempo-Setup-v2.2.0.exe -Algorithm SHA256
 ```
 
-**Expected SHA256 Hash:**
+**Expected SHA256 Checksum:**
 ```text
-fd8fa041931e033ceae9897e49b076941c9afeebff8a8d8d9620260d6b5051a6
+2dc999d3e94bc80c8ed379af1a690964708ad58ad85d0383f8d6bc3cebbc5318
 ```
 
 ---

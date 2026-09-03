@@ -55,25 +55,25 @@
             </Setter>
         </Style>
 
-        <!-- Tempo Precision Instrumental Color Palette -->
-        <SolidColorBrush x:Key="BgDark" Color="#10131A"/>
-        <SolidColorBrush x:Key="SurfaceLow" Color="#161922"/>
-        <SolidColorBrush x:Key="SurfaceContainer" Color="#1D2027"/>
-        <SolidColorBrush x:Key="SurfaceHigh" Color="#272A31"/>
-        <SolidColorBrush x:Key="SurfaceHighest" Color="#32353C"/>
-        <SolidColorBrush x:Key="BorderMuted" Color="#2D343F"/>
-        <SolidColorBrush x:Key="BorderLight" Color="#424656"/>
+        <!-- Tempo Precision Calibrated Palette (Obsidian Slate & Linear Inspired) -->
+        <SolidColorBrush x:Key="BgDark" Color="#0B0E14"/>
+        <SolidColorBrush x:Key="SurfaceLow" Color="#10141D"/>
+        <SolidColorBrush x:Key="SurfaceContainer" Color="#151B26"/>
+        <SolidColorBrush x:Key="SurfaceHigh" Color="#1C2433"/>
+        <SolidColorBrush x:Key="SurfaceHighest" Color="#242D40"/>
+        <SolidColorBrush x:Key="BorderMuted" Color="#1E2638"/>
+        <SolidColorBrush x:Key="BorderLight" Color="#2C374E"/>
 
-        <SolidColorBrush x:Key="PrimaryCobalt" Color="#0066FF"/>
-        <SolidColorBrush x:Key="PrimaryCobaltHover" Color="#0054D6"/>
-        <SolidColorBrush x:Key="PrimaryAccent" Color="#B3C5FF"/>
-        <SolidColorBrush x:Key="TealHealth" Color="#44DDC1"/>
-        <SolidColorBrush x:Key="AmberWarn" Color="#FFB77D"/>
-        <SolidColorBrush x:Key="RedAlert" Color="#FFB4AB"/>
+        <SolidColorBrush x:Key="PrimaryCobalt" Color="#2563EB"/>
+        <SolidColorBrush x:Key="PrimaryCobaltHover" Color="#1D4ED8"/>
+        <SolidColorBrush x:Key="PrimaryAccent" Color="#93C5FD"/>
+        <SolidColorBrush x:Key="TealHealth" Color="#10B981"/>
+        <SolidColorBrush x:Key="AmberWarn" Color="#F59E0B"/>
+        <SolidColorBrush x:Key="RedAlert" Color="#EF4444"/>
 
-        <SolidColorBrush x:Key="TextPrimary" Color="#E0E2EC"/>
-        <SolidColorBrush x:Key="TextSecondary" Color="#C2C6D8"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#8C90A1"/>
+        <SolidColorBrush x:Key="TextPrimary" Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="TextSecondary" Color="#94A3B8"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
 
         <!-- Window Control Buttons (─, ✕) -->
         <Style x:Key="WindowControlBtn" TargetType="Button">
@@ -138,29 +138,30 @@
             </Setter>
         </Style>
 
-        <!-- UNIFIED STENCIL BUTTON STYLE (إسطمبة موحدة بمقاس ثابت ومحكم) -->
+        <!-- UNIFIED STENCIL BUTTON STYLE (إسطمبة موحدة بمقاس مريح وتجاوب كامل) -->
         <Style x:Key="ActionBtnStencil" TargetType="Button">
-            <Setter Property="Width" Value="74"/>
+            <Setter Property="MinWidth" Value="72"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="Height" Value="28"/>
-            <Setter Property="Background" Value="#181B24"/>
-            <Setter Property="Foreground" Value="#B3C5FF"/>
-            <Setter Property="BorderBrush" Value="#2D343F"/>
+            <Setter Property="Background" Value="#141924"/>
+            <Setter Property="Foreground" Value="#93C5FD"/>
+            <Setter Property="BorderBrush" Value="#222B3D"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="11"/>
-            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#0066FF"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#0066FF"/>
+                                <Setter TargetName="bd" Property="Background" Value="#2563EB"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#3B82F6"/>
                                 <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
@@ -174,28 +175,29 @@
 
         <!-- WARNING ACTION BUTTON STENCIL (للأزرار ذات شروط الأمان والتأكيد) -->
         <Style x:Key="ActionBtnWarningStencil" TargetType="Button">
-            <Setter Property="Width" Value="74"/>
+            <Setter Property="MinWidth" Value="72"/>
+            <Setter Property="Padding" Value="10,0"/>
             <Setter Property="Height" Value="28"/>
-            <Setter Property="Background" Value="#1A1812"/>
-            <Setter Property="Foreground" Value="#FFB77D"/>
-            <Setter Property="BorderBrush" Value="#66FFB77D"/>
+            <Setter Property="Background" Value="#1E1914"/>
+            <Setter Property="Foreground" Value="#F59E0B"/>
+            <Setter Property="BorderBrush" Value="#3D3020"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#FFB77D"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#FFB77D"/>
-                                <Setter Property="Foreground" Value="#10131A"/>
+                                <Setter TargetName="bd" Property="Background" Value="#D97706"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#F59E0B"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
@@ -206,29 +208,29 @@
             </Setter>
         </Style>
 
-        <!-- Primary Hero Button Style (Prominent with Blue Glow) -->
+        <!-- Primary Hero Button Style (Prominent with Refined Sapphire Gradient) -->
         <Style x:Key="PrimaryHeroBtn" TargetType="Button">
-            <Setter Property="Background" Value="#0066FF"/>
+            <Setter Property="Background" Value="#2563EB"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontWeight" Value="Bold"/>
-            <Setter Property="FontSize" Value="13.5"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="13"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="bd" Background="{TemplateBinding Background}" CornerRadius="8">
                             <Border.Effect>
-                                <DropShadowEffect Color="#0066FF" BlurRadius="18" ShadowDepth="0" Opacity="0.55"/>
+                                <DropShadowEffect Color="#2563EB" BlurRadius="12" ShadowDepth="2" Opacity="0.32"/>
                             </Border.Effect>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1A75FF"/>
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -269,8 +271,8 @@
 
         <!-- TOOLBAR INTERACTIVE POD STYLE -->
         <Style x:Key="ToolbarPodStyle" TargetType="Border">
-            <Setter Property="Background" Value="#171B25"/>
-            <Setter Property="BorderBrush" Value="#2A3040"/>
+            <Setter Property="Background" Value="#141924"/>
+            <Setter Property="BorderBrush" Value="#1E2638"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="14"/>
             <Setter Property="Padding" Value="8,4"/>
@@ -278,8 +280,8 @@
             <Setter Property="Cursor" Value="Hand"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#222838"/>
-                    <Setter Property="BorderBrush" Value="#0066FF"/>
+                    <Setter Property="Background" Value="#1C2433"/>
+                    <Setter Property="BorderBrush" Value="#2563EB"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -293,11 +295,11 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" CornerRadius="16" BorderThickness="1" BorderBrush="#800066FF">
+                        <Border x:Name="bd" CornerRadius="16" BorderThickness="1" BorderBrush="#802563EB">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#0066FF" Offset="0"/>
-                                    <GradientStop Color="#0047BA" Offset="1"/>
+                                    <GradientStop Color="#2563EB" Offset="0"/>
+                                    <GradientStop Color="#1D4ED8" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -307,12 +309,12 @@
                                 <Setter TargetName="bd" Property="Background">
                                     <Setter.Value>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#1A75FF" Offset="0"/>
-                                            <GradientStop Color="#005CE6" Offset="1"/>
+                                            <GradientStop Color="#3B82F6" Offset="0"/>
+                                            <GradientStop Color="#2563EB" Offset="1"/>
                                         </LinearGradientBrush>
                                     </Setter.Value>
                                 </Setter>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#00C4FF"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#60A5FA"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
                                 <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
@@ -327,8 +329,8 @@
         <Style x:Key="ToolbarIconBtn" TargetType="Button">
             <Setter Property="Height" Value="30"/>
             <Setter Property="Width" Value="30"/>
-            <Setter Property="Background" Value="#171B25"/>
-            <Setter Property="BorderBrush" Value="#2A3040"/>
+            <Setter Property="Background" Value="#141924"/>
+            <Setter Property="BorderBrush" Value="#1E2638"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
@@ -339,8 +341,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#252C3D"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#0066FF"/>
+                                <Setter TargetName="bd" Property="Background" Value="#1C2433"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#2563EB"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -383,7 +385,7 @@
                     </StackPanel>
 
                     <!-- Column 2: Action Button -->
-                    <Button Grid.Column="2" Width="74" Height="26" Style="{StaticResource ActionBtnStencil}" Content="{Binding ActionText}" Click="BtnDisableStartupApp_Click" VerticalAlignment="Center"/>
+                    <Button Grid.Column="2" Height="26" Style="{StaticResource ActionBtnStencil}" Content="{Binding ActionText}" Click="BtnDisableStartupApp_Click" VerticalAlignment="Center"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -589,7 +591,7 @@
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,6">
                                                 <TextBlock x:Name="TxtCpuPercent" Text="--" Foreground="{StaticResource TealHealth}" FontSize="22" FontWeight="Bold" FontFamily="Consolas, monospace"/>
                                             </StackPanel>
-                                            <ProgressBar x:Name="ProgCpuPercent" Height="6" Minimum="0" Maximum="100" Value="0" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
+                                            <ProgressBar x:Name="ProgCpuPercent" Height="5" Minimum="0" Maximum="100" Value="0" FlowDirection="LeftToRight" Background="#1C2433" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
                                             <TextBlock x:Name="TxtCpuClockTemp" Text="--" Foreground="{StaticResource TextSecondary}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
@@ -604,7 +606,7 @@
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,6">
                                                 <TextBlock x:Name="TxtRamPercentValue" Text="--" Foreground="{StaticResource TealHealth}" FontSize="22" FontWeight="Bold" FontFamily="Consolas, monospace"/>
                                             </StackPanel>
-                                            <ProgressBar x:Name="ProgRamPercent" Height="6" Minimum="0" Maximum="100" Value="0" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
+                                            <ProgressBar x:Name="ProgRamPercent" Height="5" Minimum="0" Maximum="100" Value="0" FlowDirection="LeftToRight" Background="#1C2433" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
                                             <TextBlock x:Name="TxtRamUsageFormatted" Text="--" Foreground="{StaticResource TextSecondary}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
@@ -621,7 +623,7 @@
                                             <TextBlock Text="{DynamicResource TxtFreeDiskSpace}" Foreground="{StaticResource TextSecondary}" FontSize="11" HorizontalAlignment="Left"/>
                                             <TextBlock x:Name="TxtStorageFree" Text="--" Foreground="{StaticResource TextPrimary}" FontSize="11" FontFamily="Consolas, monospace" HorizontalAlignment="Right"/>
                                         </Grid>
-                                        <ProgressBar x:Name="ProgStorageUsed" Height="5" Minimum="0" Maximum="100" Value="0" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0"/>
+                                        <ProgressBar x:Name="ProgStorageUsed" Height="5" Minimum="0" Maximum="100" Value="0" FlowDirection="LeftToRight" Background="#1C2433" Foreground="{StaticResource TealHealth}" BorderThickness="0"/>
                                     </StackPanel>
                                 </Border>
 
@@ -644,7 +646,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="74"/>
+                                                    <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Border Grid.Column="0" Width="28" Height="28" Background="#161922" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="4" Margin="0,0,8,0">
                                                     <Path FlowDirection="LeftToRight" Data="M15,4 L20,4 L20,6 L19,6 L19,19 C19,20.1 18.1,21 17,21 L7,21 C5.9,21 5,20.1 5,19 L5,6 L4,6 L4,4 L9,4 L10,3 L14,3 L15,4 Z" Fill="{StaticResource TextSecondary}" Width="12" Height="12" Stretch="Uniform"/>
@@ -665,7 +667,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="74"/>
+                                                    <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Border Grid.Column="0" Width="28" Height="28" Background="#161922" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="4" Margin="0,0,8,0">
                                                     <Path FlowDirection="LeftToRight" Data="M4,6 L20,6 L20,18 L4,18 Z M6,8 L18,8 L18,16 L6,16 Z" Fill="{StaticResource TextSecondary}" Width="12" Height="12" Stretch="Uniform"/>
@@ -686,7 +688,7 @@
                                                     <ColumnDefinition Width="Auto"/>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="74"/>
+                                                    <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
                                                 <Border Grid.Column="0" Width="28" Height="28" Background="#161922" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="4" Margin="0,0,8,0">
                                                     <Path FlowDirection="LeftToRight" Data="M6,19 C6,20.1 6.9,21 8,21 L16,21 C17.1,21 18,20.1 18,19 L18,7 L6,7 L6,19 Z" Fill="{StaticResource TextSecondary}" Width="12" Height="12" Stretch="Uniform"/>
@@ -711,7 +713,7 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{DynamicResource TxtScanCenter}" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold"/>
@@ -726,7 +728,7 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{DynamicResource TileTempTitle}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="Medium"/>
@@ -746,7 +748,7 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{DynamicResource TileRecycleTitle}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="Medium"/>
@@ -766,7 +768,7 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{DynamicResource TileBrowserTitle}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="Medium"/>
@@ -786,7 +788,7 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{DynamicResource TileDevTitle}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="Medium"/>
@@ -806,7 +808,7 @@
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="74"/>
+                                            <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                             <TextBlock Text="{DynamicResource TileWorkingSetTitle}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="Medium"/>
@@ -891,8 +893,8 @@
                                                                 </StackPanel>
                                                                 <Button Grid.Column="1" Style="{StaticResource ActionBtnStencil}" Content="{Binding ActionButtonText}" Visibility="{Binding TrimVisibility}" Click="BtnSsdTrim_Click" VerticalAlignment="Center"/>
                                                             </Grid>
-                                                            <!-- RTL Storage Usage Progress Bar -->
-                                                            <ProgressBar Grid.Row="1" Height="4" Minimum="0" Maximum="100" Value="{Binding UsedPercent}" FlowDirection="RightToLeft" Background="#202430" Foreground="{Binding ProgressBrush}" BorderThickness="0" Margin="0,6,0,0"/>
+                                                            <!-- Storage Usage Progress Bar -->
+                                                            <ProgressBar Grid.Row="1" Height="4" Minimum="0" Maximum="100" Value="{Binding UsedPercent}" FlowDirection="LeftToRight" Background="#1C2433" Foreground="{Binding ProgressBrush}" BorderThickness="0" Margin="0,6,0,0"/>
                                                         </Grid>
                                                     </Border>
                                                 </DataTemplate>
@@ -956,12 +958,12 @@
                                             </Grid.ColumnDefinitions>
                                             <Button x:Name="BtnLangEnglish" Grid.Column="0" Height="34" Style="{StaticResource ToolTileBtn}" Click="BtnLangEnglish_Click">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="🇬🇧 English (Default)" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="English" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                             <Button x:Name="BtnLangArabic" Grid.Column="2" Height="34" Style="{StaticResource ToolTileBtn}" Click="BtnLangArabic_Click">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <TextBlock Text="🇪🇬 العربية" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="العربية" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
                                         </Grid>
@@ -1066,15 +1068,15 @@
         <!-- 2A. HORIZONTAL COMPANION BAR (أعلى الشاشة - كبسولة أفقية نحيفة) -->
         <Border x:Name="CompanionBarHorizontal"
                 Visibility="Collapsed"
-                Background="#F010131B"
-                BorderBrush="#550066FF"
-                BorderThickness="1.2"
+                Background="#F20B0E14"
+                BorderBrush="#2E3A52"
+                BorderThickness="1"
                 CornerRadius="21"
                 Padding="8,4"
                 Height="42"
                 FlowDirection="RightToLeft">
             <Border.Effect>
-                <DropShadowEffect Color="#0066FF" BlurRadius="18" ShadowDepth="0" Opacity="0.28"/>
+                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.45"/>
             </Border.Effect>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -1250,8 +1252,8 @@
         <!-- 2B. VERTICAL COMPANION BAR (الجانب - كبسولة عمودية فائقة النحافة 34px وبدون زخارف زائدة) -->
         <Border x:Name="CompanionBarVertical"
                 Visibility="Collapsed"
-                Background="#F010131B"
-                BorderBrush="#550066FF"
+                Background="#F20B0E14"
+                BorderBrush="#2E3A52"
                 BorderThickness="1"
                 CornerRadius="17"
                 Padding="2,6"
@@ -1260,7 +1262,7 @@
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
             <Border.Effect>
-                <DropShadowEffect Color="#0066FF" BlurRadius="12" ShadowDepth="0" Opacity="0.3"/>
+                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.45"/>
             </Border.Effect>
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
                 <!-- Compact Grip Dots -->

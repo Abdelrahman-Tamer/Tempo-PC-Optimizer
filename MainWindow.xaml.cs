@@ -621,12 +621,12 @@ namespace Tempo
             {
                 if (cpuPercent >= 85)
                 {
-                    CardCpuBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF5252"));
+                    CardCpuBorder.BorderBrush = (Brush)FindResource("RedAlert");
                     CardCpuBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#291517"));
                 }
                 else if (cpuPercent >= 65)
                 {
-                    CardCpuBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFA726"));
+                    CardCpuBorder.BorderBrush = (Brush)FindResource("AmberWarn");
                     CardCpuBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#261D15"));
                 }
                 else
@@ -655,12 +655,12 @@ namespace Tempo
             {
                 if (ramPercent >= 85)
                 {
-                    CardRamBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF5252"));
+                    CardRamBorder.BorderBrush = (Brush)FindResource("RedAlert");
                     CardRamBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#291517"));
                 }
                 else if (ramPercent >= 65)
                 {
-                    CardRamBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFA726"));
+                    CardRamBorder.BorderBrush = (Brush)FindResource("AmberWarn");
                     CardRamBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#261D15"));
                 }
                 else
@@ -1744,8 +1744,8 @@ namespace Tempo
             if (IndSettings != null) IndSettings.HorizontalAlignment = indAlign;
 
             // Highlight active language button in Settings
-            var activeBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0066FF"));
-            var inactiveBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#161922"));
+            var activeBg = (Brush)FindResource("PrimaryCobalt");
+            var inactiveBg = (Brush)FindResource("SurfaceContainer");
             var activeFg = Brushes.White;
             var inactiveFg = (Brush)FindResource("TextSecondary");
 
