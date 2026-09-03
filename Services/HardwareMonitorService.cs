@@ -56,12 +56,17 @@ namespace Tempo.Services
             }
         }
 
-        public string TooltipText =>
-            $"اسم البرنامج: {DisplayName}\n" +
-            $"المعرف في السجل: {Name}\n" +
-            $"المسار التنفيذي: {CleanExecutablePath}\n" +
-            $"النطاق: {LocationFriendly}" +
-            (IsSecurityApp ? "\n\n⚠️ ملاحظة: هذا التطبيق أساسي لأمان وحماية النظام، ينصح بعدم تعطيله." : "");
+        public string TooltipText => (LocalizationManager.CurrentLanguage == "ar")
+            ? $"اسم البرنامج: {DisplayName}\n" +
+              $"المعرف في السجل: {Name}\n" +
+              $"المسار التنفيذي: {CleanExecutablePath}\n" +
+              $"النطاق: {LocationFriendly}" +
+              (IsSecurityApp ? "\n\n⚠️ ملاحظة: هذا التطبيق أساسي لأمان وحماية النظام، ينصح بعدم تعطيله." : "")
+            : $"Program: {DisplayName}\n" +
+              $"Registry Key: {Name}\n" +
+              $"Executable Path: {CleanExecutablePath}\n" +
+              $"Scope: {LocationFriendly}" +
+              (IsSecurityApp ? "\n\n⚠️ Safety Notice: This service is vital for system protection. Disabling is not recommended." : "");
 
         // Security App Detection (Point 5)
         public bool IsSecurityApp =>
@@ -97,7 +102,7 @@ namespace Tempo.Services
                 if (Name.Equals("Docker Desktop", StringComparison.OrdinalIgnoreCase))
                     return "Docker Desktop";
                 if (Name.Equals("SecurityHealth", StringComparison.OrdinalIgnoreCase))
-                    return "أمان ويندوز (Windows Security)";
+                    return (LocalizationManager.CurrentLanguage == "ar") ? "أمان ويندوز (Windows Security)" : "Windows Security";
                 if (Name.Equals("Avast Driver Updater UI", StringComparison.OrdinalIgnoreCase))
                     return "Avast Driver Updater";
                 if (Name.Equals("MTPW", StringComparison.OrdinalIgnoreCase))
@@ -105,9 +110,9 @@ namespace Tempo.Services
                 if (Name.Equals("UrbanVPN", StringComparison.OrdinalIgnoreCase))
                     return "Urban VPN";
                 if (Name.StartsWith("{") && Name.EndsWith("}"))
-                    return "برنامج غير معروف (معرف نظام)";
+                    return (LocalizationManager.CurrentLanguage == "ar") ? "برنامج غير معروف (معرف نظام)" : "Unknown Program (System GUID)";
                 if (Name.Length > 24 && System.Text.RegularExpressions.Regex.IsMatch(Name, @"[0-9a-fA-F]{16,}"))
-                    return "أداة خلفية للنظام";
+                    return (LocalizationManager.CurrentLanguage == "ar") ? "أداة خلفية للنظام" : "Background System Service";
                 return Name;
             }
         }
@@ -284,7 +289,7 @@ namespace Tempo.Services
             }
             catch { }
 
-            return ("لا يوجد كارت منفصل", null, null, 0, 0);
+            return (LocalizationManager.CurrentLanguage == "ar" ? "لا يوجد كارت منفصل" : "Integrated / No dedicated GPU", null, null, 0, 0);
         }
 
         public (double downKbSec, double upKbSec, string downFormatted, string upFormatted) GetNetworkMetrics()
@@ -414,7 +419,7 @@ namespace Tempo.Services
                     list.Add(new StorageDriveInfo
                     {
                         DriveLetter = drive.Name.TrimEnd('\\'),
-                        VolumeLabel = string.IsNullOrWhiteSpace(drive.VolumeLabel) ? "قرص محلي" : drive.VolumeLabel,
+                        VolumeLabel = string.IsNullOrWhiteSpace(drive.VolumeLabel) ? (LocalizationManager.CurrentLanguage == "ar" ? "قرص محلي" : "Local Disk") : drive.VolumeLabel,
                         TotalGb = total,
                         FreeGb = free,
                         UsedGb = used,
@@ -530,9 +535,9 @@ namespace Tempo.Services
                 catch { }
             }
 
-            ReadKey(RegistryHive.CurrentUser, RegistryView.Default, "المستخدم الحالي");
-            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry64, "النظام (64-bit)");
-            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry32, "النظام (32-bit)");
+            ReadKey(RegistryHive.CurrentUser, RegistryView.Default, "HKCU");
+            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry64, "HKLM-64");
+            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry32, "HKLM-32");
 
             return apps;
         }
@@ -583,7 +588,7 @@ namespace Tempo.Services
                 }
 
                 if (items.Count == 0)
-                    return ("لا يوجد برنامج حماية مُعرَّف", false);
+                    return (LocalizationManager.CurrentLanguage == "ar" ? "لا يوجد برنامج حماية مُعرَّف" : "No Antivirus Detected", false);
 
                 // Prefer first active AV; if none active, return first with inactive status
                 var activeAv = items.FirstOrDefault(i => i.active);
@@ -595,11 +600,11 @@ namespace Tempo.Services
             catch (ManagementException)
             {
                 // SecurityCenter2 unavailable (e.g. Server OS, permission denied)
-                return ("Security Center غير متاح", false);
+                return (LocalizationManager.CurrentLanguage == "ar" ? "Security Center غير متاح" : "Security Center Unavailable", false);
             }
             catch
             {
-                return ("حالة الحماية: غير معروفة", false);
+                return (LocalizationManager.CurrentLanguage == "ar" ? "حالة الحماية: غير معروفة" : "Protection Status: Unknown", false);
             }
         }
 

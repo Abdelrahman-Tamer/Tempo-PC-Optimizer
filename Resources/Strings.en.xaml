@@ -136,4 +136,13 @@
     <system:String x:Key="TxtEstimatedTime">Estimated Time</system:String>
     <system:String x:Key="TxtLessThanSecond">Less than 1 second</system:String>
     <system:String x:Key="TxtReadyForBoost">Ready for instant optimization</system:String>
+    <system:String x:Key="CardRamUsagePlaceholder">14.7 GB of 31.7 GB</system:String>
+    <system:String x:Key="TxtReady">Ready</system:String>
+    <system:String x:Key="TxtZeroItemsPlaceholder">0 items (0 MB)</system:String>
+    <system:String x:Key="TxtLastCheckRecent">Last check: Just now</system:String>
+    <system:String x:Key="TxtAppVersionSkipped">Update skipped for this version</system:String>
+    <system:String x:Key="TxtUpdateAvailableBadge">Update v{0} Available</system:String>
+    <system:String x:Key="BtnHeroOptimizeMini">Optimize</system:String>
+    <system:String x:Key="BtnStateEnabled">Enabled</system:String>
+    <system:String x:Key="BtnStateDisabled">Disabled</system:String>
 </ResourceDictionary>

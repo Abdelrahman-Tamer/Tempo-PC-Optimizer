@@ -741,7 +741,7 @@ namespace Tempo
                 var info = _cleanupService.QueryRecycleBin();
                 Dispatcher.InvokeAsync(() =>
                 {
-                    TxtRecycleBinDetails.Text = $"{info.ItemCount} عنصر ({info.TotalSizeMb:F1} MB)";
+                    TxtRecycleBinDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"{info.ItemCount} عنصر (\u200E{info.TotalSizeMb:F1} MB\u200E)" : $"{info.ItemCount} items (\u200E{info.TotalSizeMb:F1} MB\u200E)";
                     TxtRecRecycleBinSize.Text = $"{info.TotalSizeMb:F1} MB";
                 });
             });
@@ -809,15 +809,16 @@ namespace Tempo
                     _ => ""
                 };
 
+                bool isAr = (LocalizationManager.CurrentLanguage == "ar");
                 string toolName = toolKey switch
                 {
-                    "taskmgr" => "مدير المهام",
-                    "diskmgmt" => "إدارة الأقراص",
-                    "resmon" => "مراقب الموارد",
-                    "services" => "خدمات ويندوز",
-                    "devmgmt" => "إدارة الأجهزة",
-                    "ncpa" => "محولات الشبكة",
-                    _ => "الأداة"
+                    "taskmgr" => isAr ? "مدير المهام" : "Task Manager",
+                    "diskmgmt" => isAr ? "إدارة الأقراص" : "Disk Management",
+                    "resmon" => isAr ? "مراقب الموارد" : "Resource Monitor",
+                    "services" => isAr ? "خدمات ويندوز" : "Services",
+                    "devmgmt" => isAr ? "إدارة الأجهزة" : "Device Manager",
+                    "ncpa" => isAr ? "محولات الشبكة" : "Network Connections",
+                    _ => isAr ? "الأداة" : "Tool"
                 };
 
                 if (!string.IsNullOrEmpty(cmd))
@@ -825,11 +826,11 @@ namespace Tempo
                     try
                     {
                         Process.Start(new ProcessStartInfo { FileName = cmd, UseShellExecute = true });
-                        ShowToast($"تم تشغيل {toolName} بنجاح.", false);
+                        ShowToast(isAr ? $"تم تشغيل {toolName} بنجاح." : $"{toolName} launched successfully.", false);
                     }
                     catch (Exception ex)
                     {
-                        ShowToast($"تعذر التشغيل: {ex.Message}", true);
+                        ShowToast(isAr ? $"تعذر التشغيل: {ex.Message}" : $"Unable to launch: {ex.Message}", true);
                     }
                 }
             }
@@ -844,7 +845,7 @@ namespace Tempo
             catch
             {
                 try { Process.Start(new ProcessStartInfo("taskmgr.exe") { UseShellExecute = true }); }
-                catch (Exception ex) { ShowToast($"تعذر فتح إعدادات بدء التشغيل: {ex.Message}", true); }
+                catch (Exception ex) { ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر فتح إعدادات بدء التشغيل: {ex.Message}" : $"Unable to open Startup Settings: {ex.Message}", true); }
             }
         }
 
@@ -857,9 +858,9 @@ namespace Tempo
                     try
                     {
                         Process.Start(new ProcessStartInfo("ms-settings:startupapps") { UseShellExecute = true });
-                        ShowToast("تطبيقات النظام (HKLM) تتطلب إدارتها عبر نافذة ويندوز.", false);
+                        ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تطبيقات النظام (HKLM) تتطلب إدارتها عبر نافذة ويندوز." : "System apps (HKLM) must be managed via Windows Settings.", false);
                     }
-                    catch { ShowToast("يتطلب تعديل هذا التطبيق صلاحيات مسؤول.", true); }
+                    catch { ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "يتطلب تعديل هذا التطبيق صلاحيات مسؤول." : "Modifying this app requires Administrator privileges.", true); }
                     return;
                 }
 
@@ -875,18 +876,30 @@ namespace Tempo
                                      app.Name.IndexOf("Norton", StringComparison.OrdinalIgnoreCase) >= 0 ||
                                      app.Name.IndexOf("Firewall", StringComparison.OrdinalIgnoreCase) >= 0;
 
+                bool isAr = (LocalizationManager.CurrentLanguage == "ar");
                 string securityNotice = isSecurityApp
-                    ? "\n\n⚠️ تحذير أمني شديد: هذا البرنامج يبدو مرتبطاً بالحماية أو مكافحة الفيروسات! تعطيله قد يؤثر على أمان النظام."
+                    ? (isAr ? "\n\n⚠️ تحذير أمني شديد: هذا البرنامج يبدو مرتبطاً بالحماية أو مكافحة الفيروسات! تعطيله قد يؤثر على أمان النظام."
+                            : "\n\n⚠️ High Security Warning: This application appears to be security/antivirus related! Disabling it may compromise system safety.")
                     : "";
 
+                string title = isAr ? "تأكيد تعطيل برنامج بدء التشغيل - Tempo" : "Confirm Disable Startup Program - Tempo";
+                string msg = isAr
+                    ? $"هل أنت متأكد من رغبتك في إزالة هذا التطبيق من بدء التشغيل التلقائي؟\n\n" +
+                      $"• اسم البرنامج: {app.Name}\n" +
+                      $"• النطاق: {app.Location} (HKCU)\n" +
+                      $"• المسار: {app.Command}" +
+                      securityNotice +
+                      "\n\nملاحظة أمان: لن يتم حذف ملفات البرنامج من جهازك، بل سيتم منع تشغيله تلقائياً فقط مع إقلاع ويندوز."
+                    : $"Are you sure you want to disable this program from automatically starting?\n\n" +
+                      $"• Program Name: {app.Name}\n" +
+                      $"• Scope: {app.Location} (HKCU)\n" +
+                      $"• Executable Path: {app.Command}" +
+                      securityNotice +
+                      "\n\nSafety Note: Program files will not be deleted, only automatic startup on Windows boot will be disabled.";
+
                 var confirm = MessageBox.Show(
-                    $"هل أنت متأكد من رغبتك في إزالة هذا التطبيق من بدء التشغيل التلقائي؟\n\n" +
-                    $"• اسم البرنامج: {app.Name}\n" +
-                    $"• النطاق: {app.Location} (HKCU)\n" +
-                    $"• المسار: {app.Command}" +
-                    securityNotice +
-                    "\n\nملاحظة أمان: لن يتم حذف ملفات البرنامج من جهازك، بل سيتم منع تشغيله تلقائياً فقط مع إقلاع ويندوز.",
-                    "تأكيد تعطيل برنامج بدء التشغيل - Tempo",
+                    msg,
+                    title,
                     MessageBoxButton.YesNo,
                     isSecurityApp ? MessageBoxImage.Warning : MessageBoxImage.Question,
                     MessageBoxResult.No);
@@ -896,12 +909,12 @@ namespace Tempo
                 bool ok = _hardwareMonitor.DisableStartupApp(app);
                 if (ok)
                 {
-                    ShowToast($"تمت إزالة {app.Name} من بدء التشغيل بنجاح.", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تمت إزالة {app.Name} من بدء التشغيل بنجاح." : $"Removed {app.Name} from startup successfully.", false);
                     LoadStartupApps();
                 }
                 else
                 {
-                    ShowToast($"تعذر إزالة {app.Name}. يمكنك إدارته عبر إعدادات ويندوز.", true);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر إزالة {app.Name}. يمكنك إدارته عبر إعدادات ويندوز." : $"Unable to disable {app.Name}. You can manage it via Windows Settings.", true);
                 }
             }
         }
@@ -914,7 +927,7 @@ namespace Tempo
         {
             var btn = sender as Button;
             if (btn != null) btn.IsEnabled = false;
-            ShowToast("جاري تحسين الذاكرة الخاملة وتفريغ الملفات المؤقتة بأمان...", false);
+            ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "جاري تحسين الذاكرة الخاملة وتفريغ الملفات المؤقتة بأمان..." : "Optimizing inactive memory and clearing temporary caches safely...", false);
 
             Task.Run(() =>
             {
@@ -924,9 +937,9 @@ namespace Tempo
                 Dispatcher.InvokeAsync(() =>
                 {
                     if (btn != null) btn.IsEnabled = true;
-                    ShowToast($"تم التحسين بنجاح! تم تحرير {ramRes.ReclaimedMb:F1} MB رام و {tempRes.ReclaimedMb:F1} MB كاش مؤقت.", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم التحسين بنجاح! تم تحرير \u200E{ramRes.ReclaimedMb:F1} MB\u200E رام و \u200E{tempRes.ReclaimedMb:F1} MB\u200E كاش مؤقت." : $"Optimization successful! Reclaimed \u200E{ramRes.ReclaimedMb:F1} MB\u200E RAM and \u200E{tempRes.ReclaimedMb:F1} MB\u200E temp cache.", false);
                     FetchTelemetryAsync();
-                    TxtTargetFilesSize.Text = "تم التحسين";
+                    TxtTargetFilesSize.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم التحسين" : "Optimized";
                     TxtRecTempSize.Text = "0 MB";
                 });
             });
@@ -950,7 +963,7 @@ namespace Tempo
         private void BtnScanAll_Click(object sender, RoutedEventArgs e)
         {
             BtnScanAll.IsEnabled = false;
-            TxtScanSummary.Text = "جاري فحص مجلدات الكاش وسلة المحذوفات...";
+            TxtScanSummary.Text = (LocalizationManager.CurrentLanguage == "ar") ? "جاري فحص مجلدات الكاش وسلة المحذوفات..." : "Scanning cache directories and Recycle Bin...";
 
             Task.Run(() =>
             {
@@ -958,15 +971,15 @@ namespace Tempo
                 Dispatcher.InvokeAsync(() =>
                 {
                     BtnScanAll.IsEnabled = true;
-                    TxtTempDetails.Text = $"{summary.TempFiles} ملف مؤقت ({summary.TempMb:F1} MB)";
-                    TxtRecycleBinDetails.Text = $"{summary.RecycleBinItems} عنصر ({summary.RecycleBinMb:F1} MB)";
-                    TxtBrowserDetails.Text = $"Chrome & Edge ({summary.BrowserCacheFiles} ملف، {summary.BrowserCacheMb:F1} MB)";
-                    TxtDevDetails.Text = $"npm, NuGet, pip ({summary.DevCacheFiles} ملف، {summary.DevCacheMb:F1} MB)";
-                    TxtScanSummary.Text = $"إجمالي المخلفات: {summary.TotalMb:F1} MB عبر {summary.TotalItems} عنصر.";
+                    TxtTempDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"{summary.TempFiles} ملف مؤقت (\u200E{summary.TempMb:F1} MB\u200E)" : $"{summary.TempFiles} temp files (\u200E{summary.TempMb:F1} MB\u200E)";
+                    TxtRecycleBinDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"{summary.RecycleBinItems} عنصر (\u200E{summary.RecycleBinMb:F1} MB\u200E)" : $"{summary.RecycleBinItems} items (\u200E{summary.RecycleBinMb:F1} MB\u200E)";
+                    TxtBrowserDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"Chrome & Edge ({summary.BrowserCacheFiles} ملف، \u200E{summary.BrowserCacheMb:F1} MB\u200E)" : $"Chrome & Edge ({summary.BrowserCacheFiles} files, \u200E{summary.BrowserCacheMb:F1} MB\u200E)";
+                    TxtDevDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"npm, NuGet, pip ({summary.DevCacheFiles} ملف، \u200E{summary.DevCacheMb:F1} MB\u200E)" : $"npm, NuGet, pip ({summary.DevCacheFiles} files, \u200E{summary.DevCacheMb:F1} MB\u200E)";
+                    TxtScanSummary.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"إجمالي المخلفات: \u200E{summary.TotalMb:F1} MB\u200E عبر {summary.TotalItems} عنصر." : $"Total Cleanable Junk: \u200E{summary.TotalMb:F1} MB\u200E across {summary.TotalItems} items.";
                     TxtTargetFilesSize.Text = $"{summary.TotalMb:F1} MB";
                     TxtRecTempSize.Text = $"{summary.TempMb:F1} MB";
                     TxtRecRecycleBinSize.Text = $"{summary.RecycleBinMb:F1} MB";
-                    ShowToast($"اكتمل الفحص: {summary.TotalMb:F1} MB قابلة للتنظيف.", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"اكتمل الفحص: \u200E{summary.TotalMb:F1} MB\u200E قابلة للتنظيف." : $"Scan completed: \u200E{summary.TotalMb:F1} MB\u200E cleanable.", false);
                 });
             });
         }
@@ -977,7 +990,7 @@ namespace Tempo
             ShowToast(res.Message, false);
             LoadRecycleBinInfo();
             TxtRecTempSize.Text = "0 MB";
-            TxtTempDetails.Text = "تم تنظيف الملفات المؤقتة بنجاح";
+            TxtTempDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف الملفات المؤقتة بنجاح" : "Temporary files cleaned successfully";
         }
 
         private void BtnEmptyRecycleBin_Click(object sender, RoutedEventArgs e)
@@ -985,7 +998,7 @@ namespace Tempo
             var before = _cleanupService.QueryRecycleBin();
             if (before.ItemCount == 0)
             {
-                ShowToast("سلة المحذوفات فارغة بالفعل (0 عنصر).", false);
+                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "سلة المحذوفات فارغة بالفعل (0 عنصر)." : "Recycle Bin is already empty (0 items).", false);
                 return;
             }
 
@@ -1014,7 +1027,7 @@ namespace Tempo
         {
             var res = _cleanupService.BrowserCacheFlush();
             ShowToast(res.Message, !res.Success);
-            TxtBrowserDetails.Text = "تم تنظيف كاش المتصفحات بنجاح";
+            TxtBrowserDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش المتصفحات بنجاح" : "Browser caches flushed successfully";
         }
 
         private void BtnDevClean_Click(object sender, RoutedEventArgs e)
@@ -1036,7 +1049,7 @@ namespace Tempo
             {
                 var res = _cleanupService.DevCachesFlush();
                 ShowToast(res.Message, false);
-                TxtDevDetails.Text = "تم تنظيف كاش بيئات التطوير بنجاح";
+                TxtDevDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش بيئات التطوير بنجاح" : "Developer package caches purged successfully";
             }
         }
 
@@ -1145,7 +1158,7 @@ namespace Tempo
             UpdateToolbarSettingsUI();
             SaveSettings();
             ShowToolbarView();
-            ShowToast("تم التبديل إلى شريط سطح المكتب المصاحب.", false);
+            ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم التبديل إلى شريط سطح المكتب المصاحب." : "Switched to Desktop Companion Toolbar.", false);
         }
 
         private void BtnToggleToolbar_Click(object sender, RoutedEventArgs e)
@@ -1153,20 +1166,20 @@ namespace Tempo
             _isToolbarEnabled = !_isToolbarEnabled;
             UpdateToolbarSettingsUI();
             SaveSettings();
-            ShowToast(_isToolbarEnabled ? "تم تفعيل شريط سطح المكتب بنجاح." : "تم تعطيل شريط سطح المكتب.", false);
+            ShowToast(_isToolbarEnabled ? ((LocalizationManager.CurrentLanguage == "ar") ? "تم تفعيل شريط سطح المكتب بنجاح." : "Desktop Toolbar enabled.") : ((LocalizationManager.CurrentLanguage == "ar") ? "تم تعطيل شريط سطح المكتب." : "Desktop Toolbar disabled."), false);
         }
 
         private void UpdateToolbarSettingsUI()
         {
             if (_isToolbarEnabled)
             {
-                BtnToggleToolbar.Content = "مفعّل";
+                BtnToggleToolbar.Content = (LocalizationManager.CurrentLanguage == "ar") ? "مفعّل" : "Enabled";
                 BtnToggleToolbar.Foreground = (SolidColorBrush)FindResource("TealHealth");
                 ToolbarPlacementPanel.Visibility = Visibility.Visible;
             }
             else
             {
-                BtnToggleToolbar.Content = "معطّل";
+                BtnToggleToolbar.Content = (LocalizationManager.CurrentLanguage == "ar") ? "معطّل" : "Disabled";
                 BtnToggleToolbar.Foreground = (SolidColorBrush)FindResource("TextMuted");
                 ToolbarPlacementPanel.Visibility = Visibility.Collapsed;
             }
@@ -1241,12 +1254,12 @@ namespace Tempo
             {
                 _autoHideTimer.Stop();
                 RevealFromPeek();
-                ShowToast("تم تثبيت الشريط دائماً على الشاشة (تعطيل الإخفاء التلقائي).", false);
+                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تثبيت الشريط دائماً على الشاشة (تعطيل الإخفاء التلقائي)." : "Toolbar pinned to screen (Auto-hide disabled).", false);
             }
             else
             {
                 _autoHideTimer.Start();
-                ShowToast("تم تفعيل الإخفاء التلقائي للشريط عند الخمول.", false);
+                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تفعيل الإخفاء التلقائي للشريط عند الخمول." : "Auto-hide enabled for toolbar on idle.", false);
             }
         }
 
@@ -1377,6 +1390,40 @@ namespace Tempo
 
         #region System Tray & Persistence
 
+        private void UpdateTrayMenu()
+        {
+            if (_trayIcon == null) return;
+            bool isAr = (LocalizationManager.CurrentLanguage == "ar");
+            var menu = new TrayContextMenuStrip();
+
+            menu.Items.Add(isAr ? "فتح لوحة التحكم (Tempo)" : "Open Dashboard (Tempo)", null, (s, e) => {
+                this.Show();
+                this.WindowState = WindowState.Normal;
+                ShowDashboardView();
+                this.Activate();
+            });
+            menu.Items.Add(isAr ? "إظهار / إخفاء شريط سطح المكتب" : "Toggle Desktop Companion Toolbar", null, (s, e) => {
+                if (_currentView == AppViewMode.Toolbar)
+                {
+                    ShowDashboardView();
+                }
+                else
+                {
+                    ShowToolbarView();
+                }
+            });
+            menu.Items.Add(new TrayToolStripSeparator());
+            menu.Items.Add(isAr ? "تحسين الذاكرة الخاملة (Optimize RAM)" : "Optimize RAM Now", null, (s, e) => {
+                var res = _cleanupService.OptimizeRamWorkingSets();
+                _cleanupService.QuickCleanTemp();
+                ShowToast(res.Message, false);
+            });
+            menu.Items.Add(new TrayToolStripSeparator());
+            menu.Items.Add(isAr ? "إغلاق التطبيق نهائياً" : "Exit Tempo", null, (s, e) => ExitApp());
+
+            _trayIcon.ContextMenuStrip = menu;
+        }
+
         private void InitSystemTray()
         {
             _trayIcon = new TrayNotifyIcon();
@@ -1394,33 +1441,7 @@ namespace Tempo
             _trayIcon.Text = "Tempo Diagnostic";
             _trayIcon.Visible = true;
 
-            var menu = new TrayContextMenuStrip();
-            menu.Items.Add("فتح لوحة التحكم (Tempo)", null, (s, e) => {
-                this.Show();
-                this.WindowState = WindowState.Normal;
-                ShowDashboardView();
-                this.Activate();
-            });
-            menu.Items.Add("إظهار / إخفاء شريط سطح المكتب", null, (s, e) => {
-                if (_currentView == AppViewMode.Toolbar)
-                {
-                    ShowDashboardView();
-                }
-                else
-                {
-                    ShowToolbarView();
-                }
-            });
-            menu.Items.Add(new TrayToolStripSeparator());
-            menu.Items.Add("تحسين الذاكرة الخاملة (Optimize RAM)", null, (s, e) => {
-                var res = _cleanupService.OptimizeRamWorkingSets();
-                _cleanupService.QuickCleanTemp();
-                ShowToast($"تم تحسين الذاكرة: تحرير {res.ReclaimedMb:F1} MB.", false);
-            });
-            menu.Items.Add(new TrayToolStripSeparator());
-            menu.Items.Add("إغلاق التطبيق نهائياً", null, (s, e) => ExitApp());
-
-            _trayIcon.ContextMenuStrip = menu;
+            UpdateTrayMenu();
             _trayIcon.MouseClick += (s, e) =>
             {
                 if (e.Button == TrayMouseButtons.Left)
@@ -1502,7 +1523,7 @@ namespace Tempo
 
         private void UpdateSettingsUiState(UpdateInfo? update, bool isManualCheck)
         {
-            TxtSettingsLastCheck.Text = $"آخر فحص: {DateTime.Now:HH:mm} ({DateTime.Now:yyyy/MM/dd})";
+            TxtSettingsLastCheck.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"آخر فحص: {DateTime.Now:HH:mm} ({DateTime.Now:yyyy/MM/dd})" : $"Last check: {DateTime.Now:HH:mm} ({DateTime.Now:MM/dd/yyyy})";
 
             if (update != null && update.IsUpdateAvailable)
             {
@@ -1510,14 +1531,14 @@ namespace Tempo
 
                 // Show Discord-Style Update Badge in Header
                 BtnUpdateBadge.Visibility = Visibility.Visible;
-                TxtUpdateBadgeText.Text = $"تحديث v{update.LatestVersion}";
+                TxtUpdateBadgeText.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"تحديث v{update.LatestVersion}" : $"Update v{update.LatestVersion}";
 
                 // Show Companion Toolbar Update Indicators
                 BtnToolbarUpdateH.Visibility = Visibility.Visible;
                 BtnToolbarUpdateV.Visibility = Visibility.Visible;
 
                 // Update Settings status badge
-                TxtSettingsUpdateBadge.Text = $"يوجد تحديث v{update.LatestVersion}";
+                TxtSettingsUpdateBadge.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"يوجد تحديث v{update.LatestVersion}" : $"Update v{update.LatestVersion} Available";
                 TxtSettingsUpdateBadge.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
 
                 if (isManualCheck)
@@ -1529,7 +1550,7 @@ namespace Tempo
             {
                 if (isManualCheck)
                 {
-                    TxtSettingsUpdateBadge.Text = "أنت تستخدم أحدث إصدار";
+                    TxtSettingsUpdateBadge.Text = (LocalizationManager.CurrentLanguage == "ar") ? "أنت تستخدم أحدث إصدار" : "Up to date";
                     TxtSettingsUpdateBadge.Foreground = (Brush)FindResource("TealHealth");
                     MessageBox.Show("أنت تستخدم أحدث إصدار بالفعل من Tempo PC Optimizer (v2.2.0).\nلا توجد تحديثات جديدة متاحة حالياً.",
                                     "التحقق من التحديثات", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1551,7 +1572,7 @@ namespace Tempo
 
             TxtModalVersionDiff.Text = $"v{_availableUpdate.CurrentVersion}  ➔  v{_availableUpdate.LatestVersion}";
             TxtModalReleaseNotes.Text = string.IsNullOrWhiteSpace(_availableUpdate.ReleaseNotes)
-                ? "تحديث جديد يتضمن تحسينات في الأداء وسرعة الاستجابة واستقرار النظام."
+                ? ((LocalizationManager.CurrentLanguage == "ar") ? "تحديث جديد يتضمن تحسينات في الأداء وسرعة الاستجابة واستقرار النظام." : "New update featuring performance improvements, responsiveness and system stability.")
                 : _availableUpdate.ReleaseNotes;
 
             PanelUpdateProgress.Visibility = Visibility.Collapsed;
@@ -1585,7 +1606,7 @@ namespace Tempo
                 BtnToolbarUpdateV.Visibility = Visibility.Collapsed;
                 UpdateModalOverlay.Visibility = Visibility.Collapsed;
 
-                TxtSettingsUpdateBadge.Text = "تم تخطي التحديث";
+                TxtSettingsUpdateBadge.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تخطي التحديث" : "Version Skipped";
                 TxtSettingsUpdateBadge.Foreground = (Brush)FindResource("TextMuted");
             }
         }
@@ -1600,7 +1621,7 @@ namespace Tempo
             BorderUpdateError.Visibility = Visibility.Collapsed;
             BarUpdateProgress.Value = 0;
             TxtUpdateProgressPercent.Text = "0%";
-            TxtUpdateProgressStatus.Text = "جاري التنزيل والتحقق من البصمة...";
+            TxtUpdateProgressStatus.Text = (LocalizationManager.CurrentLanguage == "ar") ? "جاري التنزيل والتحقق من البصمة..." : "Downloading update and verifying SHA256 checksum...";
 
             var progress = new Progress<int>(p =>
             {
@@ -1615,7 +1636,7 @@ namespace Tempo
                     _availableUpdate.ExpectedSha256,
                     progress).ConfigureAwait(true);
 
-                TxtUpdateProgressStatus.Text = "اكتمل التنزيل بنجاح! جاري تثبيت التحديث...";
+                TxtUpdateProgressStatus.Text = (LocalizationManager.CurrentLanguage == "ar") ? "اكتمل التنزيل بنجاح! جاري تثبيت التحديث..." : "Download complete! Launching silent installer...";
 
                 // Launch installer with silent arguments
                 var status = UpdateService.LaunchInstaller(installerPath, silent: true);
@@ -1628,20 +1649,20 @@ namespace Tempo
                 else if (status == UpdateInstallStatus.UserCancelledUac)
                 {
                     BorderUpdateError.Visibility = Visibility.Visible;
-                    TxtUpdateErrorMsg.Text = "تم إلغاء عملية التحديث لعدم منح صلاحيات التثبيت (UAC). يمكنك المحاولة لاحقاً.";
+                    TxtUpdateErrorMsg.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم إلغاء عملية التحديث لعدم منح صلاحيات التثبيت (UAC). يمكنك المحاولة لاحقاً." : "Update canceled: Administrator (UAC) permissions were denied. You may retry later.";
                     PanelUpdateActions.IsEnabled = true;
                 }
                 else
                 {
                     BorderUpdateError.Visibility = Visibility.Visible;
-                    TxtUpdateErrorMsg.Text = "تعذر تشغيل مثبت التحديث. يمكنك تنزيله يدوياً من صفحة GitHub.";
+                    TxtUpdateErrorMsg.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تعذر تشغيل مثبت التحديث. يمكنك تنزيله يدوياً من صفحة GitHub." : "Unable to launch update installer. You can download it manually from GitHub.";
                     PanelUpdateActions.IsEnabled = true;
                 }
             }
             catch (Exception ex)
             {
                 BorderUpdateError.Visibility = Visibility.Visible;
-                TxtUpdateErrorMsg.Text = $"فشل التحديث: {ex.Message}";
+                TxtUpdateErrorMsg.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"فشل التحديث: {ex.Message}" : $"Update failed: {ex.Message}";
                 PanelUpdateActions.IsEnabled = true;
             }
         }
@@ -1649,7 +1670,7 @@ namespace Tempo
         private async void BtnCheckUpdatesManual_Click(object sender, RoutedEventArgs e)
         {
             BtnCheckUpdatesManual.IsEnabled = false;
-            TxtSettingsLastCheck.Text = "جاري فحص التحديثات من GitHub...";
+            TxtSettingsLastCheck.Text = (LocalizationManager.CurrentLanguage == "ar") ? "جاري فحص التحديثات من GitHub..." : "Checking GitHub for updates...";
 
             try
             {
@@ -1684,13 +1705,20 @@ namespace Tempo
             bool isAr = string.Equals(lang, "ar", StringComparison.OrdinalIgnoreCase);
             var dir = isAr ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
 
-            // Update main containers FlowDirection
-            if (MainDashboardView != null) MainDashboardView.FlowDirection = dir;
+            // Keep Window Chrome Header stable (Window controls stay anchored on the right)
+            if (DashboardHeader != null) DashboardHeader.FlowDirection = FlowDirection.LeftToRight;
+
+            // Content Area flows naturally in the selected language (LTR for English, RTL for Arabic)
+            if (MainContentGrid != null) MainContentGrid.FlowDirection = dir;
             if (BorderStartupSecurityApps != null) BorderStartupSecurityApps.FlowDirection = dir;
             if (BorderStartupRegularApps != null) BorderStartupRegularApps.FlowDirection = dir;
+            if (ToastBanner != null) ToastBanner.FlowDirection = dir;
             if (CompanionBarHorizontal != null) CompanionBarHorizontal.FlowDirection = dir;
             if (CompanionBarVertical != null) CompanionBarVertical.FlowDirection = dir;
             if (UpdateModalOverlay != null) UpdateModalOverlay.FlowDirection = dir;
+
+            // Update System Tray menu texts
+            UpdateTrayMenu();
 
             if (ProgCpuPercent != null) ProgCpuPercent.FlowDirection = dir;
             if (ProgRamPercent != null) ProgRamPercent.FlowDirection = dir;

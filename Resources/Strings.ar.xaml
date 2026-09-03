@@ -136,4 +136,13 @@
     <system:String x:Key="TxtEstimatedTime">الزمن المقدر</system:String>
     <system:String x:Key="TxtLessThanSecond">أقل من ثانية واحدة</system:String>
     <system:String x:Key="TxtReadyForBoost">جاهز للتحسين الفوري</system:String>
+    <system:String x:Key="CardRamUsagePlaceholder">‎14.7 GB‎ من أصل ‎31.7 GB‎</system:String>
+    <system:String x:Key="TxtReady">جاهز</system:String>
+    <system:String x:Key="TxtZeroItemsPlaceholder">0 عنصر (0 MB)</system:String>
+    <system:String x:Key="TxtLastCheckRecent">آخر فحص: منذ قليل</system:String>
+    <system:String x:Key="TxtAppVersionSkipped">تم تخطي هذا التحديث</system:String>
+    <system:String x:Key="TxtUpdateAvailableBadge">تحديث v{0} متوفر</system:String>
+    <system:String x:Key="BtnHeroOptimizeMini">تحسين</system:String>
+    <system:String x:Key="BtnStateEnabled">مفعّل</system:String>
+    <system:String x:Key="BtnStateDisabled">معطّل</system:String>
 </ResourceDictionary>

@@ -229,7 +229,9 @@ namespace Tempo.Services
             result.ReclaimedBytes = freedBytes;
             result.DeletedFilesCount = processedCount;
             result.SkippedFilesCount = skippedCount;
-            result.Message = $"تم تفريغ الذاكرة لـ {processedCount} عملية بنجاح. تم تحرير {result.ReclaimedMb:F1} MB من الرام.";
+            result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                ? $"تم تفريغ الذاكرة لـ {processedCount} عملية بنجاح. تم تحرير \u200E{result.ReclaimedMb:F1} MB\u200E من الرام."
+                : $"Trimmed working memory for {processedCount} processes. Reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E of RAM.";
             Log($"Turbo RAM Boost completed: Reclaimed {result.ReclaimedMb:F1} MB across {processedCount} processes.");
 
             return result;
@@ -321,7 +323,9 @@ namespace Tempo.Services
             result.ReclaimedBytes = totalFreedBytes;
             result.DeletedFilesCount = deletedFiles;
             result.SkippedFilesCount = skippedFiles;
-            result.Message = $"تم حذف {deletedFiles} ملفاً مؤقتاً، وتحرير {result.ReclaimedMb:F1} MB بنجاح.";
+            result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                ? $"تم حذف {deletedFiles} ملفاً مؤقتاً، وتحرير \u200E{result.ReclaimedMb:F1} MB\u200E بنجاح."
+                : $"Deleted {deletedFiles} temporary files, reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E.";
             Log($"Quick Clean completed: Deleted {deletedFiles} files, freed {result.ReclaimedMb:F1} MB.");
 
             return result;
@@ -354,7 +358,9 @@ namespace Tempo.Services
                 if (before.ItemCount == 0)
                 {
                     result.Success = true;
-                    result.Message = "سلة المحذوفات فارغة بالفعل (0 عنصر).";
+                    result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                        ? "سلة المحذوفات فارغة بالفعل (0 عنصر)."
+                        : "Recycle Bin is already empty (0 items).";
                     return result;
                 }
 
@@ -369,7 +375,9 @@ namespace Tempo.Services
                     result.Success = true;
                     result.ReclaimedBytes = before.TotalSizeBytes;
                     result.DeletedFilesCount = (int)before.ItemCount;
-                    result.Message = $"تم تفريغ سلة المحذوفات بنجاح. تم تحرير {before.TotalSizeMb:F1} MB وحذف {before.ItemCount} عنصر.";
+                    result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                        ? $"تم تفريغ سلة المحذوفات بنجاح. تم تحرير \u200E{before.TotalSizeMb:F1} MB\u200E وحذف {before.ItemCount} عنصر."
+                        : $"Recycle Bin emptied successfully. Reclaimed \u200E{before.TotalSizeMb:F1} MB\u200E ({before.ItemCount:N0} items deleted).";
                     Log($"Recycle bin emptied successfully: Reclaimed {before.TotalSizeMb:F1} MB across {before.ItemCount} items.");
                 }
                 else if (after.ItemCount < before.ItemCount)
@@ -382,23 +390,33 @@ namespace Tempo.Services
                     result.ReclaimedBytes = freedBytes;
                     result.DeletedFilesCount = (int)deletedCount;
                     result.SkippedFilesCount = (int)after.ItemCount;
-                    result.Warning = "فشل جزئي في تفريغ سلة المحذوفات";
-                    result.Message = $"تم حذف {deletedCount} عنصر فقط ({freedMb:F1} MB). تعذر حذف {after.ItemCount} عنصر لوجود ملفات مقفلة أو قيد الاستخدام.";
+                    result.Warning = (LocalizationManager.CurrentLanguage == "ar")
+                        ? "فشل جزئي في تفريغ سلة المحذوفات"
+                        : "Partial Recycle Bin cleanup";
+                    result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                        ? $"تم حذف {deletedCount} عنصر فقط (\u200E{freedMb:F1} MB\u200E). تعذر حذف {after.ItemCount} عنصر لوجود ملفات مقفلة أو قيد الاستخدام."
+                        : $"Deleted {deletedCount} items (\u200E{freedMb:F1} MB\u200E). Unable to delete {after.ItemCount} locked files.";
                     Log($"Recycle bin partial cleanup: Deleted {deletedCount}, remaining {after.ItemCount}.", "WARN");
                 }
                 else
                 {
                     result.Success = false;
                     result.Message = hr != 0
-                        ? $"تعذر تفريغ سلة المحذوفات (رمز الخطأ: 0x{hr:X8}). قد تكون الملفات قيد الاستخدام بواسطة تطبيق آخر."
-                        : "تعذر تفريغ سلة المحذوفات: بقيت الملفات دون حذف.";
+                        ? ((LocalizationManager.CurrentLanguage == "ar")
+                            ? $"تعذر تفريغ سلة المحذوفات (رمز الخطأ: 0x{hr:X8}). قد تكون الملفات قيد الاستخدام بواسطة تطبيق آخر."
+                            : $"Unable to empty Recycle Bin (Error code: 0x{hr:X8}). Files may be locked by another application.")
+                        : ((LocalizationManager.CurrentLanguage == "ar")
+                            ? "تعذر تفريغ سلة المحذوفات: بقيت الملفات دون حذف."
+                            : "Unable to empty Recycle Bin: files remained undeleted.");
                     Log($"Recycle bin empty failed. HRESULT=0x{hr:X8}", "ERROR");
                 }
             }
             catch (Exception ex)
             {
                 result.Success = false;
-                result.Message = $"خطأ أثناء محاولة تفريغ سلة المحذوفات: {ex.Message}";
+                result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                    ? $"خطأ أثناء محاولة تفريغ سلة المحذوفات: {ex.Message}"
+                    : $"Error emptying Recycle Bin: {ex.Message}";
                 Log($"Recycle bin exception: {ex.Message}", "ERROR");
             }
             return result;
@@ -420,9 +438,13 @@ namespace Tempo.Services
             if (runningBrowsers.Count > 0)
             {
                 result.Success = false;
-                string browserNames = string.Join(" و ", runningBrowsers);
-                result.Warning = $"المتصفح قيد التشغيل: ({browserNames}).";
-                result.Message = $"يرجى إغلاق {browserNames} يدوياً أولاً، ثم إعادة المحاولة لإتمام تنظيف الكاش بالكامل وبأمان.";
+                string browserNames = string.Join(LocalizationManager.CurrentLanguage == "ar" ? " و " : " & ", runningBrowsers);
+                result.Warning = (LocalizationManager.CurrentLanguage == "ar")
+                    ? $"المتصفح قيد التشغيل: ({browserNames})."
+                    : $"Browser is running: ({browserNames}).";
+                result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                    ? $"يرجى إغلاق {browserNames} يدوياً أولاً، ثم إعادة المحاولة لإتمام تنظيف الكاش بالكامل وبأمان."
+                    : $"Please close {browserNames} manually first, then retry to safely flush cache.";
                 return result;
             }
 
@@ -464,7 +486,9 @@ namespace Tempo.Services
             result.Success = true;
             result.ReclaimedBytes = freedBytes;
             result.DeletedFilesCount = deletedFiles;
-            result.Message = $"تم تنظيف كاش المتصفحات بنجاح: حذف {deletedFiles} ملف، وتحرير {result.ReclaimedMb:F1} MB.";
+            result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                ? $"تم تنظيف كاش المتصفحات بنجاح: حذف {deletedFiles} ملف، وتحرير \u200E{result.ReclaimedMb:F1} MB\u200E."
+                : $"Browser cache cleaned: deleted {deletedFiles} files, reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E.";
             return result;
         }
 
@@ -539,7 +563,9 @@ namespace Tempo.Services
             result.Success = true;
             result.ReclaimedBytes = freedBytes;
             result.DeletedFilesCount = deletedFiles;
-            result.Message = $"تم تنظيف كاش المطورين بنجاح (npm, NuGet http-cache, pip): حذف {deletedFiles} ملف، وتحرير {result.ReclaimedMb:F1} MB.";
+            result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                ? $"تم تنظيف كاش المطورين بنجاح (npm, NuGet http-cache, pip): حذف {deletedFiles} ملف، وتحرير \u200E{result.ReclaimedMb:F1} MB\u200E."
+                : $"Developer caches purged (npm, NuGet, pip): deleted {deletedFiles} files, reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E.";
             return result;
         }
 
@@ -575,7 +601,9 @@ namespace Tempo.Services
                             if (proc.ExitCode == 0)
                             {
                                 result.Success = true;
-                                result.Message = $"تم تنشيط وإعادة تهيئة خلايا التخزين الحرة على القرص {driveLetter}: بنجاح عبر TRIM.";
+                                result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                                    ? $"تم تنشيط وإعادة تهيئة خلايا التخزين الحرة على القرص {driveLetter}: بنجاح عبر TRIM."
+                                    : $"SSD TRIM optimization completed on drive {driveLetter}: successfully.";
                                 return result;
                             }
                         }
@@ -604,7 +632,9 @@ namespace Tempo.Services
                         if (psProc.ExitCode == 0)
                         {
                             result.Success = true;
-                            result.Message = $"تم تنشيط وإعادة تهيئة خلايا التخزين الحرة على القرص {driveLetter}: بنجاح عبر TRIM.";
+                            result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                                    ? $"تم تنشيط وإعادة تهيئة خلايا التخزين الحرة على القرص {driveLetter}: بنجاح عبر TRIM."
+                                    : $"SSD TRIM optimization completed on drive {driveLetter}: successfully.";
                             return result;
                         }
                         else
@@ -613,12 +643,16 @@ namespace Tempo.Services
                             if (combinedErr.Contains("40001") || combinedErr.Contains("Access denied", StringComparison.OrdinalIgnoreCase) || combinedErr.Contains("0x89000024"))
                             {
                                 result.Success = false;
-                                result.Message = $"يتطلب تشغيل TRIM على القرص {driveLetter}: تشغيل التطبيق بصلاحيات مسؤول النظام (Administrator).";
+                                result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                                    ? $"يتطلب تشغيل TRIM على القرص {driveLetter}: تشغيل التطبيق بصلاحيات مسؤول النظام (Administrator)."
+                                    : $"Running TRIM on drive {driveLetter}: requires Administrator privileges.";
                             }
                             else
                             {
                                 result.Success = false;
-                                result.Message = $"تعذر إكمال TRIM على القرص {driveLetter}: {combinedErr.Trim()}";
+                                result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                                    ? $"تعذر إكمال TRIM على القرص {driveLetter}: {combinedErr.Trim()}"
+                                    : $"Unable to complete TRIM on drive {driveLetter}: {combinedErr.Trim()}";
                             }
                         }
                     }
@@ -627,7 +661,9 @@ namespace Tempo.Services
             catch (Exception ex)
             {
                 result.Success = false;
-                result.Message = $"خطأ أثناء تشغيل TRIM: {ex.Message}";
+                result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                    ? $"خطأ أثناء تشغيل TRIM: {ex.Message}"
+                    : $"Error executing TRIM: {ex.Message}";
             }
 
             return result;
