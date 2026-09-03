@@ -1522,13 +1522,13 @@
         <!-- Name / Email -->
         <div style="margin-bottom: 18px;">
           <label for="fbSender" class="feedback-label" data-i18n="fb_sender_lbl">الاسم أو البريد الإلكتروني (اختياري)</label>
-          <input type="text" id="fbSender" class="feedback-input" placeholder="ahmed@example.com">
+          <input type="text" id="fbSender" class="feedback-input" data-i18n-ph="fb_sender_ph" placeholder="مثال: أحمد أو ahmed@example.com">
         </div>
 
         <!-- Message -->
         <div style="margin-bottom: 14px;">
           <label for="fbMessage" class="feedback-label" data-i18n="fb_msg_lbl">تفاصيل الرسالة</label>
-          <textarea id="fbMessage" class="feedback-textarea" rows="4" required placeholder="اكتب اقتراحك أو مشكلتك هنا..."></textarea>
+          <textarea id="fbMessage" class="feedback-textarea" rows="4" required data-i18n-ph="fb_msg_ph" placeholder="اكتب اقتراحك أو مشكلتك هنا بالتفصيل..."></textarea>
         </div>
 
         <!-- Custom Dark Checkbox (Zero white box!) -->
@@ -1664,7 +1664,9 @@
       fb_type_feature: "💡 اقتراح ميزة",
       fb_type_general: "💬 رأي عام",
       fb_sender_lbl: "الاسم أو البريد الإلكتروني (اختياري)",
+      fb_sender_ph: "مثال: أحمد أو ahmed@example.com",
       fb_msg_lbl: "تفاصيل الرسالة",
+      fb_msg_ph: "اكتب اقتراحك أو مشكلتك هنا بالتفصيل...",
       fb_include_info: "تضمين معلومات المتصفح والنظام لتسهيل المعاينة",
       fb_btn_send: "إرسال الملاحظة",
       fb_success_text: "شكراً لمشاركتك! تم تجهيز رسالتك للإرسال عبر البريد الإلكتروني.",
@@ -1742,7 +1744,9 @@
       fb_type_feature: "💡 Feature Request",
       fb_type_general: "💬 General Feedback",
       fb_sender_lbl: "Your Name / Email (Optional)",
+      fb_sender_ph: "e.g. Alex or alex@example.com",
       fb_msg_lbl: "Your Message",
+      fb_msg_ph: "Describe your suggestion or issue in detail here...",
       fb_include_info: "Include browser & OS diagnostics for easier debugging",
       fb_btn_send: "Send Feedback",
       fb_success_text: "Thank you! Opening your email client to send your feedback.",
@@ -1772,6 +1776,12 @@
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
       if (t[key]) el.textContent = t[key];
+    });
+
+    // Update all elements with data-i18n-ph attribute (placeholders)
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+      const key = el.getAttribute('data-i18n-ph');
+      if (t[key]) el.placeholder = t[key];
     });
 
     // Update Language Toggle Label
