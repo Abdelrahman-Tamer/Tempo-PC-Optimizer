@@ -15,6 +15,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Tempo.Services;
+using Tempo.Models;
 
 // Disambiguate System.Windows.Forms types
 using TrayNotifyIcon = System.Windows.Forms.NotifyIcon;
@@ -96,6 +97,8 @@ namespace Tempo
         public readonly CleanupService _cleanupService;
         private readonly DispatcherTimer _telemetryTimer;
         private readonly DispatcherTimer _autoHideTimer;
+        private readonly UpdateService _updateService = new UpdateService();
+        private UpdateInfo? _availableUpdate;
         private TrayNotifyIcon? _trayIcon;
 
         public AppViewMode _currentView { get; private set; } = AppViewMode.Dashboard;
@@ -210,6 +213,9 @@ namespace Tempo
             FetchTelemetryAsync();
             LoadStorageDrivesFast();
             LoadRecycleBinInfo();
+
+            // 6. Check for updates in background (Cached every 6-12 hours)
+            _ = CheckForUpdatesBackgroundAsync(force: false);
         }
 
         private void LoadAppIconAndLogos()
@@ -1402,6 +1408,187 @@ namespace Tempo
                 File.WriteAllText(GetSettingsFilePath(), JsonSerializer.Serialize(s));
             }
             catch { }
+        }
+
+        #endregion
+
+        #region Auto-Update & Version Tracking
+
+        private async Task CheckForUpdatesBackgroundAsync(bool force = false)
+        {
+            try
+            {
+                var update = await _updateService.CheckForUpdatesAsync(force).ConfigureAwait(false);
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    UpdateSettingsUiState(update, force);
+                });
+            }
+            catch
+            {
+                // Non-blocking update failure
+            }
+        }
+
+        private void UpdateSettingsUiState(UpdateInfo? update, bool isManualCheck)
+        {
+            TxtSettingsLastCheck.Text = $"آخر فحص: {DateTime.Now:HH:mm} ({DateTime.Now:yyyy/MM/dd})";
+
+            if (update != null && update.IsUpdateAvailable)
+            {
+                _availableUpdate = update;
+
+                // Show Discord-Style Update Badge in Header
+                BtnUpdateBadge.Visibility = Visibility.Visible;
+                TxtUpdateBadgeText.Text = $"تحديث v{update.LatestVersion}";
+
+                // Show Companion Toolbar Update Indicators
+                BtnToolbarUpdateH.Visibility = Visibility.Visible;
+                BtnToolbarUpdateV.Visibility = Visibility.Visible;
+
+                // Update Settings status badge
+                TxtSettingsUpdateBadge.Text = $"يوجد تحديث v{update.LatestVersion}";
+                TxtSettingsUpdateBadge.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10B981"));
+
+                if (isManualCheck)
+                {
+                    ShowUpdateModal();
+                }
+            }
+            else
+            {
+                if (isManualCheck)
+                {
+                    TxtSettingsUpdateBadge.Text = "أنت تستخدم أحدث إصدار";
+                    TxtSettingsUpdateBadge.Foreground = (Brush)FindResource("TealHealth");
+                    MessageBox.Show("أنت تستخدم أحدث إصدار بالفعل من Tempo PC Optimizer (v2.2.0).\nلا توجد تحديثات جديدة متاحة حالياً.",
+                                    "التحقق من التحديثات", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+        }
+
+        private void BtnUpdateBadge_Click(object sender, RoutedEventArgs e)
+        {
+            if (_availableUpdate != null)
+            {
+                ShowUpdateModal();
+            }
+        }
+
+        private void ShowUpdateModal()
+        {
+            if (_availableUpdate == null) return;
+
+            TxtModalVersionDiff.Text = $"v{_availableUpdate.CurrentVersion}  ➔  v{_availableUpdate.LatestVersion}";
+            TxtModalReleaseNotes.Text = string.IsNullOrWhiteSpace(_availableUpdate.ReleaseNotes)
+                ? "تحديث جديد يتضمن تحسينات في الأداء وسرعة الاستجابة واستقرار النظام."
+                : _availableUpdate.ReleaseNotes;
+
+            PanelUpdateProgress.Visibility = Visibility.Collapsed;
+            BorderUpdateError.Visibility = Visibility.Collapsed;
+            PanelUpdateActions.IsEnabled = true;
+
+            UpdateModalOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void BtnCloseUpdateModal_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateModalOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void BtnModalRemindLater_Click(object sender, RoutedEventArgs e)
+        {
+            UpdateModalOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void BtnModalSkipVersion_Click(object sender, RoutedEventArgs e)
+        {
+            if (_availableUpdate != null)
+            {
+                var settings = UpdateSettings.Load();
+                settings.SkippedVersion = _availableUpdate.LatestVersion;
+                settings.Save();
+
+                // Hide badges
+                BtnUpdateBadge.Visibility = Visibility.Collapsed;
+                BtnToolbarUpdateH.Visibility = Visibility.Collapsed;
+                BtnToolbarUpdateV.Visibility = Visibility.Collapsed;
+                UpdateModalOverlay.Visibility = Visibility.Collapsed;
+
+                TxtSettingsUpdateBadge.Text = "تم تخطي التحديث";
+                TxtSettingsUpdateBadge.Foreground = (Brush)FindResource("TextMuted");
+            }
+        }
+
+        private async void BtnModalUpdateNow_Click(object sender, RoutedEventArgs e)
+        {
+            if (_availableUpdate == null || string.IsNullOrEmpty(_availableUpdate.DownloadUrl))
+                return;
+
+            PanelUpdateActions.IsEnabled = false;
+            PanelUpdateProgress.Visibility = Visibility.Visible;
+            BorderUpdateError.Visibility = Visibility.Collapsed;
+            BarUpdateProgress.Value = 0;
+            TxtUpdateProgressPercent.Text = "0%";
+            TxtUpdateProgressStatus.Text = "جاري التنزيل والتحقق من البصمة...";
+
+            var progress = new Progress<int>(p =>
+            {
+                BarUpdateProgress.Value = p;
+                TxtUpdateProgressPercent.Text = $"{p}%";
+            });
+
+            try
+            {
+                string installerPath = await _updateService.DownloadInstallerAsync(
+                    _availableUpdate.DownloadUrl,
+                    _availableUpdate.ExpectedSha256,
+                    progress).ConfigureAwait(true);
+
+                TxtUpdateProgressStatus.Text = "اكتمل التنزيل بنجاح! جاري تثبيت التحديث...";
+
+                // Launch installer with silent arguments
+                var status = UpdateService.LaunchInstaller(installerPath, silent: true);
+
+                if (status == UpdateInstallStatus.Success)
+                {
+                    // Shut down Tempo so installer can update the binaries cleanly
+                    Application.Current.Shutdown();
+                }
+                else if (status == UpdateInstallStatus.UserCancelledUac)
+                {
+                    BorderUpdateError.Visibility = Visibility.Visible;
+                    TxtUpdateErrorMsg.Text = "تم إلغاء عملية التحديث لعدم منح صلاحيات التثبيت (UAC). يمكنك المحاولة لاحقاً.";
+                    PanelUpdateActions.IsEnabled = true;
+                }
+                else
+                {
+                    BorderUpdateError.Visibility = Visibility.Visible;
+                    TxtUpdateErrorMsg.Text = "تعذر تشغيل مثبت التحديث. يمكنك تنزيله يدوياً من صفحة GitHub.";
+                    PanelUpdateActions.IsEnabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                BorderUpdateError.Visibility = Visibility.Visible;
+                TxtUpdateErrorMsg.Text = $"فشل التحديث: {ex.Message}";
+                PanelUpdateActions.IsEnabled = true;
+            }
+        }
+
+        private async void BtnCheckUpdatesManual_Click(object sender, RoutedEventArgs e)
+        {
+            BtnCheckUpdatesManual.IsEnabled = false;
+            TxtSettingsLastCheck.Text = "جاري فحص التحديثات من GitHub...";
+
+            try
+            {
+                await CheckForUpdatesBackgroundAsync(force: true);
+            }
+            finally
+            {
+                BtnCheckUpdatesManual.IsEnabled = true;
+            }
         }
 
         #endregion
