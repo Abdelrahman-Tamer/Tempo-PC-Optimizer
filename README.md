@@ -82,7 +82,7 @@ Get-FileHash .\Tempo-Setup-v2.2.0.exe -Algorithm SHA256
 
 **Expected SHA256 Hash:**
 ```text
-4eeab813acff363e6515b35f66155e998374a7bf02033a32dc73e77e6231b2e3
+814c12919681ea3727c018a012cb0a8f2fc4645831c4832a84b54b1ca3d64783
 ```
 
 ---

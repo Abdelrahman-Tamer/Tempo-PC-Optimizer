@@ -925,19 +925,24 @@ namespace Tempo
             if (btn != null) btn.IsEnabled = false;
             ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "جاري تنظيف وتسريع الجهاز..." : "Cleaning PC & boosting RAM...", false);
 
-            Task.Run(() =>
+            Task.Run(async () =>
             {
                 var ramRes = _cleanupService.OptimizeRamWorkingSets();
                 var tempRes = _cleanupService.QuickCleanTemp();
 
-                Dispatcher.InvokeAsync(() =>
+                // Allow 350ms for Windows Memory Manager and filesystem to stabilize
+                await Task.Delay(350);
+
+                await Dispatcher.InvokeAsync(() =>
                 {
                     if (btn != null) btn.IsEnabled = true;
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم التسريع: تحرير \u200E{ramRes.ReclaimedMb:F1} MB\u200E رام و \u200E{tempRes.ReclaimedMb:F1} MB\u200E مؤقت" : $"Boosted: \u200E{ramRes.ReclaimedMb:F1} MB\u200E RAM & \u200E{tempRes.ReclaimedMb:F1} MB\u200E temp freed", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") 
+                        ? $"تم التسريع: تحرير \u200E{ramRes.ReclaimedMb:F1} MB\u200E رام و \u200E{tempRes.ReclaimedMb:F1} MB\u200E مؤقت" 
+                        : $"Boosted: \u200E{ramRes.ReclaimedMb:F1} MB\u200E RAM & \u200E{tempRes.ReclaimedMb:F1} MB\u200E temp freed", false);
+
                     FetchTelemetryAsync();
-                    // Re-query actual storage and recycle bin state instead of false hardcoded 0 MB
-            LoadStorageDrivesFast();
-            LoadRecycleBinInfo();
+                    LoadStorageDrivesFast();
+                    LoadRecycleBinInfo();
                     TxtRecTempSize.Text = "0 MB";
                 });
             });

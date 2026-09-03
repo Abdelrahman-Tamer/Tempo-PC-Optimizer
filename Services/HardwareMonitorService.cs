@@ -200,13 +200,61 @@ namespace Tempo.Services
         }
 
 
+        private static readonly object _cpuLock = new();
+        private static DateTime _lastCpuSampleTime = DateTime.MinValue;
+        private static float _lastCpuPercent = 0f;
+        private static float _detectedCpuBaseClockMhz = 0f;
+
+        private static float GetBaseCpuClockMhz()
+        {
+            if (_detectedCpuBaseClockMhz > 0f) return _detectedCpuBaseClockMhz;
+
+            try
+            {
+                using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
+                if (key != null)
+                {
+                    var mhzObj = key.GetValue("~MHz");
+                    if (mhzObj is int mhzInt && mhzInt > 500)
+                    {
+                        _detectedCpuBaseClockMhz = (float)mhzInt;
+                        return _detectedCpuBaseClockMhz;
+                    }
+                }
+            }
+            catch { }
+
+            _detectedCpuBaseClockMhz = 2600f;
+            return _detectedCpuBaseClockMhz;
+        }
+
         public (float cpuPercent, float? cpuTemp, float cpuClockGhz) GetCpuMetrics()
         {
-            float cpuPercent = 0f;
-            try { cpuPercent = _cpuCounter?.NextValue() ?? 0f; } catch { }
+            float cpuPercent = _lastCpuPercent;
+            DateTime now = DateTime.UtcNow;
+
+            lock (_cpuLock)
+            {
+                // Only sample PerformanceCounter if at least 400ms elapsed since last sample
+                // to prevent skewed/elevated readings over tiny intervals
+                if ((now - _lastCpuSampleTime).TotalMilliseconds >= 400 || _lastCpuSampleTime == DateTime.MinValue)
+                {
+                    try
+                    {
+                        if (_cpuCounter != null)
+                        {
+                            cpuPercent = _cpuCounter.NextValue();
+                            cpuPercent = Math.Clamp(cpuPercent, 0f, 100f);
+                            _lastCpuPercent = cpuPercent;
+                            _lastCpuSampleTime = now;
+                        }
+                    }
+                    catch { }
+                }
+            }
 
             float? cpuTemp = null;
-            float cpuClockMhz = 2600f;
+            float cpuClockMhz = GetBaseCpuClockMhz();
 
             if (!_isComputerOpen)
             {
@@ -230,9 +278,16 @@ namespace Tempo.Services
                             {
                                 cpuTemp = sensor.Value;
                             }
-                            else if (sensor.SensorType == SensorType.Clock && sensor.Name.Contains("Core #1", StringComparison.OrdinalIgnoreCase))
+                            else if (sensor.SensorType == SensorType.Clock && (sensor.Name.Contains("Core #1", StringComparison.OrdinalIgnoreCase) || sensor.Name.Contains("Core Max", StringComparison.OrdinalIgnoreCase)))
                             {
-                                if (sensor.Value.HasValue) cpuClockMhz = sensor.Value.Value;
+                                if (sensor.Value.HasValue && sensor.Value.Value > 100f) cpuClockMhz = sensor.Value.Value;
+                            }
+                            else if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("CPU Total", StringComparison.OrdinalIgnoreCase))
+                            {
+                                if (cpuPercent <= 0.001f && sensor.Value.HasValue)
+                                {
+                                    cpuPercent = Math.Clamp(sensor.Value.Value, 0f, 100f);
+                                }
                             }
                         }
                     }
@@ -251,7 +306,7 @@ namespace Tempo.Services
                 double totalGb = Math.Round((double)memStatus.ullTotalPhys / (1024 * 1024 * 1024), 2);
                 double freeGb = Math.Round((double)memStatus.ullAvailPhys / (1024 * 1024 * 1024), 2);
                 double usedGb = Math.Round(totalGb - freeGb, 2);
-                double percent = memStatus.dwMemoryLoad;
+                double percent = totalGb > 0 ? Math.Round(((totalGb - freeGb) / totalGb) * 100.0, 1) : 0;
                 return (totalGb, usedGb, freeGb, percent);
             }
             return (0, 0, 0, 0);
@@ -398,48 +453,60 @@ namespace Tempo.Services
             }
         }
 
+        private static readonly Dictionary<string, string> _cachedDiskMediaMap = new(StringComparer.OrdinalIgnoreCase);
+        private static bool _diskMediaMapInitialized = false;
+        private static readonly object _diskMediaLock = new();
+
         public List<StorageDriveInfo> GetStorageMetricsWithDriveType()
         {
             var list = new List<StorageDriveInfo>();
 
-            // Build DeviceId → MediaType map for all physical disks
-            // MediaType: 3=HDD, 4=SSD, 5=SCM/Optane, 0=Unknown
-            // Then map partitions → drive letters via MSFT_Partition
-            var diskMediaMap = new Dictionary<string, string>(); // DriveLetter → MediaType string
-            var diskTypes = new Dictionary<string, string>(); // DeviceId → "SSD"/"HDD"/"Unknown"
-            string singleDefaultType = "";
-
-            try
+            lock (_diskMediaLock)
             {
-                var diskSearcher = new ManagementObjectSearcher(
-                    @"root\Microsoft\Windows\Storage",
-                    "SELECT DeviceId, MediaType FROM MSFT_PhysicalDisk");
-
-                foreach (ManagementObject disk in diskSearcher.Get())
+                if (!_diskMediaMapInitialized)
                 {
-                    string devId = disk["DeviceId"]?.ToString() ?? "";
-                    ushort mType = disk["MediaType"] != null ? Convert.ToUInt16(disk["MediaType"]) : (ushort)0;
-                    string typeStr = mType == 4 || mType == 5 ? "SSD" : mType == 3 ? "HDD" : "SSD";
-                    diskTypes[devId] = typeStr;
-                    singleDefaultType = typeStr;
-                }
-
-                // Map partitions to their drive letters via DiskNumber
-                var partSearcher = new ManagementObjectSearcher(
-                    @"root\Microsoft\Windows\Storage",
-                    "SELECT DiskNumber, DriveLetter FROM MSFT_Partition WHERE DriveLetter IS NOT NULL");
-
-                foreach (ManagementObject part in partSearcher.Get())
-                {
-                    string diskNum = part["DiskNumber"]?.ToString() ?? "";
-                    string driveLetter = part["DriveLetter"]?.ToString() ?? "";
-                    if (!string.IsNullOrEmpty(driveLetter) && diskTypes.TryGetValue(diskNum, out string? mediaType))
+                    try
                     {
-                        diskMediaMap[driveLetter.TrimEnd(':').ToUpperInvariant()] = mediaType!;
+                        var diskTypes = new Dictionary<string, string>();
+                        using var diskSearcher = new ManagementObjectSearcher(
+                            @"root\Microsoft\Windows\Storage",
+                            "SELECT DeviceId, MediaType FROM MSFT_PhysicalDisk");
+
+                        foreach (ManagementObject disk in diskSearcher.Get())
+                        {
+                            using (disk)
+                            {
+                                string devId = disk["DeviceId"]?.ToString() ?? "";
+                                ushort mType = disk["MediaType"] != null ? Convert.ToUInt16(disk["MediaType"]) : (ushort)0;
+                                string typeStr = (mType == 4 || mType == 5) ? "SSD" : (mType == 3 ? "HDD" : "SSD");
+                                diskTypes[devId] = typeStr;
+                            }
+                        }
+
+                        using var partSearcher = new ManagementObjectSearcher(
+                            @"root\Microsoft\Windows\Storage",
+                            "SELECT DiskNumber, DriveLetter FROM MSFT_Partition WHERE DriveLetter IS NOT NULL");
+
+                        foreach (ManagementObject part in partSearcher.Get())
+                        {
+                            using (part)
+                            {
+                                string diskNum = part["DiskNumber"]?.ToString() ?? "";
+                                string driveLetter = part["DriveLetter"]?.ToString() ?? "";
+                                if (!string.IsNullOrEmpty(driveLetter) && diskTypes.TryGetValue(diskNum, out string? mediaType))
+                                {
+                                    _cachedDiskMediaMap[driveLetter.TrimEnd(':').ToUpperInvariant()] = mediaType!;
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                    finally
+                    {
+                        _diskMediaMapInitialized = true;
                     }
                 }
             }
-            catch { }
 
             foreach (var drive in DriveInfo.GetDrives())
             {
@@ -455,13 +522,9 @@ namespace Tempo.Services
 
                     string driveLetter = drive.Name.TrimEnd('\\').TrimEnd(':').ToUpperInvariant();
                     string mediaType = "SSD";
-                    if (diskMediaMap.TryGetValue(driveLetter, out string? mt) && !string.IsNullOrEmpty(mt))
+                    if (_cachedDiskMediaMap.TryGetValue(driveLetter, out string? mt) && !string.IsNullOrEmpty(mt))
                     {
                         mediaType = mt;
-                    }
-                    else if (diskTypes.Count == 1 && !string.IsNullOrEmpty(singleDefaultType))
-                    {
-                        mediaType = singleDefaultType;
                     }
 
                     list.Add(new StorageDriveInfo
@@ -483,24 +546,40 @@ namespace Tempo.Services
 
         public (string processName, double ramMb)[] GetTop5RamProcesses()
         {
-            return Process.GetProcesses()
-                .Select(p =>
+            Process[] processes = Array.Empty<Process>();
+            try
+            {
+                processes = Process.GetProcesses();
+                return processes
+                    .Select(p =>
+                    {
+                        try
+                        {
+                            return new { Name = p.ProcessName, WorkingSetMb = p.WorkingSet64 / (1024.0 * 1024.0) };
+                        }
+                        catch
+                        {
+                            return new { Name = "", WorkingSetMb = 0.0 };
+                        }
+                    })
+                    .Where(p => !string.IsNullOrEmpty(p.Name))
+                    .GroupBy(p => p.Name)
+                    .Select(g => (processName: g.Key, ramMb: Math.Round(g.Sum(x => x.WorkingSetMb), 1)))
+                    .OrderByDescending(x => x.ramMb)
+                    .Take(5)
+                    .ToArray();
+            }
+            catch
+            {
+                return Array.Empty<(string, double)>();
+            }
+            finally
+            {
+                foreach (var p in processes)
                 {
-                    try
-                    {
-                        return new { Name = p.ProcessName, WorkingSetMb = p.WorkingSet64 / (1024.0 * 1024.0) };
-                    }
-                    catch
-                    {
-                        return new { Name = "", WorkingSetMb = 0.0 };
-                    }
-                })
-                .Where(p => !string.IsNullOrEmpty(p.Name))
-                .GroupBy(p => p.Name)
-                .Select(g => (processName: g.Key, ramMb: Math.Round(g.Sum(x => x.WorkingSetMb), 1)))
-                .OrderByDescending(x => x.ramMb)
-                .Take(5)
-                .ToArray();
+                    try { p.Dispose(); } catch { }
+                }
+            }
         }
 
         [DllImport("user32.dll", SetLastError = true)]

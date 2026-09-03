@@ -31,6 +31,12 @@ namespace Tempo.Services
         [DllImport("psapi.dll", SetLastError = true)]
         public static extern bool EmptyWorkingSet(IntPtr hProcess);
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+
         public static bool IsSafePath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return false;
@@ -252,24 +258,55 @@ namespace Tempo.Services
         private const uint SHERB_NOPROGRESSUI   = 0x00000002;
         private const uint SHERB_NOSOUND        = 0x00000004;
 
-        // Exactly 15 Protected System & Critical Processes
+        // Comprehensive Protected System & Shell Processes Whitelist (Never evict working set of these)
         public static readonly HashSet<string> ExcludedProcessNames = new(StringComparer.OrdinalIgnoreCase)
         {
-            "System",               // 1. Core NT Kernel
-            "Idle",                 // 2. System Idle Process
-            "Registry",             // 3. Windows Kernel Registry
-            "Secure System",        // 4. Virtualization-based Security (VBS)
-            "smss",                 // 5. Session Manager Subsystem
-            "csrss",                // 6. Client/Server Runtime
-            "wininit",              // 7. Windows Initialization
-            "winlogon",             // 8. Windows Logon
-            "services",             // 9. Service Control Manager
-            "lsass",                // 10. Local Security Authority
-            "dwm",                  // 11. Desktop Window Manager (Prevents screen flicker)
-            "fontdrvhost",          // 12. User-mode Font Driver Host
-            "Memory Compression",   // 13. Windows 11 Compressed Store
-            "audiodg",              // 14. Windows Audio Device Graph (Prevents audio crackle)
-            "Tempo"                 // 15. The Tempo App itself
+            // 1. Core NT Kernel & Subsystems
+            "System",
+            "Idle",
+            "Registry",
+            "Secure System",
+            "smss",
+            "csrss",
+            "wininit",
+            "winlogon",
+            "services",
+            "lsass",
+            "Memory Compression",
+
+            // 2. Desktop Window Manager, Graphics & Audio
+            "dwm",
+            "fontdrvhost",
+            "audiodg",
+
+            // 3. Windows Shell & Core Experience
+            "explorer",
+            "svchost",
+            "sihost",
+            "taskhostw",
+            "RuntimeBroker",
+            "ApplicationFrameHost",
+            "ShellExperienceHost",
+            "StartMenuExperienceHost",
+            "SearchHost",
+            "SearchIndexer",
+            "SearchApp",
+            "StartMenu",
+            "SystemSettings",
+            "TextInputHost",
+            "ctfmon",
+            "conhost",
+            "spoolsv",
+            "wlanext",
+
+            // 4. Windows Security & Antivirus
+            "MsMpEng",
+            "SecurityHealthService",
+            "SecurityHealthSystray",
+            "NisSrv",
+
+            // 5. Host Application
+            "Tempo"
         };
 
         private readonly string _logFilePath;
@@ -309,40 +346,70 @@ namespace Tempo.Services
             int processedCount = 0;
             int skippedCount = 0;
 
-            Process[] processes = Process.GetProcesses();
-            foreach (Process process in processes)
+            // Identify active foreground process to avoid lag/stutter in the user's active window
+            uint foregroundPid = 0;
+            try
             {
-                try
+                IntPtr fgWnd = GetForegroundWindow();
+                if (fgWnd != IntPtr.Zero)
                 {
-                    string pName = process.ProcessName;
-                    int pid = process.Id;
+                    GetWindowThreadProcessId(fgWnd, out foregroundPid);
+                }
+            }
+            catch { }
 
-                    if (pid <= 4 || ExcludedProcessNames.Contains(pName))
+            Process[] processes = Array.Empty<Process>();
+            try
+            {
+                processes = Process.GetProcesses();
+                foreach (Process process in processes)
+                {
+                    try
                     {
-                        skippedCount++;
-                        continue;
-                    }
+                        string pName = process.ProcessName;
+                        int pid = process.Id;
 
-                    if (EmptyWorkingSet(process.Handle))
-                    {
-                        processedCount++;
+                        // Skip system kernel, protected processes, the active foreground window, and Tempo itself
+                        if (pid <= 4 || pid == foregroundPid || ExcludedProcessNames.Contains(pName))
+                        {
+                            skippedCount++;
+                            continue;
+                        }
+
+                        // Smart threshold: Only trim non-system processes using significant memory (> 30 MB)
+                        // Stripping tiny processes causes page fault overhead for negligible RAM gain
+                        long workingSet = 0;
+                        try { workingSet = process.WorkingSet64; } catch { }
+                        if (workingSet < 30L * 1024 * 1024)
+                        {
+                            skippedCount++;
+                            continue;
+                        }
+
+                        if (EmptyWorkingSet(process.Handle))
+                        {
+                            processedCount++;
+                        }
+                        else
+                        {
+                            skippedCount++;
+                        }
                     }
-                    else
+                    catch
                     {
                         skippedCount++;
                     }
                 }
-                catch
+            }
+            finally
+            {
+                foreach (var p in processes)
                 {
-                    skippedCount++;
-                }
-                finally
-                {
-                    process.Dispose();
+                    try { p.Dispose(); } catch { }
                 }
             }
 
-            System.Threading.Thread.Sleep(150);
+            System.Threading.Thread.Sleep(100);
 
             var memAfter = new MEMORYSTATUSEX();
             GlobalMemoryStatusEx(memAfter);
