@@ -35,10 +35,14 @@ namespace Tempo.Services
         public string Location { get; set; } = "";
         public bool IsEnabled { get; set; } = true;
         public ImageSource? IconSource { get; set; }
-        public bool IsUserScope => Location.Contains("المستخدم", StringComparison.OrdinalIgnoreCase);
-        public string ActionText => IsUserScope ? "تعطيل" : "إدارة";
+        public bool IsUserScope => Location.Contains("المستخدم", StringComparison.OrdinalIgnoreCase) || Location.Contains("HKCU", StringComparison.OrdinalIgnoreCase);
+        public string ActionText => IsUserScope 
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "تعطيل" : "Disable") 
+            : (LocalizationManager.CurrentLanguage == "ar" ? "إدارة" : "Manage");
 
-        public string LocationFriendly => IsUserScope ? "المستخدم الحالي (HKCU)" : "النظام (HKLM 64-bit)";
+        public string LocationFriendly => IsUserScope 
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "المستخدم الحالي (HKCU)" : "Current User (HKCU)") 
+            : (LocalizationManager.CurrentLanguage == "ar" ? "النظام (HKLM 64-bit)" : "System (HKLM 64-bit)");
 
         public string CleanExecutablePath
         {

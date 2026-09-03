@@ -46,10 +46,12 @@ namespace Tempo
         public double FreeGb { get; set; }
         public double UsedPercent { get; set; }
         public string MediaType { get; set; } = "SSD";
-        public string SpaceSummary => $"{FreeGb:F1} GB متاح من أصل {TotalGb:F1} GB ({UsedPercent:F0}%)";
+        public string SpaceSummary => LocalizationManager.FormatStorageSummary(FreeGb, TotalGb, UsedPercent);
 
         public Visibility TrimVisibility => Visibility.Visible;
-        public string ActionButtonText => MediaType.Equals("HDD", StringComparison.OrdinalIgnoreCase) ? "إلغاء التجزئة" : "تنشيط TRIM";
+        public string ActionButtonText => MediaType.Equals("HDD", StringComparison.OrdinalIgnoreCase)
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "إلغاء التجزئة" : "Defrag")
+            : (LocalizationManager.CurrentLanguage == "ar" ? "تنشيط TRIM" : "Run TRIM");
 
         public Brush BadgeBg => MediaType switch
         {
@@ -82,13 +84,14 @@ namespace Tempo
     {
         public string ProcessName { get; set; } = "";
         public double RamMb { get; set; }
-        public string RamFormatted => $"{RamMb:F1} MB";
+        public string RamFormatted => LocalizationManager.FormatMb(RamMb);
     }
 
     public class AppSettings
     {
         public bool IsToolbarEnabled { get; set; } = true;
         public DockPosition ToolbarDock { get; set; } = DockPosition.TopToolbar;
+        public string SelectedLanguage { get; set; } = "en"; // Default is English!
     }
 
     public partial class MainWindow : Window
@@ -104,6 +107,7 @@ namespace Tempo
         public AppViewMode _currentView { get; private set; } = AppViewMode.Dashboard;
         public bool _isToolbarEnabled { get; set; } = true;
         public DockPosition _toolbarDock { get; set; } = DockPosition.TopToolbar;
+        public string _selectedLanguage { get; set; } = "en";
         private bool _isPeeked = false;
         private bool _isFetching = false;
         private bool _isPinned = false;
@@ -125,6 +129,8 @@ namespace Tempo
             _cleanupService = new CleanupService();
 
             LoadSettings();
+            LocalizationManager.Initialize(_selectedLanguage);
+            LocalizationManager.LanguageChanged += lang => ApplyLanguageUi(lang);
             InitSystemTray();
 
             // 1. Hardware Telemetry Polling (1.5s interval, fully paused when minimized)
@@ -216,6 +222,9 @@ namespace Tempo
 
             // 6. Check for updates in background (Cached every 6-12 hours)
             _ = CheckForUpdatesBackgroundAsync(force: false);
+
+            // 7. Apply Language & Layout Alignment (English Default or Saved Language)
+            ApplyLanguageUi(_selectedLanguage);
         }
 
         private void LoadAppIconAndLogos()
@@ -603,11 +612,29 @@ namespace Tempo
             var cpuBrush = GetLoadBrush(cpuPercent);
             var ramBrush = GetLoadBrush(ramPercent);
 
-            // Overview Tab: CPU
+            // Overview Tab: CPU with Threshold Warnings (>85% Alert, 65-85% Warning)
             if (TxtCpuPercent != null)
             {
-                TxtCpuPercent.Text = $"{cpuPercent:F0}%";
+                TxtCpuPercent.Text = LocalizationManager.FormatPercent(cpuPercent);
                 TxtCpuPercent.Foreground = cpuBrush;
+            }
+            if (CardCpuBorder != null)
+            {
+                if (cpuPercent >= 85)
+                {
+                    CardCpuBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF5252"));
+                    CardCpuBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#291517"));
+                }
+                else if (cpuPercent >= 65)
+                {
+                    CardCpuBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFA726"));
+                    CardCpuBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#261D15"));
+                }
+                else
+                {
+                    CardCpuBorder.BorderBrush = (Brush)FindResource("BorderMuted");
+                    CardCpuBorder.Background = (Brush)FindResource("SurfaceContainer");
+                }
             }
             if (ProgCpuPercent != null)
             {
@@ -619,11 +646,29 @@ namespace Tempo
                 TxtCpuClockTemp.Text = cpuTemp.HasValue ? $"{cpuTemp.Value:F0}°C | {cpuClock:F2} GHz" : $"{cpuClock:F2} GHz";
             }
 
-            // Overview Tab: RAM
+            // Overview Tab: RAM with Threshold Warnings (>85% Alert, 65-85% Warning)
             if (TxtRamPercentValue != null)
             {
-                TxtRamPercentValue.Text = $"{ramPercent:F0}%";
+                TxtRamPercentValue.Text = LocalizationManager.FormatPercent(ramPercent);
                 TxtRamPercentValue.Foreground = ramBrush;
+            }
+            if (CardRamBorder != null)
+            {
+                if (ramPercent >= 85)
+                {
+                    CardRamBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF5252"));
+                    CardRamBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#291517"));
+                }
+                else if (ramPercent >= 65)
+                {
+                    CardRamBorder.BorderBrush = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFA726"));
+                    CardRamBorder.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#261D15"));
+                }
+                else
+                {
+                    CardRamBorder.BorderBrush = (Brush)FindResource("BorderMuted");
+                    CardRamBorder.Background = (Brush)FindResource("SurfaceContainer");
+                }
             }
             if (ProgRamPercent != null)
             {
@@ -632,7 +677,7 @@ namespace Tempo
             }
             if (TxtRamUsageFormatted != null)
             {
-                TxtRamUsageFormatted.Text = $"{usedRam:F1} GB من أصل {totalRam:F1} GB";
+                TxtRamUsageFormatted.Text = LocalizationManager.FormatRamSummary(usedRam, totalRam);
             }
 
             // Diagnostic Tab
@@ -664,17 +709,23 @@ namespace Tempo
 
             if (healthScore >= 80)
             {
-                TxtHealthStatus.Text = "حالة النظام: ممتازة";
+                TxtHealthStatus.Text = (LocalizationManager.CurrentLanguage == "ar")
+                    ? "حالة النظام: ممتازة"
+                    : "System Status: Optimal";
                 DotHealthGlow.Fill = (SolidColorBrush)FindResource("TealHealth");
             }
             else if (healthScore >= 50)
             {
-                TxtHealthStatus.Text = "حالة النظام: مقبولة - يوصى بالتحسين";
+                TxtHealthStatus.Text = (LocalizationManager.CurrentLanguage == "ar")
+                    ? "حالة النظام: مقبولة - يوصى بالتحسين"
+                    : "System Status: Good - Boost Recommended";
                 DotHealthGlow.Fill = (SolidColorBrush)FindResource("AmberWarn");
             }
             else
             {
-                TxtHealthStatus.Text = "حالة النظام: استهلاك مرتفع";
+                TxtHealthStatus.Text = (LocalizationManager.CurrentLanguage == "ar")
+                    ? "حالة النظام: استهلاك مرتفع"
+                    : "System Status: Heavy Load";
                 DotHealthGlow.Fill = (SolidColorBrush)FindResource("RedAlert");
             }
         }
@@ -703,9 +754,15 @@ namespace Tempo
                 var apps = _hardwareMonitor.GetStartupApps();
                 Dispatcher.InvokeAsync(() =>
                 {
-                    ListStartupApps.ItemsSource = apps;
+                    var securityApps = apps.Where(a => a.IsSecurityApp).ToList();
+                    var regularApps = apps.Where(a => !a.IsSecurityApp).ToList();
+
+                    if (ListStartupSecurityApps != null) ListStartupSecurityApps.ItemsSource = securityApps;
+                    if (ListStartupRegularApps != null) ListStartupRegularApps.ItemsSource = regularApps;
+
                     TxtRecStartupCount.Text = $"{apps.Count} Apps";
-                    if (TxtStartupAppsHeaderCount != null) TxtStartupAppsHeaderCount.Text = $"{apps.Count} تطبيقات";
+                    if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count}";
+                    if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count}";
                 });
             });
         }
@@ -932,12 +989,16 @@ namespace Tempo
                 return;
             }
 
+            string title = (LocalizationManager.CurrentLanguage == "ar")
+                ? "تأكيد تفريغ سلة المحذوفات - Tempo"
+                : "Confirm Empty Recycle Bin - Tempo";
+            string msg = (LocalizationManager.CurrentLanguage == "ar")
+                ? $"هل أنت متأكد من رغبتك في تفريغ سلة المحذوفات نهائياً؟\n\n• عدد العناصر: {before.ItemCount:N0} عنصر\n• الحجم المشغول: {LocalizationManager.FormatMb(before.TotalSizeMb)}\n\nتحذير أمان: لا يمكن التراجع عن هذه العملية."
+                : $"Are you sure you want to permanently empty the Recycle Bin?\n\n• Items: {before.ItemCount:N0}\n• Total Size: {LocalizationManager.FormatMb(before.TotalSizeMb)}\n\nWarning: This action cannot be undone.";
+
             var confirm = MessageBox.Show(
-                $"هل أنت متأكد من رغبتك في تفريغ سلة المحذوفات نهائياً؟\n\n" +
-                $"• عدد العناصر: {before.ItemCount:N0} عنصر\n" +
-                $"• الحجم المشغول: {before.TotalSizeMb:F1} MB ({before.TotalSizeBytes:N0} بايت)\n\n" +
-                "تحذير أمان: لا يمكن التراجع عن هذه العملية.",
-                "تأكيد تفريغ سلة المحذوفات - Tempo",
+                msg,
+                title,
                 MessageBoxButton.OKCancel,
                 MessageBoxImage.Warning,
                 MessageBoxResult.Cancel);
@@ -958,9 +1019,16 @@ namespace Tempo
 
         private void BtnDevClean_Click(object sender, RoutedEventArgs e)
         {
+            string title = (LocalizationManager.CurrentLanguage == "ar")
+                ? "تأكيد تنظيف كاش المطورين - Tempo"
+                : "Confirm Developer Cache Purge - Tempo";
+            string msg = (LocalizationManager.CurrentLanguage == "ar")
+                ? "سيتم تفريغ كاش npm و NuGet و pip بالكامل.\n\n🔒 ملاحظة أمان: لن يتم لمس مشاريعك أو الحزم المثبتة عالمياً نهائياً.\n\nهل تريد المتابعة؟"
+                : "This will completely purge all npm, NuGet, and pip package caches.\n\n🔒 Safety note: Your projects and global packages will NOT be touched.\n\nDo you want to proceed?";
+
             var confirm = MessageBox.Show(
-                "سيتم تفريغ كاش npm و NuGet و pip بالكامل.\n\n🔒 ملاحظة أمان: لن يتم لمس مشاريعك أو الحزم المثبتة عالمياً نهائياً.\n\nهل تريد المتابعة؟",
-                "تأكيد تنظيف كاش المطورين - Tempo",
+                msg,
+                title,
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Question);
 
@@ -1386,6 +1454,7 @@ namespace Tempo
                     {
                         _isToolbarEnabled = s.IsToolbarEnabled;
                         _toolbarDock = s.ToolbarDock;
+                        _selectedLanguage = string.IsNullOrWhiteSpace(s.SelectedLanguage) ? "en" : s.SelectedLanguage;
                         return;
                     }
                 }
@@ -1403,7 +1472,8 @@ namespace Tempo
                 var s = new AppSettings
                 {
                     IsToolbarEnabled = _isToolbarEnabled,
-                    ToolbarDock = _toolbarDock
+                    ToolbarDock = _toolbarDock,
+                    SelectedLanguage = _selectedLanguage
                 };
                 File.WriteAllText(GetSettingsFilePath(), JsonSerializer.Serialize(s));
             }
@@ -1590,6 +1660,79 @@ namespace Tempo
                 BtnCheckUpdatesManual.IsEnabled = true;
             }
         }
+
+        #region Localization & Dynamic Language Switching
+
+        private void BtnLangEnglish_Click(object sender, RoutedEventArgs e)
+        {
+            _selectedLanguage = "en";
+            LocalizationManager.SetLanguage("en");
+            SaveSettings();
+            ApplyLanguageUi("en");
+        }
+
+        private void BtnLangArabic_Click(object sender, RoutedEventArgs e)
+        {
+            _selectedLanguage = "ar";
+            LocalizationManager.SetLanguage("ar");
+            SaveSettings();
+            ApplyLanguageUi("ar");
+        }
+
+        private void ApplyLanguageUi(string lang)
+        {
+            bool isAr = string.Equals(lang, "ar", StringComparison.OrdinalIgnoreCase);
+            var dir = isAr ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+
+            // Update main containers FlowDirection
+            if (MainDashboardView != null) MainDashboardView.FlowDirection = dir;
+            if (BorderStartupSecurityApps != null) BorderStartupSecurityApps.FlowDirection = dir;
+            if (BorderStartupRegularApps != null) BorderStartupRegularApps.FlowDirection = dir;
+            if (CompanionBarHorizontal != null) CompanionBarHorizontal.FlowDirection = dir;
+            if (CompanionBarVertical != null) CompanionBarVertical.FlowDirection = dir;
+            if (UpdateModalOverlay != null) UpdateModalOverlay.FlowDirection = dir;
+
+            if (ProgCpuPercent != null) ProgCpuPercent.FlowDirection = dir;
+            if (ProgRamPercent != null) ProgRamPercent.FlowDirection = dir;
+            if (ProgStorageUsed != null) ProgStorageUsed.FlowDirection = dir;
+
+            if (BorderNavRail != null)
+            {
+                BorderNavRail.BorderThickness = isAr ? new Thickness(1, 0, 0, 0) : new Thickness(0, 0, 1, 0);
+                BorderNavRail.CornerRadius = isAr ? new CornerRadius(0, 0, 10, 0) : new CornerRadius(0, 0, 0, 10);
+            }
+
+            var indAlign = isAr ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+            if (IndOverview != null) IndOverview.HorizontalAlignment = indAlign;
+            if (IndOptimize != null) IndOptimize.HorizontalAlignment = indAlign;
+            if (IndDiagnostic != null) IndDiagnostic.HorizontalAlignment = indAlign;
+            if (IndSettings != null) IndSettings.HorizontalAlignment = indAlign;
+
+            // Highlight active language button in Settings
+            var activeBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0066FF"));
+            var inactiveBg = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#161922"));
+            var activeFg = Brushes.White;
+            var inactiveFg = (Brush)FindResource("TextSecondary");
+
+            if (BtnLangEnglish != null)
+            {
+                BtnLangEnglish.Background = isAr ? inactiveBg : activeBg;
+                BtnLangEnglish.Foreground = isAr ? inactiveFg : activeFg;
+            }
+            if (BtnLangArabic != null)
+            {
+                BtnLangArabic.Background = isAr ? activeBg : inactiveBg;
+                BtnLangArabic.Foreground = isAr ? activeFg : inactiveFg;
+            }
+
+            // Refresh data views to re-evaluate formatted text in current language
+            FetchTelemetryAsync();
+            LoadStorageDrivesFast();
+            LoadRecycleBinInfo();
+            LoadStartupApps();
+        }
+
+        #endregion
 
         #endregion
     }
