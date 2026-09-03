@@ -105,7 +105,7 @@ namespace Tempo.Services
         private static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
 
         // Win32 Shell Recycle Bin APIs
-        [StructLayout(LayoutKind.Sequential, Pack = 4)]
+        [StructLayout(LayoutKind.Sequential)]
         private struct SHQUERYRBINFO
         {
             public int cbSize;
@@ -114,7 +114,7 @@ namespace Tempo.Services
         }
 
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
-        private static extern int SHQueryRecycleBin(string pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
+        private static extern int SHQueryRecycleBin(string? pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
 
         [DllImport("shell32.dll", CharSet = CharSet.Auto)]
         private static extern int SHEmptyRecycleBin(IntPtr hwnd, string? pszRootPath, uint dwFlags);
@@ -230,8 +230,8 @@ namespace Tempo.Services
             result.DeletedFilesCount = processedCount;
             result.SkippedFilesCount = skippedCount;
             result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                ? $"تم تفريغ الذاكرة لـ {processedCount} عملية بنجاح. تم تحرير \u200E{result.ReclaimedMb:F1} MB\u200E من الرام."
-                : $"Trimmed working memory for {processedCount} processes. Reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E of RAM.";
+                ? $"تم تسريع الذاكرة: تحرير \u200E{result.ReclaimedMb:F1} MB\u200E"
+                : $"RAM Boosted: \u200E{result.ReclaimedMb:F1} MB\u200E freed";
             Log($"Turbo RAM Boost completed: Reclaimed {result.ReclaimedMb:F1} MB across {processedCount} processes.");
 
             return result;
@@ -324,8 +324,8 @@ namespace Tempo.Services
             result.DeletedFilesCount = deletedFiles;
             result.SkippedFilesCount = skippedFiles;
             result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                ? $"تم حذف {deletedFiles} ملفاً مؤقتاً، وتحرير \u200E{result.ReclaimedMb:F1} MB\u200E بنجاح."
-                : $"Deleted {deletedFiles} temporary files, reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E.";
+                ? $"تم تنظيف {deletedFiles} ملف مؤقت (\u200E{result.ReclaimedMb:F1} MB\u200E)"
+                : $"Cleaned {deletedFiles} temp files (\u200E{result.ReclaimedMb:F1} MB\u200E)";
             Log($"Quick Clean completed: Deleted {deletedFiles} files, freed {result.ReclaimedMb:F1} MB.");
 
             return result;
@@ -338,7 +338,11 @@ namespace Tempo.Services
             {
                 var rb = new SHQUERYRBINFO();
                 rb.cbSize = Marshal.SizeOf(typeof(SHQUERYRBINFO));
-                int hr = SHQueryRecycleBin(string.Empty, ref rb);
+                int hr = SHQueryRecycleBin(null, ref rb);
+                if (hr != 0)
+                {
+                    hr = SHQueryRecycleBin(@"C:\", ref rb);
+                }
                 if (hr == 0)
                 {
                     info.ItemCount = rb.i64NumItems;
@@ -359,8 +363,8 @@ namespace Tempo.Services
                 {
                     result.Success = true;
                     result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                        ? "سلة المحذوفات فارغة بالفعل (0 عنصر)."
-                        : "Recycle Bin is already empty (0 items).";
+                        ? "سلة المحذوفات فارغة بالفعل"
+                        : "Recycle Bin is already empty";
                     return result;
                 }
 
@@ -376,8 +380,8 @@ namespace Tempo.Services
                     result.ReclaimedBytes = before.TotalSizeBytes;
                     result.DeletedFilesCount = (int)before.ItemCount;
                     result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                        ? $"تم تفريغ سلة المحذوفات بنجاح. تم تحرير \u200E{before.TotalSizeMb:F1} MB\u200E وحذف {before.ItemCount} عنصر."
-                        : $"Recycle Bin emptied successfully. Reclaimed \u200E{before.TotalSizeMb:F1} MB\u200E ({before.ItemCount:N0} items deleted).";
+                        ? $"تم إفراغ سلة المحذوفات: توفير \u200E{before.TotalSizeMb:F1} MB\u200E"
+                        : $"Recycle Bin emptied: \u200E{before.TotalSizeMb:F1} MB\u200E freed";
                     Log($"Recycle bin emptied successfully: Reclaimed {before.TotalSizeMb:F1} MB across {before.ItemCount} items.");
                 }
                 else if (after.ItemCount < before.ItemCount)
@@ -443,8 +447,8 @@ namespace Tempo.Services
                     ? $"المتصفح قيد التشغيل: ({browserNames})."
                     : $"Browser is running: ({browserNames}).";
                 result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                    ? $"يرجى إغلاق {browserNames} يدوياً أولاً، ثم إعادة المحاولة لإتمام تنظيف الكاش بالكامل وبأمان."
-                    : $"Please close {browserNames} manually first, then retry to safely flush cache.";
+                    ? $"يرجى إغلاق {browserNames} أولاً"
+                    : $"Please close {browserNames} first";
                 return result;
             }
 
@@ -487,8 +491,8 @@ namespace Tempo.Services
             result.ReclaimedBytes = freedBytes;
             result.DeletedFilesCount = deletedFiles;
             result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                ? $"تم تنظيف كاش المتصفحات بنجاح: حذف {deletedFiles} ملف، وتحرير \u200E{result.ReclaimedMb:F1} MB\u200E."
-                : $"Browser cache cleaned: deleted {deletedFiles} files, reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E.";
+                ? $"تم تنظيف كاش المتصفح (\u200E{result.ReclaimedMb:F1} MB\u200E)"
+                : $"Browser cache cleaned (\u200E{result.ReclaimedMb:F1} MB\u200E)";
             return result;
         }
 
@@ -564,8 +568,8 @@ namespace Tempo.Services
             result.ReclaimedBytes = freedBytes;
             result.DeletedFilesCount = deletedFiles;
             result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                ? $"تم تنظيف كاش المطورين بنجاح (npm, NuGet http-cache, pip): حذف {deletedFiles} ملف، وتحرير \u200E{result.ReclaimedMb:F1} MB\u200E."
-                : $"Developer caches purged (npm, NuGet, pip): deleted {deletedFiles} files, reclaimed \u200E{result.ReclaimedMb:F1} MB\u200E.";
+                ? $"تم تنظيف كاش المطورين (\u200E{result.ReclaimedMb:F1} MB\u200E)"
+                : $"Developer cache cleaned (\u200E{result.ReclaimedMb:F1} MB\u200E)";
             return result;
         }
 
@@ -602,8 +606,8 @@ namespace Tempo.Services
                             {
                                 result.Success = true;
                                 result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                                    ? $"تم تنشيط وإعادة تهيئة خلايا التخزين الحرة على القرص {driveLetter}: بنجاح عبر TRIM."
-                                    : $"SSD TRIM optimization completed on drive {driveLetter}: successfully.";
+                                    ? $"تم تنشيط الـ SSD للقرص {driveLetter}: بنجاح"
+                                    : $"SSD {driveLetter}: TRIM complete";
                                 return result;
                             }
                         }
@@ -633,8 +637,8 @@ namespace Tempo.Services
                         {
                             result.Success = true;
                             result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                                    ? $"تم تنشيط وإعادة تهيئة خلايا التخزين الحرة على القرص {driveLetter}: بنجاح عبر TRIM."
-                                    : $"SSD TRIM optimization completed on drive {driveLetter}: successfully.";
+                                    ? $"تم تنشيط الـ SSD للقرص {driveLetter}: بنجاح"
+                                    : $"SSD {driveLetter}: TRIM complete";
                             return result;
                         }
                         else

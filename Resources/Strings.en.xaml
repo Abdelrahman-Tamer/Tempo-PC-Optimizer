@@ -3,146 +3,132 @@
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
 
     <!-- Header & Window Controls -->
-    <system:String x:Key="AppTitle">Tempo Diagnostic</system:String>
-    <system:String x:Key="AppSubtitle">PRO</system:String>
+    <system:String x:Key="AppTitle">Tempo</system:String>
+    <system:String x:Key="AppSubtitle">PC Optimizer</system:String>
     <system:String x:Key="BtnTooltipMinimize">Minimize</system:String>
-    <system:String x:Key="BtnTooltipClose">Close Application</system:String>
-    <system:String x:Key="BtnTooltipToolbar">Switch to Companion Desktop Bar</system:String>
-    <system:String x:Key="BtnUpdateBadgeText">Update Available</system:String>
-    <system:String x:Key="BtnTooltipUpdate">New update available — click to review and install</system:String>
+    <system:String x:Key="BtnTooltipClose">Close</system:String>
+    <system:String x:Key="BtnTooltipToolbar">Mini Bar</system:String>
+    <system:String x:Key="BtnUpdateBadgeText">Update</system:String>
+    <system:String x:Key="BtnTooltipUpdate">New update ready</system:String>
 
     <!-- Navigation Rail -->
-    <system:String x:Key="NavOverview">Overview</system:String>
-    <system:String x:Key="NavOptimize">Optimize</system:String>
+    <system:String x:Key="NavOverview">Home</system:String>
+    <system:String x:Key="NavOptimize">Clean</system:String>
     <system:String x:Key="NavDiagnostic">Hardware</system:String>
     <system:String x:Key="NavSettings">Settings</system:String>
-    <system:String x:Key="NavTooltipOverview">System Health &amp; Live Telemetry</system:String>
-    <system:String x:Key="NavTooltipOptimize">Deep Cleaning &amp; Memory Purge</system:String>
-    <system:String x:Key="NavTooltipDiagnostic">Hardware Diagnostics &amp; Storage</system:String>
-    <system:String x:Key="NavTooltipSettings">Settings &amp; About Tempo</system:String>
+    <system:String x:Key="NavTooltipOverview">Home Dashboard</system:String>
+    <system:String x:Key="NavTooltipOptimize">Clean Junk &amp; Boost RAM</system:String>
+    <system:String x:Key="NavTooltipDiagnostic">Hardware Stats &amp; Drives</system:String>
+    <system:String x:Key="NavTooltipSettings">Settings &amp; About</system:String>
 
     <!-- Overview Tab -->
-    <system:String x:Key="CardHealthTitle">System Health Score</system:String>
-    <system:String x:Key="CardHealthDescOptimal">All hardware components operating within optimal thresholds</system:String>
-    <system:String x:Key="CardHealthDescGood">Good system performance; working sets optimization recommended</system:String>
-    <system:String x:Key="CardHealthDescAlert">High resource consumption detected; immediate optimization advised</system:String>
-    <system:String x:Key="BtnBoostNow">Optimize &amp; Boost System Now</system:String>
-    <system:String x:Key="CardCpuTitle">Processor (CPU)</system:String>
-    <system:String x:Key="CardRamTitle">Memory (RAM)</system:String>
+    <system:String x:Key="CardHealthTitle">PC Health</system:String>
+    <system:String x:Key="TxtSystemStatusOptimal">Status: Excellent</system:String>
+    <system:String x:Key="TxtSystemStatusGood">Status: Good (Boost Recommended)</system:String>
+    <system:String x:Key="TxtSystemStatusHeavy">Status: High Usage</system:String>
+    <system:String x:Key="TxtObservedJunk">Junk Files</system:String>
+    <system:String x:Key="TxtReadyForBoost">Ready to clean</system:String>
+    <system:String x:Key="TxtEstimatedTime">Time</system:String>
+    <system:String x:Key="TxtLessThanSecond">Instant</system:String>
+    <system:String x:Key="BtnBoostNow">Clean &amp; Boost PC</system:String>
+    <system:String x:Key="CardCpuTitle">CPU</system:String>
+    <system:String x:Key="CardRamTitle">RAM</system:String>
     <system:String x:Key="CpuUsageLabel">Load</system:String>
-    <system:String x:Key="RamUsageLabel">In Use</system:String>
+    <system:String x:Key="RamUsageLabel">Used</system:String>
     <system:String x:Key="NetDownloadLabel">Download</system:String>
     <system:String x:Key="NetUploadLabel">Upload</system:String>
-    <system:String x:Key="TopProcessesTitle">Top Memory Consuming Processes</system:String>
-    <system:String x:Key="ProcessColName">Process Name</system:String>
-    <system:String x:Key="ProcessColRam">Memory</system:String>
+    <system:String x:Key="TopProcessesTitle">Apps Using Most RAM</system:String>
+    <system:String x:Key="ProcessColName">App Name</system:String>
+    <system:String x:Key="ProcessColRam">RAM</system:String>
+    <system:String x:Key="TxtFreeDiskSpace">Free Space on C:</system:String>
+    <system:String x:Key="TxtRecommendations">Quick Actions</system:String>
+    <system:String x:Key="TxtTempTitleShort">Temporary Files</system:String>
+    <system:String x:Key="TxtTempDescShort">Clean app caches and temporary files</system:String>
+    <system:String x:Key="TxtStartupTitleShort">Startup Apps</system:String>
+    <system:String x:Key="TxtStartupDescShort">Turn off startup apps to boot faster</system:String>
+    <system:String x:Key="TxtRecycleTitleShort">Recycle Bin</system:String>
+    <system:String x:Key="TxtRecycleDescShort">Delete trash files to free disk space</system:String>
+    <system:String x:Key="TxtApply">Clean</system:String>
+    <system:String x:Key="TxtManage">Manage</system:String>
+    <system:String x:Key="TxtPurge">Empty</system:String>
 
     <!-- Optimize Tab -->
-    <system:String x:Key="CleanCardTitle">Deep System Cleanup &amp; Cache Purge</system:String>
-    <system:String x:Key="CleanCardSubtitle">Safely reclaim storage and working memory with kernel-level safety</system:String>
-    <system:String x:Key="TileTempTitle">User &amp; System Temp Files</system:String>
-    <system:String x:Key="TileTempDesc">Application caches and temporary setup remnants</system:String>
-    <system:String x:Key="TileRecycleTitle">Windows Recycle Bin</system:String>
-    <system:String x:Key="TileRecycleDesc">Permanently purge deleted files across all storage volumes</system:String>
-    <system:String x:Key="TileDevTitle">Developer Package Caches</system:String>
-    <system:String x:Key="TileDevDesc">Residual build and package caches for npm, NuGet, and pip</system:String>
-    <system:String x:Key="TileWorkingSetTitle">Inactive Process Working Sets</system:String>
-    <system:String x:Key="TileWorkingSetDesc">Trim idle process memory while safeguarding 15 core NT services</system:String>
+    <system:String x:Key="TxtScanCenter">Junk Cleaner</system:String>
+    <system:String x:Key="TxtScanSummaryDefault">Click Scan to find junk files you can safely delete</system:String>
+    <system:String x:Key="BtnScanAllText">Scan PC</system:String>
+    <system:String x:Key="TileTempTitle">Temporary Files</system:String>
+    <system:String x:Key="TxtTempCleanFast">✔ Safe</system:String>
+    <system:String x:Key="TxtTempDetailsDefault">Windows and app temp files</system:String>
     <system:String x:Key="BtnCleanSafe">Clean</system:String>
-    <system:String x:Key="BtnCleanPurge">Purge All</system:String>
-    <system:String x:Key="BtnTrimWorkingSets">Trim Memory</system:String>
-    <system:String x:Key="BadgeRequiresConfirm">Requires Confirmation ⚠</system:String>
-    <system:String x:Key="BadgeSafe">Safe Operation</system:String>
+    <system:String x:Key="TileRecycleTitle">Recycle Bin</system:String>
+    <system:String x:Key="TxtRecycleWarn">⚠️ Permanent delete</system:String>
+    <system:String x:Key="TileBrowserTitle">Browser Cache</system:String>
+    <system:String x:Key="TxtBrowserWarn">⚠️ Close browser first</system:String>
+    <system:String x:Key="TxtBrowserDetailsDefault">Chrome and Edge temporary web cache</system:String>
+    <system:String x:Key="TileDevTitle">Developer Cache</system:String>
+    <system:String x:Key="TxtDevWarn">⚠️ Requires confirmation</system:String>
+    <system:String x:Key="TxtDevDetailsDefault">npm, NuGet, and pip cache files</system:String>
+    <system:String x:Key="TileWorkingSetTitle">Optimize RAM</system:String>
+    <system:String x:Key="TxtWorkingSetSafe">✔ 100% Safe</system:String>
+    <system:String x:Key="TxtWorkingSetDetailsDefault">Free memory from idle background apps</system:String>
 
-    <!-- Hardware & Storage Tab -->
-    <system:String x:Key="DiagHeaderTitle">Storage Drives &amp; Storage Health</system:String>
-    <system:String x:Key="DriveActionTrim">Execute TRIM</system:String>
-    <system:String x:Key="DriveActionDefrag">Defragment</system:String>
-    <system:String x:Key="NativeToolsTitle">Windows Native Tools</system:String>
+    <!-- Diagnostics Tab -->
+    <system:String x:Key="TxtDiagnosticsTitle">Hardware Stats</system:String>
+    <system:String x:Key="TxtGpuLabel">Graphics (GPU):</system:String>
+    <system:String x:Key="TxtNetLabel">Network Speed:</system:String>
+    <system:String x:Key="TxtStorageDrivesTitle">Drives &amp; SSD Speed</system:String>
+    <system:String x:Key="NativeToolsTitle">Windows Tools</system:String>
     <system:String x:Key="ToolTaskMgr">Task Manager</system:String>
     <system:String x:Key="ToolDiskMgmt">Disk Management</system:String>
-    <system:String x:Key="ToolServices">Windows Services</system:String>
+    <system:String x:Key="ToolServices">Services</system:String>
     <system:String x:Key="ToolResMon">Resource Monitor</system:String>
 
     <!-- Settings Tab -->
-    <system:String x:Key="SettingsLanguageTitle">Display Language / لغة العرض</system:String>
-    <system:String x:Key="SettingsLanguageDesc">Select your preferred interface language:</system:String>
-    <system:String x:Key="SettingsToolbarTitle">Desktop Companion Toolbar</system:String>
-    <system:String x:Key="SettingsToolbarEnable">Enable floating desktop companion:</system:String>
-    <system:String x:Key="SettingsToolbarPlacement">Toolbar screen placement:</system:String>
-    <system:String x:Key="BtnDockTop">Top Screen Capsule</system:String>
-    <system:String x:Key="BtnDockSide">Side Dock (34px)</system:String>
-    <system:String x:Key="BtnSwitchToolbarNow">Switch to Desktop Companion Now</system:String>
-    <system:String x:Key="SettingsStartupTitle">Startup Applications</system:String>
-    <system:String x:Key="SettingsStartupSecurityGroup">🛡️ Security &amp; Essential Services (Recommended Enabled)</system:String>
-    <system:String x:Key="SettingsStartupRegularGroup">⚡ User Startup Applications</system:String>
+    <system:String x:Key="SettingsLanguageTitle">Language / اللغة</system:String>
+    <system:String x:Key="SettingsLanguageDesc">Choose your language:</system:String>
+    <system:String x:Key="SettingsStartupSecurityGroup">🛡️ Protected &amp; Antivirus Apps (Keep On)</system:String>
+    <system:String x:Key="SettingsStartupRegularGroup">⚡ Startup Apps</system:String>
     <system:String x:Key="BtnOpenWindowsStartup">Windows Settings</system:String>
-    <system:String x:Key="SettingsUpdatesTitle">Application Updates</system:String>
-    <system:String x:Key="BtnCheckUpdates">Check for Updates Now</system:String>
-    <system:String x:Key="TxtUpToDate">Latest Version</system:String>
-    <system:String x:Key="SettingsAboutTitle">Tempo Diagnostic &amp; PC Optimizer</system:String>
-    <system:String x:Key="SettingsAboutAuthor">Designed &amp; Engineered by Eng. Abdelrahman Emam</system:String>
-    <system:String x:Key="SettingsAboutLicense">MIT Open Source License © 2026</system:String>
+    <system:String x:Key="SettingsToolbarTitle">Desktop Mini Bar</system:String>
+    <system:String x:Key="SettingsToolbarEnable">Show mini bar on desktop:</system:String>
+    <system:String x:Key="SettingsToolbarPlacement">Position:</system:String>
+    <system:String x:Key="BtnDockTop">Top of Screen</system:String>
+    <system:String x:Key="BtnDockSide">Side of Screen</system:String>
+    <system:String x:Key="BtnSwitchToolbarNow">Switch to Mini Bar Now</system:String>
+    <system:String x:Key="SettingsUpdatesTitle">App Updates</system:String>
+    <system:String x:Key="TxtUpToDate">Up to date</system:String>
+    <system:String x:Key="BtnCheckUpdates">Check for Updates</system:String>
+    <system:String x:Key="TxtAboutTitle">About Tempo</system:String>
+    <system:String x:Key="TxtAboutDesc">Fast, safe Windows cleaner and system monitor.</system:String>
+
+    <!-- Toolbars -->
+    <system:String x:Key="ToolbarTooltipBoost">Boost RAM &amp; Clean Temp</system:String>
+    <system:String x:Key="ToolbarTooltipOpenDashboard">Open Main Window</system:String>
+    <system:String x:Key="ToolbarTooltipPin">Pin / Auto-hide</system:String>
+    <system:String x:Key="ToolbarTooltipHide">Hide</system:String>
+    <system:String x:Key="ToolbarTooltipRam">RAM Usage</system:String>
+    <system:String x:Key="ToolbarTooltipCpu">CPU Usage</system:String>
+    <system:String x:Key="ToolbarTooltipNet">Network Activity</system:String>
 
     <!-- Update Modal -->
-    <system:String x:Key="UpdateModalTitle">New Update Available!</system:String>
-    <system:String x:Key="UpdateModalWhatNew">What's New in this Release:</system:String>
-    <system:String x:Key="BtnModalUpdateNow">Update &amp; Install Now (Silent)</system:String>
-    <system:String x:Key="BtnModalRemindLater">Remind Me Later</system:String>
-    <system:String x:Key="BtnModalSkipVersion">Skip This Version</system:String>
-    <system:String x:Key="TxtDownloading">Downloading update and verifying SHA256 checksum...</system:String>
+    <system:String x:Key="UpdateModalTitle">New Update Available</system:String>
+    <system:String x:Key="UpdateModalWhatNew">What is new:</system:String>
+    <system:String x:Key="TxtGettingReleaseNotes">Loading update info...</system:String>
+    <system:String x:Key="TxtUpdateProgressStatus">Downloading update...</system:String>
+    <system:String x:Key="TxtUpdateError">Update failed</system:String>
+    <system:String x:Key="BtnModalUpdateNow">Update Now</system:String>
+    <system:String x:Key="BtnModalRemindLater">Later</system:String>
+    <system:String x:Key="BtnModalSkipVersion">Skip Version</system:String>
 
-    <!-- Toast & Dialog Messages -->
-    <system:String x:Key="ConfirmEmptyRecycleTitle">Confirm Permanent Recycle Bin Purge</system:String>
-    <system:String x:Key="ConfirmEmptyRecycleMsg">Are you sure you want to permanently empty the Recycle Bin across all drives?&#x0a;This operation cannot be undone.</system:String>
-    <system:String x:Key="ConfirmDevCacheTitle">Confirm Developer Caches Clearance</system:String>
-    <system:String x:Key="ConfirmDevCacheMsg">Are you sure you want to purge npm, NuGet, and pip cache repositories?</system:String>
-    <system:String x:Key="MsgYes">Yes, Proceed</system:String>
-    <system:String x:Key="MsgNo">Cancel</system:String>
-
-    <!-- Additional UI Strings -->
-    <system:String x:Key="TxtRecommendations">System Recommendations</system:String>
-    <system:String x:Key="TxtTempTitleShort">Clear Temporary Files</system:String>
-    <system:String x:Key="TxtTempDescShort">Clean application cache and Temp folders</system:String>
-    <system:String x:Key="TxtStartupTitleShort">Optimize Startup</system:String>
-    <system:String x:Key="TxtStartupDescShort">Disable startup apps to accelerate boot time</system:String>
-    <system:String x:Key="TxtRecycleTitleShort">Empty Recycle Bin</system:String>
-    <system:String x:Key="TxtRecycleDescShort">Safely reclaim space occupied by deleted files</system:String>
-    <system:String x:Key="TxtApply">Apply</system:String>
-    <system:String x:Key="TxtManage">Manage</system:String>
-    <system:String x:Key="TxtPurge">Purge</system:String>
-    <system:String x:Key="TxtScanCenter">Junk Scan &amp; Clean Center</system:String>
-    <system:String x:Key="TxtScanSummaryDefault">Click Full Scan to preview cleanable cache size</system:String>
-    <system:String x:Key="BtnScanAllText">Full Scan</system:String>
-    <system:String x:Key="TxtTempCleanFast">✔ Fast &amp; Safe</system:String>
-    <system:String x:Key="TxtTempDetailsDefault">Windows temporary files and system cache</system:String>
-    <system:String x:Key="TxtRecycleWarn">⚠️ Permanent deletion with confirmation</system:String>
-    <system:String x:Key="TxtBrowserWarn">⚠️ Requires closing browser</system:String>
-    <system:String x:Key="TxtBrowserDetailsDefault">Browser cache and temporary web images</system:String>
-    <system:String x:Key="TxtDevWarn">⚠️ Requires explicit confirmation</system:String>
-    <system:String x:Key="TxtDevDetailsDefault">Temporary download packages only</system:String>
-    <system:String x:Key="TxtWorkingSetSafe">✔ 100% Safe</system:String>
-    <system:String x:Key="TxtWorkingSetDetailsDefault">Safely trim inactive background application memory</system:String>
-    <system:String x:Key="TxtDiagnosticsTitle">Live Hardware Telemetry</system:String>
-    <system:String x:Key="TxtGpuLabel">Graphics Processor (GPU):</system:String>
-    <system:String x:Key="TxtNetLabel">Network Transfer Rate:</system:String>
-    <system:String x:Key="TxtStorageDrivesTitle">Storage Drives &amp; SSD TRIM Function</system:String>
-    <system:String x:Key="TxtActionCompleted">Operation completed successfully</system:String>
-    <system:String x:Key="TxtGettingReleaseNotes">Fetching release details...</system:String>
-    <system:String x:Key="TxtUpdateError">An error occurred during update</system:String>
-    <system:String x:Key="BtnUpdateNowText">Update &amp; Install Now (Silent)</system:String>
-    <system:String x:Key="TxtFreeDiskSpace">Available space on drive C:</system:String>
-    <system:String x:Key="TxtObservedJunk">Detected Junk</system:String>
-    <system:String x:Key="TxtEstimatedTime">Estimated Time</system:String>
-    <system:String x:Key="TxtLessThanSecond">Less than 1 second</system:String>
-    <system:String x:Key="TxtReadyForBoost">Ready for instant optimization</system:String>
+    <!-- Punchy Short Toasts & Statuses -->
+    <system:String x:Key="TxtActionCompleted">Done</system:String>
     <system:String x:Key="CardRamUsagePlaceholder">14.7 GB of 31.7 GB</system:String>
     <system:String x:Key="TxtReady">Ready</system:String>
     <system:String x:Key="TxtZeroItemsPlaceholder">0 items (0 MB)</system:String>
     <system:String x:Key="TxtLastCheckRecent">Last check: Just now</system:String>
-    <system:String x:Key="TxtAppVersionSkipped">Update skipped for this version</system:String>
-    <system:String x:Key="TxtUpdateAvailableBadge">Update v{0} Available</system:String>
-    <system:String x:Key="BtnHeroOptimizeMini">Optimize</system:String>
+    <system:String x:Key="TxtAppVersionSkipped">Version skipped</system:String>
+    <system:String x:Key="TxtUpdateAvailableBadge">Update v{0}</system:String>
+    <system:String x:Key="BtnHeroOptimizeMini">Boost</system:String>
     <system:String x:Key="BtnStateEnabled">Enabled</system:String>
     <system:String x:Key="BtnStateDisabled">Disabled</system:String>
 </ResourceDictionary>

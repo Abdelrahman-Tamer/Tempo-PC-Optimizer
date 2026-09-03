@@ -3,146 +3,132 @@
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
 
     <!-- Header & Window Controls -->
-    <system:String x:Key="AppTitle">Tempo Diagnostic</system:String>
-    <system:String x:Key="AppSubtitle">PRO</system:String>
+    <system:String x:Key="AppTitle">Tempo</system:String>
+    <system:String x:Key="AppSubtitle">تسريع وتنظيف الجهاز</system:String>
     <system:String x:Key="BtnTooltipMinimize">تصغير</system:String>
-    <system:String x:Key="BtnTooltipClose">إغلاق البرنامج</system:String>
-    <system:String x:Key="BtnTooltipToolbar">التحويل إلى شريط سطح المكتب</system:String>
-    <system:String x:Key="BtnUpdateBadgeText">تحديث متوفر</system:String>
-    <system:String x:Key="BtnTooltipUpdate">تحديث جديد متوفر — اضغط للاستعراض والتثبيت</system:String>
+    <system:String x:Key="BtnTooltipClose">إغلاق</system:String>
+    <system:String x:Key="BtnTooltipToolbar">الشريط المصغر</system:String>
+    <system:String x:Key="BtnUpdateBadgeText">تحديث</system:String>
+    <system:String x:Key="BtnTooltipUpdate">يوجد تحديث جديد</system:String>
 
-    <!-- Navigation Rail -->
-    <system:String x:Key="NavOverview">نظرة</system:String>
-    <system:String x:Key="NavOptimize">تحسين</system:String>
-    <system:String x:Key="NavDiagnostic">فحص</system:String>
-    <system:String x:Key="NavSettings">إعدادات</system:String>
-    <system:String x:Key="NavTooltipOverview">نظرة عامة على صحة النظام</system:String>
-    <system:String x:Key="NavTooltipOptimize">مركز التنظيف وتفريغ الذاكرة</system:String>
-    <system:String x:Key="NavTooltipDiagnostic">فحص العتاد والأدوات</system:String>
-    <system:String x:Key="NavTooltipSettings">إعدادات وتخصيص البرنامج</system:String>
+    <!-- Navigation Rail (بسيط وواضح لكل ناطق بالعربية) -->
+    <system:String x:Key="NavOverview">الرئيسية</system:String>
+    <system:String x:Key="NavOptimize">التنظيف</system:String>
+    <system:String x:Key="NavDiagnostic">الجهاز</system:String>
+    <system:String x:Key="NavSettings">الإعدادات</system:String>
+    <system:String x:Key="NavTooltipOverview">الشاشة الرئيسية</system:String>
+    <system:String x:Key="NavTooltipOptimize">تنظيف المخلفات وتسريع الرام</system:String>
+    <system:String x:Key="NavTooltipDiagnostic">حالة الجهاز والأقراص</system:String>
+    <system:String x:Key="NavTooltipSettings">الإعدادات وعن البرنامج</system:String>
 
     <!-- Overview Tab -->
-    <system:String x:Key="CardHealthTitle">مؤشر صحة النظام</system:String>
-    <system:String x:Key="CardHealthDescOptimal">الأداء مستقر ومثالي لجميع مكونات النظام</system:String>
-    <system:String x:Key="CardHealthDescGood">أداء جيد، يُنصح بتفريغ الذاكرة الخاملة للبرامج</system:String>
-    <system:String x:Key="CardHealthDescAlert">استهلاك مرتفع للعتاد، يُوصى بالتحسين الفوري</system:String>
-    <system:String x:Key="BtnBoostNow">تحسين وتسريع النظام الآن</system:String>
+    <system:String x:Key="CardHealthTitle">حالة الجهاز</system:String>
+    <system:String x:Key="TxtSystemStatusOptimal">الحالة: ممتازة</system:String>
+    <system:String x:Key="TxtSystemStatusGood">الحالة: جيدة (يُنصح بالتسريع)</system:String>
+    <system:String x:Key="TxtSystemStatusHeavy">الحالة: استهلاك مرتفع</system:String>
+    <system:String x:Key="TxtObservedJunk">ملفات غير مهمة</system:String>
+    <system:String x:Key="TxtReadyForBoost">جاهز للتنظيف</system:String>
+    <system:String x:Key="TxtEstimatedTime">الوقت</system:String>
+    <system:String x:Key="TxtLessThanSecond">أقل من ثانية</system:String>
+    <system:String x:Key="BtnBoostNow">تنظيف وتسريع الجهاز الآن</system:String>
     <system:String x:Key="CardCpuTitle">المعالج (CPU)</system:String>
     <system:String x:Key="CardRamTitle">الذاكرة (RAM)</system:String>
     <system:String x:Key="CpuUsageLabel">الاستهلاك</system:String>
     <system:String x:Key="RamUsageLabel">المستخدم</system:String>
     <system:String x:Key="NetDownloadLabel">تنزيل</system:String>
     <system:String x:Key="NetUploadLabel">رفع</system:String>
-    <system:String x:Key="TopProcessesTitle">أعلى العمليات استهلاكاً للذاكرة</system:String>
-    <system:String x:Key="ProcessColName">اسم العملية</system:String>
+    <system:String x:Key="TopProcessesTitle">أكثر البرامج استهلاكاً للذاكرة</system:String>
+    <system:String x:Key="ProcessColName">اسم البرنامج</system:String>
     <system:String x:Key="ProcessColRam">الذاكرة</system:String>
+    <system:String x:Key="TxtFreeDiskSpace">المساحة المتوفرة في قرص C:</system:String>
+    <system:String x:Key="TxtRecommendations">إجراءات سريعة</system:String>
+    <system:String x:Key="TxtTempTitleShort">الملفات المؤقتة</system:String>
+    <system:String x:Key="TxtTempDescShort">تنظيف كاش البرامج والملفات المؤقتة</system:String>
+    <system:String x:Key="TxtStartupTitleShort">برامج بدء التشغيل</system:String>
+    <system:String x:Key="TxtStartupDescShort">إيقاف البرامج غير الضرورية لتسريع فتح الجهاز</system:String>
+    <system:String x:Key="TxtRecycleTitleShort">سلة المحذوفات</system:String>
+    <system:String x:Key="TxtRecycleDescShort">حذف الملفات نهائياً لتوفير مساحة</system:String>
+    <system:String x:Key="TxtApply">تنظيف</system:String>
+    <system:String x:Key="TxtManage">إدارة</system:String>
+    <system:String x:Key="TxtPurge">تفريغ</system:String>
 
     <!-- Optimize Tab -->
-    <system:String x:Key="CleanCardTitle">مركز التنظيف العميق وتفريغ الكاش</system:String>
-    <system:String x:Key="CleanCardSubtitle">تفريغ الذاكرة الخاملة بأمان مع حماية تامة لنواة ويندوز</system:String>
-    <system:String x:Key="TileTempTitle">الملفات المؤقتة (Temp Files)</system:String>
-    <system:String x:Key="TileTempDesc">كاش التطبيقات ومخلفات التثبيت المؤقتة للنظام</system:String>
-    <system:String x:Key="TileRecycleTitle">سلة المهملات (Recycle Bin)</system:String>
-    <system:String x:Key="TileRecycleDesc">تفريغ الملفات المحذوفة نهائياً من كافة الأقراص</system:String>
-    <system:String x:Key="TileDevTitle">كاش أدوات التطوير (Dev Packages)</system:String>
-    <system:String x:Key="TileDevDesc">مخلفات حزم npm و NuGet و pip البرمجية</system:String>
-    <system:String x:Key="TileWorkingSetTitle">الذاكرة الخاملة للبرامج (Working Sets)</system:String>
-    <system:String x:Key="TileWorkingSetDesc">تفريغ الذاكرة المحجوزة للبرامج الخاملة مع حماية 15 خدمة أساسية</system:String>
+    <system:String x:Key="TxtScanCenter">تنظيف المخلفات</system:String>
+    <system:String x:Key="TxtScanSummaryDefault">اضغط على فحص لمعاينة المساحة القابلة للتوفير</system:String>
+    <system:String x:Key="BtnScanAllText">فحص الجهاز</system:String>
+    <system:String x:Key="TileTempTitle">الملفات المؤقتة</system:String>
+    <system:String x:Key="TxtTempCleanFast">✔ آمن للحذف</system:String>
+    <system:String x:Key="TxtTempDetailsDefault">ملفات ويندوز والبرامج المؤقتة</system:String>
     <system:String x:Key="BtnCleanSafe">تنظيف</system:String>
-    <system:String x:Key="BtnCleanPurge">تفريغ نهائي</system:String>
-    <system:String x:Key="BtnTrimWorkingSets">تفريغ الذاكرة</system:String>
-    <system:String x:Key="BadgeRequiresConfirm">يتطلب تأكيد ⚠</system:String>
-    <system:String x:Key="BadgeSafe">إجراء آمن</system:String>
+    <system:String x:Key="TileRecycleTitle">سلة المحذوفات</system:String>
+    <system:String x:Key="TxtRecycleWarn">⚠️ حذف نهائي</system:String>
+    <system:String x:Key="TileBrowserTitle">ملفات المتصفح المؤقتة</system:String>
+    <system:String x:Key="TxtBrowserWarn">⚠️ أغلق المتصفح أولاً</system:String>
+    <system:String x:Key="TxtBrowserDetailsDefault">كاش تصفح Chrome و Edge</system:String>
+    <system:String x:Key="TileDevTitle">ملفات المطورين المؤقتة</system:String>
+    <system:String x:Key="TxtDevWarn">⚠️ يتطلب تأكيد</system:String>
+    <system:String x:Key="TxtDevDetailsDefault">كاش حزم npm و NuGet و pip</system:String>
+    <system:String x:Key="TileWorkingSetTitle">تسريع الذاكرة (RAM)</system:String>
+    <system:String x:Key="TxtWorkingSetSafe">✔ آمن تماماً</system:String>
+    <system:String x:Key="TxtWorkingSetDetailsDefault">تحرير الذاكرة من البرامج الخاملة في الخلفية</system:String>
 
-    <!-- Hardware & Storage Tab -->
-    <system:String x:Key="DiagHeaderTitle">الأقراص الصلبة ووحدات التخزين</system:String>
-    <system:String x:Key="DriveActionTrim">تنشيط TRIM</system:String>
-    <system:String x:Key="DriveActionDefrag">إلغاء التجزئة</system:String>
-    <system:String x:Key="NativeToolsTitle">أدوات ويندوز المباشرة</system:String>
+    <!-- Diagnostics Tab -->
+    <system:String x:Key="TxtDiagnosticsTitle">بيانات الجهاز</system:String>
+    <system:String x:Key="TxtGpuLabel">كارت الشاشة (GPU):</system:String>
+    <system:String x:Key="TxtNetLabel">سرعة الشبكة:</system:String>
+    <system:String x:Key="TxtStorageDrivesTitle">الأقراص وسرعة SSD</system:String>
+    <system:String x:Key="NativeToolsTitle">أدوات ويندوز</system:String>
     <system:String x:Key="ToolTaskMgr">مدير المهام</system:String>
     <system:String x:Key="ToolDiskMgmt">إدارة الأقراص</system:String>
-    <system:String x:Key="ToolServices">خدمات ويندوز</system:String>
+    <system:String x:Key="ToolServices">الخدمات</system:String>
     <system:String x:Key="ToolResMon">مراقب الموارد</system:String>
 
     <!-- Settings Tab -->
-    <system:String x:Key="SettingsLanguageTitle">لغة العرض / Display Language</system:String>
-    <system:String x:Key="SettingsLanguageDesc">اختر لغة واجهة التطبيق المفضلة:</system:String>
-    <system:String x:Key="SettingsToolbarTitle">شريط سطح المكتب المصاحب (Toolbar)</system:String>
-    <system:String x:Key="SettingsToolbarEnable">تفعيل الشريط العائم على الشاشة:</system:String>
-    <system:String x:Key="SettingsToolbarPlacement">موضع الشريط على الشاشة:</system:String>
-    <system:String x:Key="BtnDockTop">أعلى الشاشة (كبسولة)</system:String>
-    <system:String x:Key="BtnDockSide">الجانب (شريط نحيف)</system:String>
-    <system:String x:Key="BtnSwitchToolbarNow">التبديل إلى شريط سطح المكتب الآن</system:String>
-    <system:String x:Key="SettingsStartupTitle">تطبيقات بدء التشغيل</system:String>
-    <system:String x:Key="SettingsStartupSecurityGroup">🛡️ تطبيقات أمنية وحيوية (يُنصح بعدم إيقافها)</system:String>
-    <system:String x:Key="SettingsStartupRegularGroup">⚡ تطبيقات بدء التشغيل العامة</system:String>
+    <system:String x:Key="SettingsLanguageTitle">اللغة / Language</system:String>
+    <system:String x:Key="SettingsLanguageDesc">اختر لغة العرض المفضلة:</system:String>
+    <system:String x:Key="SettingsStartupSecurityGroup">🛡️ برامج الحماية والأمان (يُنصح بإبقائها مفعلة)</system:String>
+    <system:String x:Key="SettingsStartupRegularGroup">⚡ برامج بدء التشغيل العامة</system:String>
     <system:String x:Key="BtnOpenWindowsStartup">إعدادات ويندوز</system:String>
+    <system:String x:Key="SettingsToolbarTitle">الشريط المصغر على سطح المكتب</system:String>
+    <system:String x:Key="SettingsToolbarEnable">إظهار الشريط المصغر:</system:String>
+    <system:String x:Key="SettingsToolbarPlacement">مكان الشريط:</system:String>
+    <system:String x:Key="BtnDockTop">أعلى الشاشة</system:String>
+    <system:String x:Key="BtnDockSide">جانب الشاشة</system:String>
+    <system:String x:Key="BtnSwitchToolbarNow">التحويل إلى الشريط المصغر</system:String>
     <system:String x:Key="SettingsUpdatesTitle">تحديثات البرنامج</system:String>
-    <system:String x:Key="BtnCheckUpdates">التحقق من وجود تحديثات الآن</system:String>
-    <system:String x:Key="TxtUpToDate">النسخة الأحدث</system:String>
-    <system:String x:Key="SettingsAboutTitle">Tempo Diagnostic &amp; PC Optimizer</system:String>
-    <system:String x:Key="SettingsAboutAuthor">تصميم وهندسة م. عبد الرحمن إمام</system:String>
-    <system:String x:Key="SettingsAboutLicense">ترخيص مفتوح المصدر MIT © 2026</system:String>
+    <system:String x:Key="TxtUpToDate">الإصدار الأخير</system:String>
+    <system:String x:Key="BtnCheckUpdates">فحص التحديثات</system:String>
+    <system:String x:Key="TxtAboutTitle">عن البرنامج</system:String>
+    <system:String x:Key="TxtAboutDesc">برنامج سريع وآمن لتنظيف وتسريع نظام ويندوز.</system:String>
+
+    <!-- Toolbars -->
+    <system:String x:Key="ToolbarTooltipBoost">تسريع الرام وتنظيف المؤقت</system:String>
+    <system:String x:Key="ToolbarTooltipOpenDashboard">فتح النافذة الرئيسية</system:String>
+    <system:String x:Key="ToolbarTooltipPin">تثبيت / إخفاء تلقائي</system:String>
+    <system:String x:Key="ToolbarTooltipHide">إخفاء</system:String>
+    <system:String x:Key="ToolbarTooltipRam">استهلاك الذاكرة</system:String>
+    <system:String x:Key="ToolbarTooltipCpu">استهلاك المعالج</system:String>
+    <system:String x:Key="ToolbarTooltipNet">حركة الشبكة</system:String>
 
     <!-- Update Modal -->
-    <system:String x:Key="UpdateModalTitle">تحديث جديد متوفر!</system:String>
-    <system:String x:Key="UpdateModalWhatNew">ما الجديد في هذا التحديث:</system:String>
-    <system:String x:Key="BtnModalUpdateNow">تحديث وتثبيت الآن (صامت)</system:String>
-    <system:String x:Key="BtnModalRemindLater">تذكيري لاحقاً</system:String>
-    <system:String x:Key="BtnModalSkipVersion">تخطي هذا الإصدار</system:String>
-    <system:String x:Key="TxtDownloading">جاري التنزيل والتحقق من بصمة التشفير...</system:String>
-
-    <!-- Toast & Dialog Messages -->
-    <system:String x:Key="ConfirmEmptyRecycleTitle">تأكيد تفريغ سلة المهملات نهائياً</system:String>
-    <system:String x:Key="ConfirmEmptyRecycleMsg">هل أنت متأكد من رغبتك في تفريغ سلة المهملات نهائياً من كافة الأقراص؟&#x0a;هذا الإجراء لا يمكن التراجع عنه.</system:String>
-    <system:String x:Key="ConfirmDevCacheTitle">تأكيد مسح كاش المطورين</system:String>
-    <system:String x:Key="ConfirmDevCacheMsg">هل أنت متأكد من رغبتك في حذف مجلدات كاش npm و NuGet و pip؟</system:String>
-    <system:String x:Key="MsgYes">نعم، تابع</system:String>
-    <system:String x:Key="MsgNo">إلغاء</system:String>
-
-    <!-- Additional UI Strings -->
-    <system:String x:Key="TxtRecommendations">توصيات النظام</system:String>
-    <system:String x:Key="TxtTempTitleShort">إزالة الملفات المؤقتة</system:String>
-    <system:String x:Key="TxtTempDescShort">تنظيف ذاكرة الكاش ومجلدات Temp</system:String>
-    <system:String x:Key="TxtStartupTitleShort">تحسين بدء التشغيل</system:String>
-    <system:String x:Key="TxtStartupDescShort">إيقاف برامج الإقلاع لتسريع الإقلاع</system:String>
-    <system:String x:Key="TxtRecycleTitleShort">تفريغ سلة المحذوفات</system:String>
-    <system:String x:Key="TxtRecycleDescShort">استعادة المساحة المحجوزة في السلة بأمان</system:String>
-    <system:String x:Key="TxtApply">تطبيق</system:String>
-    <system:String x:Key="TxtManage">إدارة</system:String>
-    <system:String x:Key="TxtPurge">تفريغ</system:String>
-    <system:String x:Key="TxtScanCenter">مركز فحص وتنظيف المخلفات</system:String>
-    <system:String x:Key="TxtScanSummaryDefault">اضغط على فحص شامل لمعاينة حجم الكاش القابل للحذف</system:String>
-    <system:String x:Key="BtnScanAllText">فحص شامل</system:String>
-    <system:String x:Key="TxtTempCleanFast">✔ آمن وسريع</system:String>
-    <system:String x:Key="TxtTempDetailsDefault">ملفات مؤقتة وكاش نظام ويندوز</system:String>
-    <system:String x:Key="TxtRecycleWarn">⚠️ حذف نهائي مع تأكيد</system:String>
-    <system:String x:Key="TxtBrowserWarn">⚠️ يتطلب إغلاق المتصفح</system:String>
-    <system:String x:Key="TxtBrowserDetailsDefault">كاش التصفح والصور المؤقتة</system:String>
-    <system:String x:Key="TxtDevWarn">⚠️ يتطلب تأكيد صريح</system:String>
-    <system:String x:Key="TxtDevDetailsDefault">حزم التنزيل المؤقتة فقط</system:String>
-    <system:String x:Key="TxtWorkingSetSafe">✔ آمن 100%</system:String>
-    <system:String x:Key="TxtWorkingSetDetailsDefault">تفريغ كاش البرامج الخاملة بأمان</system:String>
-    <system:String x:Key="TxtDiagnosticsTitle">بيانات العتاد المباشرة</system:String>
-    <system:String x:Key="TxtGpuLabel">معالج الرسومات (GPU):</system:String>
-    <system:String x:Key="TxtNetLabel">معدل نقل الشبكة:</system:String>
-    <system:String x:Key="TxtStorageDrivesTitle">الأقراص ووظيفة TRIM (SSD)</system:String>
-    <system:String x:Key="TxtActionCompleted">تمت العملية بنجاح</system:String>
+    <system:String x:Key="UpdateModalTitle">تحديث جديد متوفر</system:String>
+    <system:String x:Key="UpdateModalWhatNew">الجديد في هذا الإصدار:</system:String>
     <system:String x:Key="TxtGettingReleaseNotes">جاري جلب تفاصيل التحديث...</system:String>
-    <system:String x:Key="TxtUpdateError">حدث خطأ أثناء التحديث</system:String>
-    <system:String x:Key="BtnUpdateNowText">تحديث وتثبيت الآن (صامت)</system:String>
-    <system:String x:Key="TxtFreeDiskSpace">المساحة المتاحة للقرص C:</system:String>
-    <system:String x:Key="TxtObservedJunk">المخلفات المرصودة</system:String>
-    <system:String x:Key="TxtEstimatedTime">الزمن المقدر</system:String>
-    <system:String x:Key="TxtLessThanSecond">أقل من ثانية واحدة</system:String>
-    <system:String x:Key="TxtReadyForBoost">جاهز للتحسين الفوري</system:String>
+    <system:String x:Key="TxtUpdateProgressStatus">جاري تنزيل التحديث...</system:String>
+    <system:String x:Key="TxtUpdateError">فشل التحديث</system:String>
+    <system:String x:Key="BtnModalUpdateNow">تحديث الآن</system:String>
+    <system:String x:Key="BtnModalRemindLater">لاحقاً</system:String>
+    <system:String x:Key="BtnModalSkipVersion">تخطي هذا الإصدار</system:String>
+
+    <!-- Punchy Short Toasts & Statuses (المختصر المفيد) -->
+    <system:String x:Key="TxtActionCompleted">تم بنجاح</system:String>
     <system:String x:Key="CardRamUsagePlaceholder">‎14.7 GB‎ من أصل ‎31.7 GB‎</system:String>
     <system:String x:Key="TxtReady">جاهز</system:String>
     <system:String x:Key="TxtZeroItemsPlaceholder">0 عنصر (0 MB)</system:String>
     <system:String x:Key="TxtLastCheckRecent">آخر فحص: منذ قليل</system:String>
-    <system:String x:Key="TxtAppVersionSkipped">تم تخطي هذا التحديث</system:String>
-    <system:String x:Key="TxtUpdateAvailableBadge">تحديث v{0} متوفر</system:String>
-    <system:String x:Key="BtnHeroOptimizeMini">تحسين</system:String>
+    <system:String x:Key="TxtAppVersionSkipped">تم تخطي الإصدار</system:String>
+    <system:String x:Key="TxtUpdateAvailableBadge">تحديث v{0}</system:String>
+    <system:String x:Key="BtnHeroOptimizeMini">تسريع</system:String>
     <system:String x:Key="BtnStateEnabled">مفعّل</system:String>
     <system:String x:Key="BtnStateDisabled">معطّل</system:String>
 </ResourceDictionary>

@@ -826,11 +826,11 @@ namespace Tempo
                     try
                     {
                         Process.Start(new ProcessStartInfo { FileName = cmd, UseShellExecute = true });
-                        ShowToast(isAr ? $"تم تشغيل {toolName} بنجاح." : $"{toolName} launched successfully.", false);
+                        ShowToast(isAr ? $"تم فتح {toolName}" : $"{toolName} opened", false);
                     }
                     catch (Exception ex)
                     {
-                        ShowToast(isAr ? $"تعذر التشغيل: {ex.Message}" : $"Unable to launch: {ex.Message}", true);
+                        ShowToast(isAr ? $"تعذر الفتح: {ex.Message}" : $"Could not open: {ex.Message}", true);
                     }
                 }
             }
@@ -882,20 +882,10 @@ namespace Tempo
                             : "\n\n⚠️ High Security Warning: This application appears to be security/antivirus related! Disabling it may compromise system safety.")
                     : "";
 
-                string title = isAr ? "تأكيد تعطيل برنامج بدء التشغيل - Tempo" : "Confirm Disable Startup Program - Tempo";
+                string title = isAr ? "إيقاف برنامج بدء التشغيل" : "Disable Startup App";
                 string msg = isAr
-                    ? $"هل أنت متأكد من رغبتك في إزالة هذا التطبيق من بدء التشغيل التلقائي؟\n\n" +
-                      $"• اسم البرنامج: {app.Name}\n" +
-                      $"• النطاق: {app.Location} (HKCU)\n" +
-                      $"• المسار: {app.Command}" +
-                      securityNotice +
-                      "\n\nملاحظة أمان: لن يتم حذف ملفات البرنامج من جهازك، بل سيتم منع تشغيله تلقائياً فقط مع إقلاع ويندوز."
-                    : $"Are you sure you want to disable this program from automatically starting?\n\n" +
-                      $"• Program Name: {app.Name}\n" +
-                      $"• Scope: {app.Location} (HKCU)\n" +
-                      $"• Executable Path: {app.Command}" +
-                      securityNotice +
-                      "\n\nSafety Note: Program files will not be deleted, only automatic startup on Windows boot will be disabled.";
+                    ? $"هل تريد إيقاف تشغيل {app.Name} تلقائياً عند فتح الجهاز؟" + securityNotice
+                    : $"Stop {app.Name} from starting automatically with Windows?" + securityNotice;
 
                 var confirm = MessageBox.Show(
                     msg,
@@ -909,7 +899,7 @@ namespace Tempo
                 bool ok = _hardwareMonitor.DisableStartupApp(app);
                 if (ok)
                 {
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تمت إزالة {app.Name} من بدء التشغيل بنجاح." : $"Removed {app.Name} from startup successfully.", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم تعطيل {app.Name}" : $"{app.Name} disabled", false);
                     LoadStartupApps();
                 }
                 else
@@ -927,7 +917,7 @@ namespace Tempo
         {
             var btn = sender as Button;
             if (btn != null) btn.IsEnabled = false;
-            ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "جاري تحسين الذاكرة الخاملة وتفريغ الملفات المؤقتة بأمان..." : "Optimizing inactive memory and clearing temporary caches safely...", false);
+            ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "جاري تنظيف وتسريع الجهاز..." : "Cleaning PC & boosting RAM...", false);
 
             Task.Run(() =>
             {
@@ -937,7 +927,7 @@ namespace Tempo
                 Dispatcher.InvokeAsync(() =>
                 {
                     if (btn != null) btn.IsEnabled = true;
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم التحسين بنجاح! تم تحرير \u200E{ramRes.ReclaimedMb:F1} MB\u200E رام و \u200E{tempRes.ReclaimedMb:F1} MB\u200E كاش مؤقت." : $"Optimization successful! Reclaimed \u200E{ramRes.ReclaimedMb:F1} MB\u200E RAM and \u200E{tempRes.ReclaimedMb:F1} MB\u200E temp cache.", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم التسريع: تحرير \u200E{ramRes.ReclaimedMb:F1} MB\u200E رام و \u200E{tempRes.ReclaimedMb:F1} MB\u200E مؤقت" : $"Boosted: \u200E{ramRes.ReclaimedMb:F1} MB\u200E RAM & \u200E{tempRes.ReclaimedMb:F1} MB\u200E temp freed", false);
                     FetchTelemetryAsync();
                     TxtTargetFilesSize.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم التحسين" : "Optimized";
                     TxtRecTempSize.Text = "0 MB";
@@ -963,7 +953,7 @@ namespace Tempo
         private void BtnScanAll_Click(object sender, RoutedEventArgs e)
         {
             BtnScanAll.IsEnabled = false;
-            TxtScanSummary.Text = (LocalizationManager.CurrentLanguage == "ar") ? "جاري فحص مجلدات الكاش وسلة المحذوفات..." : "Scanning cache directories and Recycle Bin...";
+            TxtScanSummary.Text = (LocalizationManager.CurrentLanguage == "ar") ? "جاري فحص الجهاز..." : "Scanning PC...";
 
             Task.Run(() =>
             {
@@ -975,11 +965,11 @@ namespace Tempo
                     TxtRecycleBinDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"{summary.RecycleBinItems} عنصر (\u200E{summary.RecycleBinMb:F1} MB\u200E)" : $"{summary.RecycleBinItems} items (\u200E{summary.RecycleBinMb:F1} MB\u200E)";
                     TxtBrowserDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"Chrome & Edge ({summary.BrowserCacheFiles} ملف، \u200E{summary.BrowserCacheMb:F1} MB\u200E)" : $"Chrome & Edge ({summary.BrowserCacheFiles} files, \u200E{summary.BrowserCacheMb:F1} MB\u200E)";
                     TxtDevDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"npm, NuGet, pip ({summary.DevCacheFiles} ملف، \u200E{summary.DevCacheMb:F1} MB\u200E)" : $"npm, NuGet, pip ({summary.DevCacheFiles} files, \u200E{summary.DevCacheMb:F1} MB\u200E)";
-                    TxtScanSummary.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"إجمالي المخلفات: \u200E{summary.TotalMb:F1} MB\u200E عبر {summary.TotalItems} عنصر." : $"Total Cleanable Junk: \u200E{summary.TotalMb:F1} MB\u200E across {summary.TotalItems} items.";
+                    TxtScanSummary.Text = (LocalizationManager.CurrentLanguage == "ar") ? $"المخلفات: \u200E{summary.TotalMb:F1} MB\u200E ({summary.TotalItems} ملف)" : $"Found: \u200E{summary.TotalMb:F1} MB\u200E ({summary.TotalItems} files)";
                     TxtTargetFilesSize.Text = $"{summary.TotalMb:F1} MB";
                     TxtRecTempSize.Text = $"{summary.TempMb:F1} MB";
                     TxtRecRecycleBinSize.Text = $"{summary.RecycleBinMb:F1} MB";
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"اكتمل الفحص: \u200E{summary.TotalMb:F1} MB\u200E قابلة للتنظيف." : $"Scan completed: \u200E{summary.TotalMb:F1} MB\u200E cleanable.", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"اكتمل الفحص: \u200E{summary.TotalMb:F1} MB\u200E جاهزة للتنظيف" : $"Scan complete: \u200E{summary.TotalMb:F1} MB\u200E to clean", false);
                 });
             });
         }
@@ -990,7 +980,7 @@ namespace Tempo
             ShowToast(res.Message, false);
             LoadRecycleBinInfo();
             TxtRecTempSize.Text = "0 MB";
-            TxtTempDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف الملفات المؤقتة بنجاح" : "Temporary files cleaned successfully";
+            TxtTempDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف الملفات المؤقتة" : "Temporary files cleaned";
         }
 
         private void BtnEmptyRecycleBin_Click(object sender, RoutedEventArgs e)
@@ -1002,12 +992,10 @@ namespace Tempo
                 return;
             }
 
-            string title = (LocalizationManager.CurrentLanguage == "ar")
-                ? "تأكيد تفريغ سلة المحذوفات - Tempo"
-                : "Confirm Empty Recycle Bin - Tempo";
+            string title = (LocalizationManager.CurrentLanguage == "ar") ? "تفريغ سلة المحذوفات" : "Empty Recycle Bin";
             string msg = (LocalizationManager.CurrentLanguage == "ar")
-                ? $"هل أنت متأكد من رغبتك في تفريغ سلة المحذوفات نهائياً؟\n\n• عدد العناصر: {before.ItemCount:N0} عنصر\n• الحجم المشغول: {LocalizationManager.FormatMb(before.TotalSizeMb)}\n\nتحذير أمان: لا يمكن التراجع عن هذه العملية."
-                : $"Are you sure you want to permanently empty the Recycle Bin?\n\n• Items: {before.ItemCount:N0}\n• Total Size: {LocalizationManager.FormatMb(before.TotalSizeMb)}\n\nWarning: This action cannot be undone.";
+                ? $"هل تريد تفريغ سلة المحذوفات نهائياً؟\n({before.ItemCount:N0} عنصر — {LocalizationManager.FormatMb(before.TotalSizeMb)})"
+                : $"Permanently empty the Recycle Bin?\n({before.ItemCount:N0} items — {LocalizationManager.FormatMb(before.TotalSizeMb)})";
 
             var confirm = MessageBox.Show(
                 msg,
@@ -1027,17 +1015,15 @@ namespace Tempo
         {
             var res = _cleanupService.BrowserCacheFlush();
             ShowToast(res.Message, !res.Success);
-            TxtBrowserDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش المتصفحات بنجاح" : "Browser caches flushed successfully";
+            TxtBrowserDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش المتصفح" : "Browser cache cleaned";
         }
 
         private void BtnDevClean_Click(object sender, RoutedEventArgs e)
         {
-            string title = (LocalizationManager.CurrentLanguage == "ar")
-                ? "تأكيد تنظيف كاش المطورين - Tempo"
-                : "Confirm Developer Cache Purge - Tempo";
+            string title = (LocalizationManager.CurrentLanguage == "ar") ? "تنظيف كاش المطورين" : "Clean Dev Cache";
             string msg = (LocalizationManager.CurrentLanguage == "ar")
-                ? "سيتم تفريغ كاش npm و NuGet و pip بالكامل.\n\n🔒 ملاحظة أمان: لن يتم لمس مشاريعك أو الحزم المثبتة عالمياً نهائياً.\n\nهل تريد المتابعة؟"
-                : "This will completely purge all npm, NuGet, and pip package caches.\n\n🔒 Safety note: Your projects and global packages will NOT be touched.\n\nDo you want to proceed?";
+                ? "هل تريد حذف كاش حزم npm و NuGet و pip المؤقتة؟"
+                : "Clean temporary package caches for npm, NuGet, and pip?";
 
             var confirm = MessageBox.Show(
                 msg,
@@ -1049,7 +1035,7 @@ namespace Tempo
             {
                 var res = _cleanupService.DevCachesFlush();
                 ShowToast(res.Message, false);
-                TxtDevDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش بيئات التطوير بنجاح" : "Developer package caches purged successfully";
+                TxtDevDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش المطورين" : "Developer cache cleaned";
             }
         }
 
@@ -1158,7 +1144,7 @@ namespace Tempo
             UpdateToolbarSettingsUI();
             SaveSettings();
             ShowToolbarView();
-            ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم التبديل إلى شريط سطح المكتب المصاحب." : "Switched to Desktop Companion Toolbar.", false);
+            ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم التبديل إلى الشريط المصغر" : "Switched to Mini Bar", false);
         }
 
         private void BtnToggleToolbar_Click(object sender, RoutedEventArgs e)
@@ -1166,7 +1152,7 @@ namespace Tempo
             _isToolbarEnabled = !_isToolbarEnabled;
             UpdateToolbarSettingsUI();
             SaveSettings();
-            ShowToast(_isToolbarEnabled ? ((LocalizationManager.CurrentLanguage == "ar") ? "تم تفعيل شريط سطح المكتب بنجاح." : "Desktop Toolbar enabled.") : ((LocalizationManager.CurrentLanguage == "ar") ? "تم تعطيل شريط سطح المكتب." : "Desktop Toolbar disabled."), false);
+            ShowToast(_isToolbarEnabled ? ((LocalizationManager.CurrentLanguage == "ar") ? "تم تفعيل الشريط المصغر" : "Mini Bar enabled") : ((LocalizationManager.CurrentLanguage == "ar") ? "تم إيقاف الشريط المصغر" : "Mini Bar disabled"), false);
         }
 
         private void UpdateToolbarSettingsUI()
@@ -1254,12 +1240,12 @@ namespace Tempo
             {
                 _autoHideTimer.Stop();
                 RevealFromPeek();
-                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تثبيت الشريط دائماً على الشاشة (تعطيل الإخفاء التلقائي)." : "Toolbar pinned to screen (Auto-hide disabled).", false);
+                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تثبيت الشريط على الشاشة" : "Mini Bar pinned", false);
             }
             else
             {
                 _autoHideTimer.Start();
-                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تفعيل الإخفاء التلقائي للشريط عند الخمول." : "Auto-hide enabled for toolbar on idle.", false);
+                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تفعيل الإخفاء التلقائي" : "Auto-hide enabled", false);
             }
         }
 
