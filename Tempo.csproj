@@ -14,9 +14,9 @@
     <Product>Tempo PC Optimizer</Product>
     <Company>Eng. Abdelrahman Emam</Company>
     <Authors>Eng. Abdelrahman Emam</Authors>
-    <Version>2.2.31</Version>
-    <AssemblyVersion>2.2.31.0</AssemblyVersion>
-    <FileVersion>2.2.31.0</FileVersion>
+    <Version>2.2.4</Version>
+    <AssemblyVersion>2.2.4.0</AssemblyVersion>
+    <FileVersion>2.2.4.0</FileVersion>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <NoWarn>WFO0003;CS0104;CS0414</NoWarn>
   </PropertyGroup>

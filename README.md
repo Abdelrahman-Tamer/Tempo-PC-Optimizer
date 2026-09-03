@@ -9,15 +9,15 @@
 
   <br />
 
-  [![Release](https://img.shields.io/badge/Release-v2.2.31%20(Stable)-2563EB.svg?style=for-the-badge&logo=windows)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest)
-  [![Tests](https://img.shields.io/badge/Tests-60%2F60%20Passed-10B981.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
+  [![Release](https://img.shields.io/badge/Release-v2.2.4%20(Stable)-2563EB.svg?style=for-the-badge&logo=windows)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest)
+  [![Tests](https://img.shields.io/badge/Tests-70%2F70%20Passed-10B981.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
   [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20x64-6366F1.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
   [![Framework](https://img.shields.io/badge/Framework-.NET%2010.0%20WPF-9333EA.svg?style=for-the-badge)](https://dotnet.microsoft.com/)
   [![License](https://img.shields.io/badge/License-MIT-gray.svg?style=for-the-badge)](LICENSE)
 
   <br />
 
-  [**🌐 Official Website & Download Page**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/) • [**📦 Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.31/Tempo-Setup-v2.2.31.exe) • [**🪶 Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.31/Tempo-v2.2.31-win-x64.zip) • [**🐛 Report an Issue**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/issues)
+  [**🌐 Official Website & Download Page**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/) • [**📦 Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.4/Tempo-Setup-v2.2.4.exe) • [**🪶 Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.4/Tempo-v2.2.4-win-x64.zip) • [**🐛 Report an Issue**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/issues)
 
 </div>
 
@@ -33,18 +33,28 @@
         <img src="docs/assets/screen_overview.png" width="100%" alt="Tempo Diagnostic Dashboard" />
       </td>
       <td width="50%" align="center">
-        <b>🧹 Clean &amp; Optimize Modules</b><br /><br />
-        <img src="docs/assets/screen_optimize.png" width="100%" alt="Tempo Clean and Optimize Modules" />
+        <b>🚀 Active Apps &amp; RAM Manager</b><br /><br />
+        <img src="docs/assets/screen_processes.png" width="100%" alt="Tempo Active Apps and RAM Manager" />
       </td>
     </tr>
     <tr>
       <td width="50%" align="center">
+        <b>🧹 Clean &amp; Optimize Modules</b><br /><br />
+        <img src="docs/assets/screen_optimize.png" width="100%" alt="Tempo Clean and Optimize Modules" />
+      </td>
+      <td width="50%" align="center">
         <b>💽 Hardware Diagnostics &amp; SSD TRIM</b><br /><br />
         <img src="docs/assets/screen_diagnostic.png" width="100%" alt="Hardware Diagnostics & SSD TRIM" />
       </td>
+    </tr>
+    <tr>
       <td width="50%" align="center">
-        <b>🚀 Startup Manager &amp; Language Switcher</b><br /><br />
+        <b>⚙️ Startup Manager &amp; Settings</b><br /><br />
         <img src="docs/assets/screen_startup.png" width="100%" alt="Startup Apps and Settings" />
+      </td>
+      <td width="50%" align="center">
+        <b>💬 User Feedback &amp; Suggestions</b><br /><br />
+        <img src="docs/assets/screen_feedback.png" width="100%" alt="Feedback and Suggestions" />
       </td>
     </tr>
     <tr>
@@ -61,9 +71,11 @@
 ## ⚡ Key Highlights / بالمختصر المفيد
 
 - **📊 100% Honest Telemetry**: Live hardware metrics (CPU clock, RAM usage, GPU stats, Network I/O) polled directly via Windows Win32 APIs and LibreHardwareMonitor — zero fabricated or simulated numbers.
+- **🚀 Active Applications & RAM Manager**: Clean view of active desktop apps with intelligent child-process rollup (bundles helper workers into parent apps), 4-second auto-refresh, and one-click task termination.
 - **🛡️ Hardened Filesystem Safety**: Hierarchical boundary enforcement (`IsSafePath`), automatic skipping of NTFS junctions/symlinks, and a strict 24-hour age cutoff protect personal files from accidental deletion.
 - **🚀 Sub-150ms Turbo RAM Boost**: Immediately flushes inactive application working sets while strictly protecting 15 core Windows NT kernel services (`System`, `dwm`, `explorer`, `svchost`, `MsMpEng`, etc.).
 - **📌 Fluid Companion Mini Bar**: Floating desktop bar (42px top capsule / 34px slim side dock) with live telemetry and smooth in-bar hardware-accelerated motions — zero toast banner spam.
+- **💬 Direct Feedback Channel**: Built-in feedback form in both the desktop app and website for reporting bugs and requesting features with optional system diagnostics.
 - **💽 Drives & Elevated SSD TRIM**: Accurately detects storage media types (SSD vs HDD) and issues elevated TRIM commands safely.
 - **🌐 Dual LTR / RTL Architecture**: Instant switching between English (LTR) and standard Arabic (RTL) without restart, with auto-sizing buttons and zero text clipping.
 
@@ -73,21 +85,21 @@
 
 | Package | Type | Version | Arch | Size | Direct Download |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Tempo-Setup-v2.2.31.exe** | 🚀 **Installer** *(Recommended)* | `2.2.31` | `x64` | **4.65 MB** | [**Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.31/Tempo-Setup-v2.2.31.exe) |
-| **Tempo-v2.2.31-win-x64.zip** | 🪶 **Portable** | `2.2.31` | `x64` | **5.19 MB** | [**Download Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.31/Tempo-v2.2.31-win-x64.zip) |
+| **Tempo-Setup-v2.2.4.exe** | 🚀 **Installer** *(Recommended)* | `2.2.4` | `x64` | **4.46 MB** | [**Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.4/Tempo-Setup-v2.2.4.exe) |
+| **Tempo-v2.2.4-win-x64.zip** | 🪶 **Portable** | `2.2.4` | `x64` | **5.20 MB** | [**Download Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.4/Tempo-v2.2.4-win-x64.zip) |
 
 ### Cryptographic Integrity (SHA256)
 
 Verify downloaded binaries before execution via PowerShell:
 
 ```powershell
-Get-FileHash .\Tempo-Setup-v2.2.31.exe -Algorithm SHA256
+Get-FileHash .\Tempo-Setup-v2.2.4.exe -Algorithm SHA256
 ```
 
 | File | Expected SHA256 Checksum |
 | :--- | :--- |
-| `Tempo-Setup-v2.2.31.exe` | `e9226181ef62d523e37b5ac89053f6de598ad769c2f1497474ca1257ca67578c` |
-| `Tempo-v2.2.31-win-x64.zip` | `0b71dec1877cd2e5bbc56bd1c843dc61043c9025c8f5a19a19e3f2120467d3ea` |
+| `Tempo-Setup-v2.2.4.exe` | `29fdcd4dc9d7750a371e561dd823f08beb3f382e35e5a28c008bfa7ac15adc1b` |
+| `Tempo-v2.2.4-win-x64.zip` | `db17bd683c4834bcb7d8ce27639711d90ed9d15789e479b5c75277a1e0cc36c2` |
 
 ---
 

@@ -269,6 +269,107 @@
             </Setter>
         </Style>
 
+        <!-- ============================================== -->
+        <!-- GLOBAL APP-THEMED CHECKBOX (No white boxes!)   -->
+        <!-- ============================================== -->
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <BulletDecorator Background="Transparent">
+                            <BulletDecorator.Bullet>
+                                <Border x:Name="CheckBorder"
+                                        Width="18"
+                                        Height="18"
+                                        CornerRadius="4"
+                                        Background="#121622"
+                                        BorderBrush="#2A3348"
+                                        BorderThickness="1.2"
+                                        VerticalAlignment="Center">
+                                    <Path x:Name="CheckMark"
+                                          Data="M3.5,8.5 L7,12 L13.5,4.5"
+                                          Stroke="#FFFFFF"
+                                          StrokeThickness="2"
+                                          StrokeStartLineCap="Round"
+                                          StrokeEndLineCap="Round"
+                                          StrokeLineJoin="Round"
+                                          Stretch="Uniform"
+                                          Margin="2.5"
+                                          Visibility="Collapsed"/>
+                                </Border>
+                            </BulletDecorator.Bullet>
+                            <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"/>
+                        </BulletDecorator>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="CheckBorder" Property="Background" Value="#171E2E"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckBorder" Property="Background" Value="#2563EB"/>
+                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="CheckBorder" Property="Background" Value="#1D4ED8"/>
+                                <Setter TargetName="CheckBorder" Property="BorderBrush" Value="#60A5FA"/>
+                            </MultiTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.5"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ============================================== -->
+        <!-- SEGMENTED RADIO BUTTON STYLE (For Feedback)     -->
+        <!-- ============================================== -->
+        <Style x:Key="SegmentedRadioBtn" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{StaticResource TextSecondary}"/>
+            <Setter Property="FontSize" Value="9.8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="bd"
+                                Height="34"
+                                Background="#121620"
+                                BorderBrush="#222738"
+                                BorderThickness="1.2"
+                                CornerRadius="7"
+                                Padding="2,0">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#181F2E"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#2D3A50"/>
+                                <Setter Property="Foreground" Value="#E2E8F0"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#172554"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#3B82F6"/>
+                                <Setter Property="Foreground" Value="#93C5FD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- TOOLBAR INTERACTIVE POD STYLE -->
         <Style x:Key="ToolbarPodStyle" TargetType="Border">
             <Setter Property="Background" Value="#141924"/>
@@ -508,16 +609,36 @@
                                         </StackPanel>
                                     </Grid>
                                 </Button>
+
+                                <!-- Processes & RAM Tab (التطبيقات) -->
+                                <Button x:Name="BtnNavProcesses" Style="{StaticResource NavRailButton}" Click="TabNavProcesses_Click" ToolTip="{DynamicResource NavTooltipProcesses}">
+                                    <Grid Width="56" Height="54">
+                                        <Rectangle x:Name="IndProcesses" Width="3" Height="24" Fill="{StaticResource PrimaryCobalt}" HorizontalAlignment="Right" RadiusX="1.5" RadiusY="1.5" Visibility="Collapsed"/>
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path FlowDirection="LeftToRight" x:Name="IconNavProcesses" Data="M3,5 C3,3.9 3.9,3 5,3 L19,3 C20.1,3 21,3.9 21,5 L21,19 C21,20.1 20.1,21 19,21 L5,21 C3.9,21 3,20.1 3,19 L3,5 Z M5,5 L5,8 L19,8 L19,5 L5,5 Z M5,10 L5,19 L19,19 L19,10 L5,10 Z M7,12 L11,12 L11,14 L7,14 L7,12 Z M13,12 L17,12 L17,14 L13,14 L13,12 Z" Fill="{StaticResource TextSecondary}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtNavProcesses" Text="{DynamicResource NavProcesses}" FontSize="10" FontWeight="Normal" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
                             </StackPanel>
 
-                            <!-- Settings Button pinned to bottom -->
-                            <StackPanel Grid.Row="2" Margin="0,0,0,10">
-                                <Button x:Name="BtnNavSettings" Style="{StaticResource NavRailButton}" Click="TabNavSettings_Click" ToolTip="{DynamicResource NavTooltipSettings}">
-                                    <Grid Width="56" Height="54">
-                                        <Rectangle x:Name="IndSettings" Width="3" Height="24" Fill="{StaticResource PrimaryCobalt}" HorizontalAlignment="Right" RadiusX="1.5" RadiusY="1.5" Visibility="Collapsed"/>
+                            <!-- Settings & Feedback Buttons pinned to bottom -->
+                            <StackPanel Grid.Row="2" Margin="0,0,0,8">
+                                <Button x:Name="BtnNavSettings" Style="{StaticResource NavRailButton}" Height="48" Click="TabNavSettings_Click" ToolTip="{DynamicResource NavTooltipSettings}">
+                                    <Grid Width="56" Height="48">
+                                        <Rectangle x:Name="IndSettings" Width="3" Height="22" Fill="{StaticResource PrimaryCobalt}" HorizontalAlignment="Right" RadiusX="1.5" RadiusY="1.5" Visibility="Collapsed"/>
                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Path FlowDirection="LeftToRight" x:Name="IconNavSettings" Data="M19.14,12.94 C19.17,12.63 19.2,12.32 19.2,12 C19.2,11.68 19.17,11.37 19.14,11.06 L21.16,9.48 C21.34,9.34 21.39,9.08 21.28,8.88 L19.36,5.55 C19.25,5.35 19.01,5.27 18.8,5.35 L16.42,6.31 C15.93,5.93 15.39,5.62 14.81,5.39 L14.45,2.86 C14.41,2.63 14.21,2.46 13.97,2.46 L10.03,2.46 C9.79,2.46 9.59,2.63 9.55,2.86 L9.19,5.39 C8.61,5.62 8.07,5.93 7.58,6.31 L5.2,5.35 C4.99,5.27 4.75,5.35 4.64,5.55 L2.72,8.88 C2.61,9.08 2.66,9.34 2.84,9.48 L4.86,11.06 C4.83,11.37 4.8,11.68 4.8,12 C4.8,12.32 4.83,12.63 4.86,12.94 L2.84,14.52 C2.66,14.66 2.61,14.92 2.72,15.12 L4.64,18.45 C4.75,18.65 4.99,18.73 5.2,18.65 L7.58,17.69 C8.07,18.07 8.61,18.38 9.19,18.61 L9.55,21.14 C9.59,21.37 9.79,21.54 10.03,21.54 L13.97,21.54 C14.21,21.54 14.41,21.37 14.45,21.14 L14.81,18.61 C15.39,18.38 15.93,18.07 16.42,17.69 L18.8,18.65 C19.01,18.73 19.25,18.65 19.36,18.45 L21.28,15.12 C21.39,14.92 21.34,14.66 21.16,14.52 L19.14,12.94 Z M12,15.5 C10.07,15.5 8.5,13.93 8.5,12 C8.5,10.07 10.07,8.5 12,8.5 C13.93,8.5 15.5,10.07 15.5,12 C15.5,13.93 13.93,15.5 12,15.5 Z" Fill="{StaticResource TextSecondary}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center"/>
-                                            <TextBlock x:Name="TxtNavSettings" Text="{DynamicResource NavSettings}" FontSize="10" FontWeight="Normal" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                                            <Path FlowDirection="LeftToRight" x:Name="IconNavSettings" Data="M19.14,12.94 C19.17,12.63 19.2,12.32 19.2,12 C19.2,11.68 19.17,11.37 19.14,11.06 L21.16,9.48 C21.34,9.34 21.39,9.08 21.28,8.88 L19.36,5.55 C19.25,5.35 19.01,5.27 18.8,5.35 L16.42,6.31 C15.93,5.93 15.39,5.62 14.81,5.39 L14.45,2.86 C14.41,2.63 14.21,2.46 13.97,2.46 L10.03,2.46 C9.79,2.46 9.59,2.63 9.55,2.86 L9.19,5.39 C8.61,5.62 8.07,5.93 7.58,6.31 L5.2,5.35 C4.99,5.27 4.75,5.35 4.64,5.55 L2.72,8.88 C2.61,9.08 2.66,9.34 2.84,9.48 L4.86,11.06 C4.83,11.37 4.8,11.68 4.8,12 C4.8,12.32 4.83,12.63 4.86,12.94 L2.84,14.52 C2.66,14.66 2.61,14.92 2.72,15.12 L4.64,18.45 C4.75,18.65 4.99,18.73 5.2,18.65 L7.58,17.69 C8.07,18.07 8.61,18.38 9.19,18.61 L9.55,21.14 C9.59,21.37 9.79,21.54 10.03,21.54 L13.97,21.54 C14.21,21.54 14.41,21.37 14.45,21.14 L14.81,18.61 C15.39,18.38 15.93,18.07 16.42,17.69 L18.8,18.65 C19.01,18.73 19.25,18.65 19.36,18.45 L21.28,15.12 C21.39,14.92 21.34,14.66 21.16,14.52 L19.14,12.94 Z M12,15.5 C10.07,15.5 8.5,13.93 8.5,12 C8.5,10.07 10.07,8.5 12,8.5 C13.93,8.5 15.5,10.07 15.5,12 C15.5,13.93 13.93,15.5 12,15.5 Z" Fill="{StaticResource TextSecondary}" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtNavSettings" Text="{DynamicResource NavSettings}" FontSize="9.5" FontWeight="Normal" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Button>
+                                <Button x:Name="BtnNavFeedback" Style="{StaticResource NavRailButton}" Height="48" Click="TabNavFeedback_Click" ToolTip="{DynamicResource NavTooltipFeedback}">
+                                    <Grid Width="56" Height="48">
+                                        <Rectangle x:Name="IndFeedback" Width="3" Height="22" Fill="{StaticResource PrimaryCobalt}" HorizontalAlignment="Right" RadiusX="1.5" RadiusY="1.5" Visibility="Collapsed"/>
+                                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <Path FlowDirection="LeftToRight" x:Name="IconNavFeedback" Data="M20,2 H4 C2.9,2 2,2.9 2,4 V22 L6,18 H20 C21.1,18 22,17.1 22,16 V4 C22,2.9 21.1,2 20,2 Z M18,14 H6 V12 H18 V14 Z M18,10 H6 V8 H18 V10 Z" Fill="{StaticResource TextSecondary}" Width="15" Height="15" Stretch="Uniform" HorizontalAlignment="Center"/>
+                                            <TextBlock x:Name="TxtNavFeedback" Text="{DynamicResource NavFeedback}" FontSize="9.5" FontWeight="Normal" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Grid>
                                 </Button>
@@ -872,6 +993,12 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                        <Button Style="{StaticResource ToolTileBtn}" Height="30" Margin="0,8,0,0" Click="BtnGoToProcesses_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path FlowDirection="LeftToRight" Data="M3,5 C3,3.9 3.9,3 5,3 L19,3 C20.1,3 21,3.9 21,5 L21,19 C21,20.1 20.1,21 19,21 L5,21 C3.9,21 3,20.1 3,19 L3,5 Z M5,10 L5,19 L19,19 L19,10 L5,10 Z M7,12 L11,12 L11,14 L7,14 L7,12 Z" Fill="{StaticResource PrimaryAccent}" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource BtnViewAllProcesses}" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </Border>
 
@@ -954,7 +1081,123 @@
                             </StackPanel>
 
                             <!-- ============================================== -->
-                            <!-- TAB 4: SETTINGS (الإعدادات ومعلومات التطبيق)     -->
+                            <!-- TAB 4: RUNNING PROCESSES & RAM MANAGER (التطبيقات) -->
+                            <!-- ============================================== -->
+                            <StackPanel x:Name="PanelProcesses" Visibility="Collapsed">
+                                <!-- Summary & Search Card -->
+                                <Border Background="{StaticResource SurfaceContainer}" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{DynamicResource ProcessesTitle}" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="Bold"/>
+                                                <TextBlock x:Name="TxtProcessesSummary" Text="{DynamicResource ProcessesSubTitle}" Foreground="{StaticResource TextSecondary}" FontSize="10.5" Margin="0,2,0,0"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Style="{StaticResource ToolTileBtn}" Height="28" Padding="8,0" Click="BtnRefreshProcesses_Click" ToolTip="{DynamicResource BtnRefreshProcesses}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Path FlowDirection="LeftToRight" Data="M17.65,6.35 C16.2,4.9 14.21,4 12,4 C7.58,4 4.01,7.58 4.01,12 C4.01,16.42 7.58,20 12,20 C15.73,20 18.84,17.45 19.73,14 L17.65,14 C16.83,16.33 14.61,18 12,18 C8.69,18 6,15.31 6,12 C6,8.69 8.69,6 12,6 C13.66,6 15.14,6.69 16.22,7.78 L13,11 L20,11 L20,4 L17.65,6.35 Z" Fill="{StaticResource PrimaryAccent}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="{DynamicResource BtnRefreshProcesses}" FontSize="10.5" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+
+                                        <!-- Search Box -->
+                                        <Border Background="#121620" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6" Height="34" Padding="8,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Path Grid.Column="0" FlowDirection="LeftToRight" Data="M15.5,14 L14.71,14 L14.43,13.73 C15.41,12.59 16,11.11 16,9.5 C16,5.91 13.09,3 9.5,3 C5.91,3 3,5.91 3,9.5 C3,13.09 5.91,16 9.5,16 C11.11,16 12.59,15.41 13.73,14.43 L14,14.71 L14,15.5 L19,20.49 L20.49,19 L15.5,14 Z M9.5,14 C7.01,14 5,11.99 5,9.5 C5,7.01 7.01,5 9.5,5 C11.99,5 14,7.01 14,9.5 C14,11.99 11.99,14 9.5,14 Z" Fill="{StaticResource TextMuted}" Width="12" Height="12" Stretch="Uniform" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <TextBox Grid.Column="1" x:Name="TxtSearchProcess" Background="Transparent" Foreground="{StaticResource TextPrimary}" BorderThickness="0" FontSize="11" VerticalContentAlignment="Center" TextChanged="TxtSearchProcess_TextChanged" CaretBrush="{StaticResource PrimaryAccent}"/>
+                                                <TextBlock Grid.Column="1" x:Name="TxtSearchPlaceholder" Text="{DynamicResource SearchProcessesPlaceholder}" Foreground="{StaticResource TextMuted}" FontSize="11" VerticalAlignment="Center" IsHitTestVisible="False" Margin="2,0,0,0"/>
+                                                <Button Grid.Column="2" x:Name="BtnClearSearch" Visibility="Collapsed" Style="{StaticResource WindowControlBtn}" Width="20" Height="20" Click="BtnClearSearch_Click">
+                                                    <Path FlowDirection="LeftToRight" Data="M0,0 L8,8 M8,0 L0,8" Stroke="{StaticResource TextMuted}" StrokeThickness="1.2" Width="7" Height="7" Stretch="Uniform"/>
+                                                </Button>
+                                            </Grid>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Processes List -->
+                                <TextBlock x:Name="TxtNoProcessesMsg" Text="{DynamicResource TxtNoProcessesFound}" Foreground="{StaticResource TextMuted}" FontSize="11" HorizontalAlignment="Center" Margin="0,30,0,0" Visibility="Collapsed"/>
+                                <ItemsControl x:Name="ListAllProcesses">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <!-- Modern Calm Card Design (No loud neon colors) -->
+                                            <Border Background="#141722" BorderBrush="#222738" BorderThickness="1" CornerRadius="10" Padding="12,10" Margin="0,0,0,7">
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="Auto"/>
+                                                    </Grid.RowDefinitions>
+
+                                                    <!-- Main Row: App Icon + Name/Metadata + RAM + Refined Action Button -->
+                                                    <Grid Grid.Row="0">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!-- App Icon (real or fallback) -->
+                                                        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8" Background="#1B202D" BorderBrush="#282F42" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                            <!-- Real icon -->
+                                                            <Image FlowDirection="LeftToRight" Source="{Binding IconSource}" Width="22" Height="22" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasIconVisibility}"/>
+                                                        </Border>
+                                                        <!-- Fallback icon -->
+                                                        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8" Background="#1B202D" BorderBrush="#282F42" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding FallbackIconVisibility}">
+                                                            <Path FlowDirection="LeftToRight" Data="M4,2 L16,2 C17.1,2 18,2.9 18,4 L18,16 C18,17.1 17.1,18 16,18 L4,18 C2.9,18 2,17.1 2,16 L2,4 C2,2.9 2.9,2 4,2 Z M6,6 L14,6 M6,9 L14,9 M6,12 L10,12" Stroke="#4B5563" StrokeThickness="1.4" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+
+                                                        <!-- Display Name + Subtitle (Process names + instances) -->
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding DisplayName}" Foreground="{StaticResource TextPrimary}" FontSize="12" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding SubtitleText}" Foreground="{StaticResource TextSecondary}" FontSize="9.5" Margin="0,2,0,0" TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+
+                                                        <!-- RAM Value + Refined Ghost Action Button -->
+                                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                            <TextBlock Text="{Binding RamFormatted}" Foreground="#93C5FD" FontSize="11.5" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                                            <Button Height="26" MinWidth="48" Padding="10,0" Tag="{Binding ProcessNamesTag}" Click="BtnEndTask_Click" Visibility="{Binding EndTaskVisibility}" Cursor="Hand">
+                                                                <Button.Template>
+                                                                    <ControlTemplate TargetType="Button">
+                                                                        <Border x:Name="BtnBorder" Background="#1F171A" BorderBrush="#4B2329" BorderThickness="1" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                                <Path FlowDirection="LeftToRight" Data="M0,0 L7,7 M7,0 L0,7" Stroke="#F87171" StrokeThickness="1.5" Width="7" Height="7" Stretch="Uniform" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                                                                <TextBlock Text="{DynamicResource BtnEndTask}" Foreground="#F87171" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                                                            </StackPanel>
+                                                                        </Border>
+                                                                        <ControlTemplate.Triggers>
+                                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                                <Setter TargetName="BtnBorder" Property="Background" Value="#331A1F"/>
+                                                                                <Setter TargetName="BtnBorder" Property="BorderBrush" Value="#782D38"/>
+                                                                            </Trigger>
+                                                                            <Trigger Property="IsPressed" Value="True">
+                                                                                <Setter TargetName="BtnBorder" Property="Background" Value="#4C1D24"/>
+                                                                            </Trigger>
+                                                                        </ControlTemplate.Triggers>
+                                                                    </ControlTemplate>
+                                                                </Button.Template>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+
+                                                    <!-- RAM Usage Bar (Slim, cohesive) -->
+                                                    <ProgressBar Grid.Row="1" Height="2.5" Minimum="0" Maximum="100" Value="{Binding RamPercentOfTotal}" FlowDirection="LeftToRight" Background="#1B202D" Foreground="{StaticResource PrimaryAccent}" BorderThickness="0" Margin="0,8,0,0"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <!-- ============================================== -->
+                            <!-- TAB 5: SETTINGS (الإعدادات ومعلومات التطبيق)     -->
                             <!-- ============================================== -->
                             <StackPanel x:Name="PanelSettings" Visibility="Collapsed">
                                 <!-- 0. Language Configuration (اختيار لغة العرض) -->
@@ -1143,6 +1386,66 @@
                                         <TextBlock Text="Tempo Diagnostic &amp; PC Optimizer" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center"/>
                                         <TextBlock x:Name="TxtAboutVersion" Text="--" Foreground="{StaticResource TextMuted}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center" Margin="0,2,0,6"/>
                                         <TextBlock x:Name="TxtAboutAuthor" Text="Designed &amp; Engineered by Eng. Abdelrahman Emam" Foreground="{StaticResource PrimaryAccent}" FontSize="10" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- ============================================== -->
+                            <!-- TAB 6: FEEDBACK (الملاحظات والاقتراحات)        -->
+                            <!-- ============================================== -->
+                            <StackPanel x:Name="PanelFeedback" Visibility="Collapsed">
+                                <!-- Header Card -->
+                                <Border Background="{StaticResource SurfaceContainer}" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="{DynamicResource FeedbackTitle}" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="Bold"/>
+                                        <TextBlock Text="{DynamicResource FeedbackSubTitle}" Foreground="{StaticResource TextSecondary}" FontSize="10.5" TextWrapping="Wrap" Margin="0,3,0,0" LineHeight="15"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Form Card -->
+                                <Border Background="{StaticResource SurfaceContainer}" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="8" Padding="14,12" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <!-- Feedback Category Radio/Pills -->
+                                        <TextBlock Text="{DynamicResource FeedbackTypeLabel}" Foreground="{StaticResource TextSecondary}" FontSize="10.5" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <Grid Margin="0,0,0,12">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <RadioButton x:Name="RadioFeedbackBug" Grid.Column="0" Style="{StaticResource SegmentedRadioBtn}" Content="{DynamicResource FeedbackTypeBug}" GroupName="FeedbackType" IsChecked="True" Margin="0,0,4,0"/>
+                                            <RadioButton x:Name="RadioFeedbackFeature" Grid.Column="1" Style="{StaticResource SegmentedRadioBtn}" Content="{DynamicResource FeedbackTypeFeature}" GroupName="FeedbackType" Margin="0,0,4,0"/>
+                                            <RadioButton x:Name="RadioFeedbackGeneral" Grid.Column="2" Style="{StaticResource SegmentedRadioBtn}" Content="{DynamicResource FeedbackTypeGeneral}" GroupName="FeedbackType"/>
+                                        </Grid>
+
+                                        <!-- Name / Email (Optional) -->
+                                        <TextBlock Text="{DynamicResource FeedbackNameLabel}" Foreground="{StaticResource TextSecondary}" FontSize="10.5" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                        <Border Background="#121620" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6" Height="34" Padding="10,0" Margin="0,0,0,12">
+                                            <Grid>
+                                                <TextBox x:Name="TxtFeedbackSender" Background="Transparent" Foreground="{StaticResource TextPrimary}" BorderThickness="0" FontSize="11" VerticalContentAlignment="Center" CaretBrush="{StaticResource PrimaryAccent}" TextChanged="TxtFeedbackSender_TextChanged"/>
+                                                <TextBlock x:Name="TxtFeedbackSenderPlaceholder" Text="{DynamicResource FeedbackNamePlaceholder}" Foreground="{StaticResource TextMuted}" FontSize="11" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Message Details -->
+                                        <TextBlock Text="{DynamicResource FeedbackMessageLabel}" Foreground="{StaticResource TextSecondary}" FontSize="10.5" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                        <Border Background="#121620" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6" Height="100" Padding="10,8" Margin="0,0,0,12">
+                                            <Grid>
+                                                <TextBox x:Name="TxtFeedbackMessage" Background="Transparent" Foreground="{StaticResource TextPrimary}" BorderThickness="0" FontSize="11" VerticalContentAlignment="Top" TextWrapping="Wrap" AcceptsReturn="True" CaretBrush="{StaticResource PrimaryAccent}" TextChanged="TxtFeedbackMessage_TextChanged"/>
+                                                <TextBlock x:Name="TxtFeedbackMessagePlaceholder" Text="{DynamicResource FeedbackMessagePlaceholder}" Foreground="{StaticResource TextMuted}" FontSize="11" VerticalAlignment="Top" HorizontalAlignment="Left" IsHitTestVisible="False" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Include System Specs Checkbox -->
+                                        <CheckBox x:Name="ChkIncludeSpecs" IsChecked="True" Content="{DynamicResource FeedbackIncludeSpecs}" Foreground="{StaticResource TextSecondary}" FontSize="10" Cursor="Hand" Margin="0,0,0,14"/>
+
+                                        <!-- Submit Button -->
+                                        <Button x:Name="BtnSubmitFeedback" Style="{StaticResource PrimaryHeroBtn}" Height="34" HorizontalAlignment="Stretch" Click="BtnSubmitFeedback_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Path FlowDirection="LeftToRight" Data="M2.01,21 L23,12 L2.01,3 L2,10 L17,12 L2,14 L2.01,21 Z" Fill="#FFFFFF" Width="12" Height="12" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource BtnSendFeedback}" FontSize="11.5" FontWeight="Bold" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>

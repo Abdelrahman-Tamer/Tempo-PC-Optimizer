@@ -142,4 +142,35 @@
     <system:String x:Key="TxtActiveImpactLabel">Active Apps Delay</system:String>
     <system:String x:Key="SettingsStartWithWindowsTitle">Start Tempo with Windows</system:String>
     <system:String x:Key="SettingsStartWithWindowsDesc">Launch quietly into the desktop mini bar without delaying boot</system:String>
+
+    <!-- Processes & RAM Manager -->
+    <system:String x:Key="NavProcesses">Apps</system:String>
+    <system:String x:Key="NavTooltipProcesses">Process Management</system:String>
+    <system:String x:Key="ProcessesTitle">Active Applications</system:String>
+    <system:String x:Key="ProcessesSubTitle">Overview of primary desktop applications and total memory consumption</system:String>
+    <system:String x:Key="SearchProcessesPlaceholder">Search apps by name...</system:String>
+    <system:String x:Key="BtnEndTask">End</system:String>
+    <system:String x:Key="BadgeProtected">Protected</system:String>
+    <system:String x:Key="BtnRefreshProcesses">Refresh</system:String>
+    <system:String x:Key="TxtRunningAppsSummary">Running Apps:</system:String>
+    <system:String x:Key="BtnViewAllProcesses">Manage Running Apps →</system:String>
+    <system:String x:Key="TxtNoProcessesFound">No applications matched your search.</system:String>
+
+    <!-- Feedback Section -->
+    <system:String x:Key="NavFeedback">Feedback</system:String>
+    <system:String x:Key="NavTooltipFeedback">Send Feedback &amp; Ideas</system:String>
+    <system:String x:Key="FeedbackTitle">Feedback &amp; Suggestions</system:String>
+    <system:String x:Key="FeedbackSubTitle">Help us improve Tempo. Share your thoughts, report issues, or suggest new features.</system:String>
+    <system:String x:Key="FeedbackTypeLabel">Feedback Category</system:String>
+    <system:String x:Key="FeedbackTypeBug">🐛 Bug Report</system:String>
+    <system:String x:Key="FeedbackTypeFeature">💡 Feature Request</system:String>
+    <system:String x:Key="FeedbackTypeGeneral">💬 General Feedback</system:String>
+    <system:String x:Key="FeedbackNameLabel">Your Name / Email (Optional)</system:String>
+    <system:String x:Key="FeedbackNamePlaceholder">e.g. John or john@example.com</system:String>
+    <system:String x:Key="FeedbackMessageLabel">Your Message</system:String>
+    <system:String x:Key="FeedbackMessagePlaceholder">Describe your feedback, issue, or idea in detail...</system:String>
+    <system:String x:Key="FeedbackIncludeSpecs">Include basic hardware info (CPU/RAM) for easier diagnostics</system:String>
+    <system:String x:Key="BtnSendFeedback">Send Feedback</system:String>
+    <system:String x:Key="FeedbackEmptyWarning">Please type your feedback message before sending.</system:String>
+    <system:String x:Key="FeedbackSuccessToast">Thank you! Opening your email client to send feedback...</system:String>
 </ResourceDictionary>

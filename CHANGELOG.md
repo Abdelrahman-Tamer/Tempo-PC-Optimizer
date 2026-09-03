@@ -4,6 +4,21 @@ All notable changes to the **Tempo PC Optimizer** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.4] - 2026-09-03
+
+### Added
+- **Running Apps & RAM Manager Tab (التطبيقات والذاكرة)**: Dedicated navigation tab listing primary desktop applications, accurate RAM consumption in MB/GB, and percentage of total system memory.
+- **Intelligent Application Rollup Engine**: Automatically bundles child worker instances, language servers, and helper processes (`language_server`, `msedgewebview2`, worker node instances) under their primary parent suite (e.g. Antigravity, Chrome, Edge) with combined memory totals.
+- **Calm, Modern Dark UI**: Replaced neon traffic-light indicators with cohesive dark cards (`#141722`), calm ice-blue memory values, and elegant muted rose pill End Task buttons.
+- **Smart 4-Second Auto-Refresh**: Periodically updates application memory in the background with zero lag, automatically pausing during user searches and window minimization.
+- **In-App & Web Feedback System (الملاحظات والاقتراحات)**: Dedicated feedback tab in the sidebar and official landing page allowing users to submit bug reports, feature requests, and suggestions directly to the developer with optional diagnostic specs.
+- **Direct End Task with Safety Guard (إنهاء المهمة)**: One-click process group termination directly from the application with immediate memory reclaim and notification.
+- **Critical OS Protection**: Critical Windows system processes (`System`, `dwm`, `svchost`, `csrss`, `services`, `lsass`, `Tempo`) are badged as **Protected** with process termination disabled to safeguard system stability.
+- **Live Search Filtering**: Instant, zero-latency search box to filter running processes by name or description.
+- **Interactive Showcase on Download Page**: Tabbed screenshot switcher allowing visitors to preview every view in high resolution before installing.
+
+---
+
 ## [2.2.31] - 2026-09-03
 
 ### Added

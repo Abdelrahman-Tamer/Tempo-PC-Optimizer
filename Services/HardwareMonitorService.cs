@@ -48,6 +48,51 @@ namespace Tempo.Services
         public string Recommendation { get; set; } = "";
     }
 
+    public class RunningProcessItem
+    {
+        public string AppKey { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string MainProcessName { get; set; } = "";
+        public string ProcessName => MainProcessName;
+        public double RamMb { get; set; }
+        public string RamFormatted { get; set; } = "";
+        public double RamPercentOfTotal { get; set; }
+        public int InstanceCount { get; set; } = 1;
+        public List<string> AssociatedProcesses { get; set; } = new();
+        public ImageSource? IconSource { get; set; }
+        public int MainPid { get; set; }
+        public string MainPath { get; set; } = "";
+
+        // Tag string for End Task button (comma-separated process names)
+        public string ProcessNamesTag => AssociatedProcesses.Count > 0
+            ? string.Join(",", AssociatedProcesses)
+            : MainProcessName;
+
+        // Clean, elegant metadata subtitle
+        public string SubtitleText
+        {
+            get
+            {
+                bool isAr = LocalizationManager.CurrentLanguage == "ar";
+                string procText = AssociatedProcesses.Count > 1
+                    ? string.Join(", ", AssociatedProcesses)
+                    : MainProcessName;
+
+                if (InstanceCount > 1)
+                {
+                    return isAr
+                        ? $"{InstanceCount} عمليات ({procText})"
+                        : $"{InstanceCount} processes ({procText})";
+                }
+                return procText;
+            }
+        }
+
+        public Visibility EndTaskVisibility => Visibility.Visible;
+        public Visibility HasIconVisibility => IconSource != null ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility FallbackIconVisibility => IconSource == null ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     public class StartupAppItem
     {
         public string Name { get; set; } = "";
@@ -649,6 +694,338 @@ namespace Tempo.Services
                 {
                     try { p.Dispose(); } catch { }
                 }
+            }
+        }
+
+        public static readonly HashSet<string> ProtectedSystemProcesses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "system", "idle", "registry", "smss", "csrss", "wininit", "services", "lsass", "winlogon",
+            "fontdrvhost", "dwm", "memory compression", "svchost", "msmpeng", "securityhealthservice",
+            "securityhealthhost", "tempo", "taskhostw", "sihost", "ctfmon", "explorer",
+            "shellexperiencehost", "startmenuexperiencehost", "searchhost", "textinputhost",
+            "runtimebroker", "applicationframehost", "systemsettings", "shellhost", "backgroundtaskhost",
+            "conhost", "dllhost", "wlanext", "smartscreen", "widgets", "widgetservice",
+            "phoneexperiencehost", "crossdeviceservice", "gameinputredistservice", "esrv", "dsatray",
+            "smmonitor", "nvdisplay.container", "nvwmi64", "applemobiledevicelauncher",
+            "applemobiledeviceprocess", "acrobatnotificationclient", "useroobebroker", "audiodg",
+            "spoolsv", "werfault", "werfaultsecure", "crashpad_handler", "openconsole",
+            "securityhealthsystray", "wmpf_installer", "tiworker", "trustedinstaller"
+        };
+
+        private static (string appKey, string displayName)? IdentifyApplication(string pName, string? path, IntPtr hwnd, string? title)
+        {
+            string pLower = pName.ToLowerInvariant();
+            string pathLower = (path ?? "").ToLowerInvariant();
+
+            // 1. Specific High-Profile Suites and Apps (Roll up helpers into root app)
+            if (pathLower.Contains("antigravity ide"))
+                return ("Antigravity IDE", "Antigravity IDE");
+
+            if (pathLower.Contains(@"\programs\antigravity\") || pLower == "antigravity")
+                return ("Antigravity", "Antigravity");
+
+            if (pLower == "chrome" || pathLower.Contains(@"\google\chrome\"))
+                return ("Google Chrome", "Google Chrome");
+
+            if (pLower == "msedge" || pLower == "msedgewebview2" || pathLower.Contains(@"\microsoft\edge"))
+                return ("Microsoft Edge", "Microsoft Edge");
+
+            if (pLower.Contains("node") || pathLower.Contains(@"\nodejs\"))
+                return ("Node.js", "Node.js JavaScript Runtime");
+
+            if (pLower == "mspcmanager" || pLower == "mspcmanagercore")
+                return ("MSPCManager", "Microsoft PC Manager");
+
+            if (pLower == "open design" || pathLower.Contains(@"\open design\"))
+                return ("Open Design", "Open Design");
+
+            if (pLower == "spotify" || pLower == "spotifylauncher")
+                return ("Spotify", "Spotify");
+
+            if (pLower == "discord" || pathLower.Contains(@"\discord\"))
+                return ("Discord", "Discord");
+
+            if (pLower == "slack" || pathLower.Contains(@"\slack\"))
+                return ("Slack", "Slack");
+
+            if (pLower == "steam" || pathLower.Contains(@"\steam\"))
+                return ("Steam", "Steam");
+
+            if (pLower == "telegram" || pathLower.Contains(@"\telegram"))
+                return ("Telegram", "Telegram Desktop");
+
+            if (pLower == "code" || pathLower.Contains(@"\microsoft vs code\"))
+                return ("VS Code", "Visual Studio Code");
+
+            if (pLower == "devenv")
+                return ("Visual Studio", "Microsoft Visual Studio");
+
+            if (pLower == "powershell" || pLower == "pwsh")
+                return ("PowerShell", "Windows PowerShell");
+
+            if (pLower == "windowsterminal")
+                return ("Windows Terminal", "Windows Terminal");
+
+            if (pLower == "taskmgr")
+                return ("Task Manager", "Task Manager");
+
+            // 2. Any process with an active top-level user window
+            if (hwnd != IntPtr.Zero && !string.IsNullOrWhiteSpace(title) && title.Length > 2)
+            {
+                string appName = pName;
+                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                {
+                    try
+                    {
+                        var vi = FileVersionInfo.GetVersionInfo(path);
+                        if (!string.IsNullOrWhiteSpace(vi.FileDescription))
+                            appName = vi.FileDescription;
+                    }
+                    catch { }
+                }
+                return (pName, appName);
+            }
+
+            // 3. User app installed in Program Files or AppData\Local\Programs with main exe
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                bool isUserAppDir = pathLower.Contains(@"\program files\") || 
+                                   pathLower.Contains(@"\program files (x86)\") || 
+                                   pathLower.Contains(@"\appdata\local\programs\");
+
+                bool isSubHelper = pathLower.Contains(@"\resources\") || 
+                                   pathLower.Contains(@"\bin\") || 
+                                   pathLower.Contains(@"\helpers\") ||
+                                   pathLower.Contains(@"\extensions\");
+
+                if (isUserAppDir && !isSubHelper)
+                {
+                    string appName = pName;
+                    try
+                    {
+                        var vi = FileVersionInfo.GetVersionInfo(path);
+                        if (!string.IsNullOrWhiteSpace(vi.FileDescription))
+                            appName = vi.FileDescription;
+                    }
+                    catch { }
+                    return (pName, appName);
+                }
+            }
+
+            // Non-primary background daemon / service -> skip
+            return null;
+        }
+
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (ImageSource? icon, string displayName)> ProcessMetaCache = new(StringComparer.OrdinalIgnoreCase);
+
+        private static string? GetProcessExePath(Process p)
+        {
+            try
+            {
+                return p.MainModule?.FileName;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static (ImageSource? icon, string displayName) GetCachedProcessMetadata(string processName, string? exePath)
+        {
+            if (ProcessMetaCache.TryGetValue(processName, out var cached))
+            {
+                return cached;
+            }
+
+            ImageSource? icon = null;
+            string displayName = processName;
+
+            try
+            {
+                if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
+                {
+                    icon = ExtractIconFromCommand(exePath);
+                    var vi = FileVersionInfo.GetVersionInfo(exePath);
+                    if (!string.IsNullOrWhiteSpace(vi.FileDescription))
+                    {
+                        displayName = vi.FileDescription;
+                    }
+                }
+            }
+            catch { }
+
+            var meta = (icon, displayName);
+            ProcessMetaCache[processName] = meta;
+            return meta;
+        }
+
+        public List<RunningProcessItem> GetAllRunningProcesses(double totalRamMb = 0)
+        {
+            if (totalRamMb <= 0)
+            {
+                var (_, total, _, _) = GetRamMetrics();
+                totalRamMb = total * 1024.0;
+            }
+
+            int currentSessionId = 1;
+            try
+            {
+                using var currentProc = Process.GetCurrentProcess();
+                currentSessionId = currentProc.SessionId;
+            }
+            catch { }
+
+            Process[] processes = Array.Empty<Process>();
+            try
+            {
+                processes = Process.GetProcesses();
+
+                // Group by AppKey to aggregate all helper processes into the primary application
+                var appMap = new Dictionary<string, (string appKey, string displayName, string mainProc, double totalRam, int instances, HashSet<string> procs, string? mainPath, int mainPid)>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var p in processes)
+                {
+                    try
+                    {
+                        if (p.SessionId != currentSessionId)
+                            continue;
+
+                        string name = p.ProcessName;
+                        if (string.IsNullOrWhiteSpace(name) || ProtectedSystemProcesses.Contains(name))
+                            continue;
+
+                        double wsMb = p.WorkingSet64 / (1024.0 * 1024.0);
+                        if (wsMb < 1.0)
+                            continue;
+
+                        string? exePath = GetProcessExePath(p);
+                        var match = IdentifyApplication(name, exePath, p.MainWindowHandle, p.MainWindowTitle);
+                        if (match == null)
+                            continue;
+
+                        string appKey = match.Value.appKey;
+                        string dispName = match.Value.displayName;
+
+                        if (!appMap.TryGetValue(appKey, out var appData))
+                        {
+                            appData = (appKey, dispName, name, 0.0, 0, new HashSet<string>(StringComparer.OrdinalIgnoreCase), exePath, p.Id);
+                        }
+
+                        appData.totalRam += wsMb;
+                        appData.instances += 1;
+                        appData.procs.Add(name);
+                        if (string.IsNullOrEmpty(appData.mainPath) && !string.IsNullOrEmpty(exePath))
+                        {
+                            appData.mainPath = exePath;
+                        }
+
+                        appMap[appKey] = appData;
+                    }
+                    catch { }
+                }
+
+                var result = new List<RunningProcessItem>();
+                foreach (var kvp in appMap.Values)
+                {
+                    // Focus on primary applications consuming at least 10 MB
+                    if (kvp.totalRam < 10.0)
+                        continue;
+
+                    double ramMb = Math.Round(kvp.totalRam, 1);
+                    double ramPct = totalRamMb > 0 ? Math.Round((ramMb / totalRamMb) * 100.0, 1) : 0;
+                    string ramFormatted = ramMb >= 1024.0
+                        ? $"{(ramMb / 1024.0):F2} GB"
+                        : $"{ramMb:F1} MB";
+
+                    var (icon, _) = GetCachedProcessMetadata(kvp.mainProc, kvp.mainPath);
+
+                    result.Add(new RunningProcessItem
+                    {
+                        AppKey = kvp.appKey,
+                        DisplayName = kvp.displayName,
+                        MainProcessName = kvp.mainProc,
+                        RamMb = ramMb,
+                        RamFormatted = ramFormatted,
+                        RamPercentOfTotal = ramPct,
+                        InstanceCount = kvp.instances,
+                        AssociatedProcesses = kvp.procs.ToList(),
+                        IconSource = icon,
+                        MainPid = kvp.mainPid,
+                        MainPath = kvp.mainPath ?? ""
+                    });
+                }
+
+                return result.OrderByDescending(x => x.RamMb).ToList();
+            }
+            catch
+            {
+                return new List<RunningProcessItem>();
+            }
+            finally
+            {
+                foreach (var p in processes)
+                {
+                    try { p.Dispose(); } catch { }
+                }
+            }
+        }
+
+        public (bool success, double freedMb, string message) TerminateProcessGroup(string processNamesCommaSeparated)
+        {
+            if (string.IsNullOrWhiteSpace(processNamesCommaSeparated))
+                return (false, 0, LocalizationManager.CurrentLanguage == "ar" ? "اسم العملية غير صالح." : "Invalid process name.");
+
+            var names = processNamesCommaSeparated.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                                  .Select(n => n.Trim())
+                                                  .Where(n => !string.IsNullOrEmpty(n))
+                                                  .ToList();
+
+            double freedMb = 0;
+            int killedCount = 0;
+
+            foreach (var processName in names)
+            {
+                if (ProtectedSystemProcesses.Contains(processName))
+                    continue;
+
+                Process[] procs = Array.Empty<Process>();
+                try
+                {
+                    procs = Process.GetProcessesByName(processName);
+                    foreach (var p in procs)
+                    {
+                        try
+                        {
+                            freedMb += p.WorkingSet64 / (1024.0 * 1024.0);
+                            p.Kill();
+                            killedCount++;
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+                finally
+                {
+                    foreach (var p in procs)
+                    {
+                        try { p.Dispose(); } catch { }
+                    }
+                }
+            }
+
+            if (killedCount > 0)
+            {
+                string msg = LocalizationManager.CurrentLanguage == "ar"
+                    ? $"تم إغلاق التطبيق بنجاح وتوفير {freedMb:F1} ميجابايت."
+                    : $"Successfully closed application and freed {freedMb:F1} MB.";
+                return (true, Math.Round(freedMb, 1), msg);
+            }
+            else
+            {
+                string msg = LocalizationManager.CurrentLanguage == "ar"
+                    ? "العملية لم تعد تعمل أو الوصول مرفوض."
+                    : "Process is no longer running or access denied.";
+                return (false, 0, msg);
             }
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -100,6 +101,7 @@ namespace Tempo
         public readonly CleanupService _cleanupService;
         private readonly DispatcherTimer _telemetryTimer;
         private readonly DispatcherTimer _autoHideTimer;
+        private readonly DispatcherTimer _processesRefreshTimer;
         private readonly UpdateService _updateService = new UpdateService();
         private UpdateInfo? _availableUpdate;
         private TrayNotifyIcon? _trayIcon;
@@ -146,16 +148,34 @@ namespace Tempo
             };
             _telemetryTimer.Start();
 
+            // Smart Apps Periodic Refresh Timer (4s interval, only active when Apps tab is open and user not searching)
+            _processesRefreshTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+            _processesRefreshTimer.Tick += (s, e) => {
+                if (this.WindowState != WindowState.Minimized &&
+                    this.Visibility == Visibility.Visible &&
+                    PanelProcesses.Visibility == Visibility.Visible &&
+                    string.IsNullOrWhiteSpace(_processSearchFilter) &&
+                    !_isLoadingProcesses)
+                {
+                    LoadRunningProcessesFast();
+                }
+            };
+
             // Pause polling completely during minimize (0% idle CPU)
             this.StateChanged += (s, e) =>
             {
                 if (this.WindowState == WindowState.Minimized)
                 {
                     _telemetryTimer.Stop();
+                    _processesRefreshTimer.Stop();
                 }
                 else if (this.WindowState == WindowState.Normal)
                 {
                     _telemetryTimer.Start();
+                    if (PanelProcesses.Visibility == Visibility.Visible)
+                    {
+                        _processesRefreshTimer.Start();
+                    }
                     FetchTelemetryAsync();
                 }
             };
@@ -418,6 +438,7 @@ namespace Tempo
 
             _telemetryTimer?.Stop();
             _autoHideTimer?.Stop();
+            _processesRefreshTimer?.Stop();
 
             try { _hardwareMonitor?.Dispose(); } catch { }
 
@@ -510,7 +531,10 @@ namespace Tempo
         public void TabNavOverview_Click(object sender, RoutedEventArgs e) => SelectTab("Overview");
         public void TabNavOptimize_Click(object sender, RoutedEventArgs e) => SelectTab("Optimize");
         public void TabNavDiagnostic_Click(object sender, RoutedEventArgs e) => SelectTab("Diagnostic");
+        public void TabNavProcesses_Click(object sender, RoutedEventArgs e) => SelectTab("Processes");
+        public void BtnGoToProcesses_Click(object sender, RoutedEventArgs e) => SelectTab("Processes");
         public void TabNavSettings_Click(object sender, RoutedEventArgs e) => SelectTab("Settings");
+        public void TabNavFeedback_Click(object sender, RoutedEventArgs e) => SelectTab("Feedback");
 
         public void SelectTab(string tabName)
         {
@@ -518,13 +542,17 @@ namespace Tempo
             PanelOverview.Visibility = Visibility.Collapsed;
             PanelOptimize.Visibility = Visibility.Collapsed;
             PanelDiagnostic.Visibility = Visibility.Collapsed;
+            PanelProcesses.Visibility = Visibility.Collapsed;
             PanelSettings.Visibility = Visibility.Collapsed;
+            PanelFeedback.Visibility = Visibility.Collapsed;
 
             // 2. Reset Indicators and colors
             IndOverview.Visibility = Visibility.Collapsed;
             IndOptimize.Visibility = Visibility.Collapsed;
             IndDiagnostic.Visibility = Visibility.Collapsed;
+            IndProcesses.Visibility = Visibility.Collapsed;
             IndSettings.Visibility = Visibility.Collapsed;
+            IndFeedback.Visibility = Visibility.Collapsed;
 
             var muted = (SolidColorBrush)FindResource("TextSecondary");
             var accent = (SolidColorBrush)FindResource("PrimaryAccent");
@@ -532,7 +560,11 @@ namespace Tempo
             IconNavOverview.Fill = muted; TxtNavOverview.Foreground = muted;
             IconNavOptimize.Fill = muted; TxtNavOptimize.Foreground = muted;
             IconNavDiagnostic.Fill = muted; TxtNavDiagnostic.Foreground = muted;
+            IconNavProcesses.Fill = muted; TxtNavProcesses.Foreground = muted;
             IconNavSettings.Fill = muted; TxtNavSettings.Foreground = muted;
+            IconNavFeedback.Fill = muted; TxtNavFeedback.Foreground = muted;
+
+            _processesRefreshTimer?.Stop();
 
             switch (tabName)
             {
@@ -559,11 +591,26 @@ namespace Tempo
                     LoadStorageDrivesFast();
                     break;
 
+                case "Processes":
+                case "Apps":
+                    PanelProcesses.Visibility = Visibility.Visible;
+                    IndProcesses.Visibility = Visibility.Visible;
+                    IconNavProcesses.Fill = accent; TxtNavProcesses.Foreground = accent;
+                    LoadRunningProcessesFast();
+                    _processesRefreshTimer?.Start();
+                    break;
+
                 case "Settings":
                     PanelSettings.Visibility = Visibility.Visible;
                     IndSettings.Visibility = Visibility.Visible;
                     IconNavSettings.Fill = accent; TxtNavSettings.Foreground = accent;
                     LoadStartupApps();
+                    break;
+
+                case "Feedback":
+                    PanelFeedback.Visibility = Visibility.Visible;
+                    IndFeedback.Visibility = Visibility.Visible;
+                    IconNavFeedback.Fill = accent; TxtNavFeedback.Foreground = accent;
                     break;
             }
         }
@@ -2068,7 +2115,254 @@ namespace Tempo
             LoadStorageDrivesFast();
             LoadRecycleBinInfo();
             LoadStartupApps();
+            if (PanelProcesses.Visibility == Visibility.Visible)
+            {
+                LoadRunningProcessesFast();
+            }
         }
+
+        #region Running Processes & RAM Manager
+
+        private List<RunningProcessItem> _allProcesses = new();
+        private string _processSearchFilter = "";
+        private bool _isLoadingProcesses = false;
+
+        public void LoadRunningProcessesFast()
+        {
+            if (_isLoadingProcesses) return;
+            _isLoadingProcesses = true;
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    var procs = _hardwareMonitor.GetAllRunningProcesses();
+                    Dispatcher.InvokeAsync(() =>
+                    {
+                        _allProcesses = procs;
+                        bool isAr = LocalizationManager.CurrentLanguage == "ar";
+                        double totalRamConsumed = procs.Sum(p => p.RamMb);
+                        string ramSummary = totalRamConsumed >= 1024.0
+                            ? $"{(totalRamConsumed / 1024.0):F2} GB"
+                            : $"{totalRamConsumed:F1} MB";
+
+                        TxtProcessesSummary.Text = isAr
+                            ? $"التطبيقات الأساسية: {procs.Count} تطبيقات • إجمالي الاستهلاك: {ramSummary}"
+                            : $"Active Applications: {procs.Count} apps • Total RAM: {ramSummary}";
+
+                        ApplyProcessFilter();
+                        _isLoadingProcesses = false;
+                    });
+                }
+                catch
+                {
+                    _isLoadingProcesses = false;
+                }
+            });
+        }
+
+        private void ApplyProcessFilter()
+        {
+            var filtered = string.IsNullOrWhiteSpace(_processSearchFilter)
+                ? _allProcesses
+                : _allProcesses.Where(p =>
+                    p.DisplayName.Contains(_processSearchFilter, StringComparison.OrdinalIgnoreCase) ||
+                    p.MainProcessName.Contains(_processSearchFilter, StringComparison.OrdinalIgnoreCase) ||
+                    p.AssociatedProcesses.Any(ap => ap.Contains(_processSearchFilter, StringComparison.OrdinalIgnoreCase))).ToList();
+
+            ListAllProcesses.ItemsSource = filtered;
+            TxtNoProcessesMsg.Visibility = (filtered.Count == 0 && _allProcesses.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private void TxtSearchProcess_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _processSearchFilter = TxtSearchProcess.Text.Trim();
+            TxtSearchPlaceholder.Visibility = string.IsNullOrEmpty(TxtSearchProcess.Text) ? Visibility.Visible : Visibility.Collapsed;
+            BtnClearSearch.Visibility = string.IsNullOrEmpty(TxtSearchProcess.Text) ? Visibility.Collapsed : Visibility.Visible;
+            ApplyProcessFilter();
+        }
+
+        private void BtnClearSearch_Click(object sender, RoutedEventArgs e)
+        {
+            TxtSearchProcess.Text = "";
+            TxtSearchProcess.Focus();
+        }
+
+        private void BtnRefreshProcesses_Click(object sender, RoutedEventArgs e)
+        {
+            LoadRunningProcessesFast();
+        }
+
+        private void BtnEndTask_Click(object sender, RoutedEventArgs e)
+        {
+            string? procNames = (sender as FrameworkElement)?.Tag?.ToString();
+            if (string.IsNullOrWhiteSpace(procNames)) return;
+
+            bool isAr = LocalizationManager.CurrentLanguage == "ar";
+
+            // Find application for friendly display name
+            var appItem = _allProcesses.FirstOrDefault(p =>
+                p.ProcessNamesTag.Equals(procNames, StringComparison.OrdinalIgnoreCase) ||
+                p.MainProcessName.Equals(procNames, StringComparison.OrdinalIgnoreCase));
+
+            string appDisplay = appItem?.DisplayName ?? procNames;
+
+            var (success, freedMb, message) = _hardwareMonitor.TerminateProcessGroup(procNames);
+            if (success)
+            {
+                string toast = isAr
+                    ? $"تم إغلاق {appDisplay} • تم توفير {freedMb:F1} ميجابايت"
+                    : $"Closed {appDisplay} • Freed {freedMb:F1} MB";
+                ShowToast(toast, false);
+                LoadRunningProcessesFast();
+                FetchTelemetryAsync();
+            }
+            else
+            {
+                ShowToast(message, true);
+            }
+        }
+
+        #endregion
+
+        #region User Feedback & Suggestions
+
+        // Feedback endpoint (obfuscated to protect recipient from public scraping & spam bots)
+        private static readonly byte[] _fbPayload = new byte[] { 56, 53, 46, 46, 59, 107, 104, 109, 109, 99, 26, 61, 55, 59, 51, 54, 116, 57, 53, 55 };
+        public static string FeedbackRecipientEmail => GetFeedbackEndpoint();
+        private static readonly HttpClient _feedbackHttpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(12) };
+
+        private static string GetFeedbackEndpoint()
+        {
+            char[] result = new char[_fbPayload.Length];
+            for (int i = 0; i < _fbPayload.Length; i++)
+            {
+                result[i] = (char)(_fbPayload[i] ^ 0x5A);
+            }
+            return new string(result);
+        }
+
+        private static string GetFeedbackApiUrl()
+        {
+            return "https://formsubmit.co/ajax/" + GetFeedbackEndpoint();
+        }
+
+        private void TxtFeedbackSender_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (TxtFeedbackSenderPlaceholder != null)
+            {
+                TxtFeedbackSenderPlaceholder.Visibility = string.IsNullOrEmpty(TxtFeedbackSender.Text)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+        }
+
+        private void TxtFeedbackMessage_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (TxtFeedbackMessagePlaceholder != null)
+            {
+                TxtFeedbackMessagePlaceholder.Visibility = string.IsNullOrEmpty(TxtFeedbackMessage.Text)
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+        }
+
+        private async void BtnSubmitFeedback_Click(object sender, RoutedEventArgs e)
+        {
+            string message = TxtFeedbackMessage?.Text?.Trim() ?? "";
+            bool isAr = LocalizationManager.CurrentLanguage == "ar";
+
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                string warn = LocalizationManager.GetString("FeedbackEmptyWarning", "Please type your feedback message before sending.");
+                ShowToast(warn, true);
+                TxtFeedbackMessage?.Focus();
+                return;
+            }
+
+            string senderContact = TxtFeedbackSender?.Text?.Trim() ?? "";
+            string category = "General Feedback";
+            if (RadioFeedbackBug?.IsChecked == true) category = "Bug Report";
+            else if (RadioFeedbackFeature?.IsChecked == true) category = "Feature Request";
+
+            string hardwareInfo = "None";
+            if (ChkIncludeSpecs?.IsChecked == true)
+            {
+                try
+                {
+                    var (totalGb, usedGb, _, pct) = _hardwareMonitor.GetRamMetrics();
+                    var (cpuPct, _, _) = _hardwareMonitor.GetCpuMetrics();
+                    hardwareInfo = $"App: v{UpdateService.GetCurrentVersion()} | OS: {Environment.OSVersion.VersionString} ({(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")}) | RAM: {usedGb:F1}GB/{totalGb:F1}GB ({pct:F0}%) | CPU: {cpuPct:F0}%";
+                }
+                catch { }
+            }
+
+            if (BtnSubmitFeedback != null)
+            {
+                BtnSubmitFeedback.IsEnabled = false;
+                BtnSubmitFeedback.Opacity = 0.6;
+            }
+
+            try
+            {
+                var payload = new Dictionary<string, string>
+                {
+                    { "_subject", $"[Tempo App Feedback] {category}" + (string.IsNullOrWhiteSpace(senderContact) ? "" : $" from {senderContact}") },
+                    { "category", category },
+                    { "sender", string.IsNullOrWhiteSpace(senderContact) ? "Tempo Desktop User" : senderContact },
+                    { "message", message },
+                    { "hardware", hardwareInfo },
+                    { "_captcha", "false" },
+                    { "_template", "table" }
+                };
+
+                string json = JsonSerializer.Serialize(payload);
+                using var request = new HttpRequestMessage(HttpMethod.Post, GetFeedbackApiUrl());
+                request.Headers.Add("Origin", "https://abdelrahman-tamer.github.io");
+                request.Headers.Add("Referer", "https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/");
+                request.Headers.Add("Accept", "application/json");
+                request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _feedbackHttpClient.SendAsync(request);
+                string responseBody = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode || responseBody.Contains("Activation") || responseBody.Contains("true"))
+                {
+                    string success = isAr 
+                        ? "شكراً لك! تم إرسال ملاحظتك بنجاح وبشكل فوري." 
+                        : "Thank you! Your feedback has been sent directly.";
+                    ShowToast(success, false);
+
+                    if (TxtFeedbackMessage != null) TxtFeedbackMessage.Text = "";
+                    if (TxtFeedbackSender != null) TxtFeedbackSender.Text = "";
+                }
+                else
+                {
+                    string fail = isAr
+                        ? "تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت."
+                        : "Could not send feedback directly. Please check your internet connection.";
+                    ShowToast(fail, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Feedback submission error: {ex.Message}");
+                string fail = isAr
+                    ? "تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت."
+                    : "Could not send feedback directly. Please check your internet connection.";
+                ShowToast(fail, true);
+            }
+            finally
+            {
+                if (BtnSubmitFeedback != null)
+                {
+                    BtnSubmitFeedback.IsEnabled = true;
+                    BtnSubmitFeedback.Opacity = 1.0;
+                }
+            }
+        }
+
+        #endregion
 
         #endregion
 

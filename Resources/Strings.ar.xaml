@@ -142,4 +142,35 @@
     <system:String x:Key="TxtActiveImpactLabel">تأخير البرامج النشطة</system:String>
     <system:String x:Key="SettingsStartWithWindowsTitle">تشغيل Tempo تلقائياً مع بدء ويندوز</system:String>
     <system:String x:Key="SettingsStartWithWindowsDesc">بدء التشغيل بهدوء في شريط الأدوات المصغر دون التأثير على سرعة الإقلاع</system:String>
+
+    <!-- Processes & RAM Manager -->
+    <system:String x:Key="NavProcesses">التطبيقات</system:String>
+    <system:String x:Key="NavTooltipProcesses">إدارة العمليات</system:String>
+    <system:String x:Key="ProcessesTitle">التطبيقات الأساسية</system:String>
+    <system:String x:Key="ProcessesSubTitle">إجمالي استهلاك الذاكرة للتطبيقات الأساسية وإمكانية إغلاقها لتسريع الجهاز</system:String>
+    <system:String x:Key="SearchProcessesPlaceholder">ابحث عن تطبيق بالاسم...</system:String>
+    <system:String x:Key="BtnEndTask">إنهاء</system:String>
+    <system:String x:Key="BadgeProtected">نظام محمي</system:String>
+    <system:String x:Key="BtnRefreshProcesses">تحديث</system:String>
+    <system:String x:Key="TxtRunningAppsSummary">التطبيقات قيد التشغيل:</system:String>
+    <system:String x:Key="BtnViewAllProcesses">إدارة التطبيقات قيد التشغيل ←</system:String>
+    <system:String x:Key="TxtNoProcessesFound">لم يتم العثور على تطبيقات مطابقة للبحث.</system:String>
+
+    <!-- Feedback Section -->
+    <system:String x:Key="NavFeedback">الملاحظات</system:String>
+    <system:String x:Key="NavTooltipFeedback">إرسال الملاحظات والاقتراحات</system:String>
+    <system:String x:Key="FeedbackTitle">الملاحظات والاقتراحات</system:String>
+    <system:String x:Key="FeedbackSubTitle">ساعدنا في تطوير وتحديث Tempo. شاركنا رأيك، بلّغ عن مشكلة، أو اقترح ميزة جديدة تود رؤيتها.</system:String>
+    <system:String x:Key="FeedbackTypeLabel">نوع الملاحظة</system:String>
+    <system:String x:Key="FeedbackTypeBug">🐛 إبلاغ عن مشكلة</system:String>
+    <system:String x:Key="FeedbackTypeFeature">💡 اقتراح ميزة جديدة</system:String>
+    <system:String x:Key="FeedbackTypeGeneral">💬 رأي عام أو استفسار</system:String>
+    <system:String x:Key="FeedbackNameLabel">اسمك أو وسيلة التواصل (اختياري)</system:String>
+    <system:String x:Key="FeedbackNamePlaceholder">مثال: أحمد أو ahmed@example.com</system:String>
+    <system:String x:Key="FeedbackMessageLabel">تفاصيل الرسالة</system:String>
+    <system:String x:Key="FeedbackMessagePlaceholder">اكتب مشكلتك أو فكرتك أو استفسارك هنا بكل تفصيل...</system:String>
+    <system:String x:Key="FeedbackIncludeSpecs">تضمين معلومات العتاد الأساسية (المعالج والرام) لتسهيل فحص المشكلة</system:String>
+    <system:String x:Key="BtnSendFeedback">إرسال الملاحظة</system:String>
+    <system:String x:Key="FeedbackEmptyWarning">يرجى كتابة نص الملاحظة أولاً قبل الإرسال.</system:String>
+    <system:String x:Key="FeedbackSuccessToast">شكراً لمشاركتك! جاري فتح برنامج البريد الإلكتروني لإرسال الملاحظة...</system:String>
 </ResourceDictionary>

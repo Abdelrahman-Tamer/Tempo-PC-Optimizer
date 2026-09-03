@@ -48,7 +48,7 @@ namespace Tempo.Services
             catch
             {
             }
-            return new Version(2, 2, 31);
+            return new Version(2, 2, 4);
         }
 
         public async Task<UpdateInfo?> CheckForUpdatesAsync(bool force = false)
