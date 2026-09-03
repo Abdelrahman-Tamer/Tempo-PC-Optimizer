@@ -65,13 +65,13 @@
     <system:String x:Key="TxtRecycleWarn">⚠️ Permanent delete</system:String>
     <system:String x:Key="TileBrowserTitle">Browser Cache</system:String>
     <system:String x:Key="TxtBrowserWarn">⚠️ Close browser first</system:String>
-    <system:String x:Key="TxtBrowserDetailsDefault">Chrome and Edge temporary web cache</system:String>
+    <system:String x:Key="TxtBrowserDetailsDefault">Chrome &amp; Edge web cache</system:String>
     <system:String x:Key="TileDevTitle">Developer Cache</system:String>
     <system:String x:Key="TxtDevWarn">⚠️ Requires confirmation</system:String>
-    <system:String x:Key="TxtDevDetailsDefault">npm, NuGet, and pip cache files</system:String>
+    <system:String x:Key="TxtDevDetailsDefault">npm, NuGet &amp; pip cache</system:String>
     <system:String x:Key="TileWorkingSetTitle">Optimize RAM</system:String>
     <system:String x:Key="TxtWorkingSetSafe">✔ 100% Safe</system:String>
-    <system:String x:Key="TxtWorkingSetDetailsDefault">Free memory from idle background apps</system:String>
+    <system:String x:Key="TxtWorkingSetDetailsDefault">Free memory from idle apps</system:String>
 
     <!-- Diagnostics Tab -->
     <system:String x:Key="TxtDiagnosticsTitle">Hardware Stats</system:String>

@@ -71,7 +71,7 @@
     <system:String x:Key="TxtDevDetailsDefault">كاش حزم npm و NuGet و pip</system:String>
     <system:String x:Key="TileWorkingSetTitle">تسريع الذاكرة (RAM)</system:String>
     <system:String x:Key="TxtWorkingSetSafe">✔ آمن تماماً</system:String>
-    <system:String x:Key="TxtWorkingSetDetailsDefault">تحرير الذاكرة من البرامج الخاملة في الخلفية</system:String>
+    <system:String x:Key="TxtWorkingSetDetailsDefault">تحرير الذاكرة من البرامج الخاملة</system:String>
 
     <!-- Diagnostics Tab -->
     <system:String x:Key="TxtDiagnosticsTitle">بيانات الجهاز</system:String>
