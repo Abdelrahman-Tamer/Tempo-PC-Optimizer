@@ -60,6 +60,15 @@
       overflow-x: hidden;
     }
 
+    .en, .en-head, .en-title, .en-sub, .hero-subtitle-en {
+      direction: ltr;
+      unicode-bidi: isolate;
+      text-align: center;
+    }
+    .detail-text .en, .feat-card .en-title, .specs-head .en, .spec-lbl .en, .stat-en {
+      text-align: inherit;
+    }
+
     .hero-glow {
       position: absolute; top: 0; left: 50%;
       transform: translateX(-50%);
@@ -70,44 +79,81 @@
 
     .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
+    /* ─── BUTTONS ─── */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      font-weight: 600; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      font-family: var(--ff-ar); font-weight: 600; text-decoration: none;
       border: 1px solid transparent;
-      transition: background .15s var(--ease), border-color .15s var(--ease), box-shadow .15s var(--ease), transform .1s var(--ease);
+      transition: background .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease), transform .15s var(--ease), color .15s var(--ease);
       cursor: pointer; white-space: nowrap;
+      position: relative;
     }
-    .btn:active { transform: scale(.98); }
+    .btn:active { transform: scale(.98) !important; }
 
-    .btn-md  { padding: 10px 20px; font-size: .9rem;  border-radius: var(--r-sm); }
-    .btn-lg  { padding: 14px 28px; font-size: 1rem;   border-radius: var(--r-md); }
-    .btn-xl  { padding: 16px 36px; font-size: 1.05rem; border-radius: var(--r-md); }
+    /* Sizes */
+    .btn-md  { padding: 9px 18px; font-size: .88rem; border-radius: var(--r-sm); }
+    .btn-lg  { padding: 13px 26px; font-size: .96rem; min-height: 52px; border-radius: var(--r-md); }
+    .btn-xl  { padding: 15px 30px; font-size: 1rem; min-height: 54px; border-radius: var(--r-md); }
 
+    /* Primary modern gradient */
     .btn-primary {
-      background: var(--blue);
-      border-color: var(--blue);
+      background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
+      border: 1px solid rgba(147, 197, 253, 0.35);
       color: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 24px -4px rgba(37, 99, 235, .45), inset 0 1px 0 rgba(255, 255, 255, .3);
     }
-    .btn-primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); box-shadow: 0 4px 20px rgba(59,130,246,.35); }
+    .btn-primary:hover {
+      background: linear-gradient(180deg, #60A5FA 0%, #2563EB 100%);
+      border-color: rgba(191, 219, 254, 0.55);
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .3), 0 12px 28px -4px rgba(37, 99, 235, .65), inset 0 1px 0 rgba(255, 255, 255, .45);
+      transform: translateY(-2px);
+    }
 
+    /* Ghost */
     .btn-ghost {
-      background: var(--surface);
-      border-color: var(--border);
-      color: var(--text-2);
+      background: rgba(17, 20, 32, 0.85);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-light);
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .05);
     }
-    .btn-ghost:hover { background: var(--surface-hi); border-color: var(--border-light); color: var(--text); }
+    .btn-ghost:hover {
+      background: rgba(23, 29, 46, 0.95);
+      border-color: rgba(59, 130, 246, 0.45);
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, .35), 0 0 16px rgba(59, 130, 246, .15);
+      transform: translateY(-2px);
+    }
 
-    .btn-download {
-      flex-direction: column;
-      align-items: center;
-      line-height: 1.3;
+    /* Micro-Badges & Icons */
+    .btn-icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 8px; border-radius: 6px;
+      font-size: .72rem; font-family: var(--ff-mono); font-weight: 500;
+      background: rgba(255, 255, 255, .18);
+      border: 1px solid rgba(255, 255, 255, .25);
+      color: #fff;
+      letter-spacing: .02em;
+      direction: ltr;
+      unicode-bidi: isolate;
     }
-    .btn-download .sub {
-      font-size: .73rem;
-      font-family: var(--ff-mono);
-      font-weight: 400;
-      color: rgba(255,255,255,.7);
-      margin-top: 2px;
+    .btn-badge-subtle {
+      display: inline-flex; align-items: center;
+      padding: 3px 8px; border-radius: 6px;
+      font-size: .72rem; font-family: var(--ff-mono); font-weight: 500;
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      letter-spacing: .02em;
+      direction: ltr;
+      unicode-bidi: isolate;
+      transition: border-color .15s, color .15s;
+    }
+    .btn:hover .btn-badge-subtle {
+      border-color: rgba(59, 130, 246, .35);
+      color: var(--text);
     }
 
     nav {
@@ -335,8 +381,8 @@
     .cta { padding: 40px 0 100px; }
     .cta-box {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r-xl); padding: 64px 40px;
-      text-align: center; max-width: 720px; margin: 0 auto;
+      border-radius: var(--r-xl); padding: 56px 36px;
+      text-align: center; max-width: 780px; margin: 0 auto;
     }
     .cta-box h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 6px; }
     .cta-box .en-head { font-family: var(--ff-en); font-size: .9rem; color: var(--text-3); margin-bottom: 14px; }
@@ -425,15 +471,25 @@
     <p class="hero-subtitle-en">A high-precision Windows diagnostic &amp; optimization engine. Now with an automated Setup installer (.exe) that handles shortcuts and uninstaller automatically.</p>
 
     <div class="hero-actions">
-      <a href="Tempo-Setup.exe" download class="btn btn-primary btn-lg btn-download">
-        <span>تحميل برنامج التثبيت (Tempo-Setup.exe)</span>
-        <span class="sub">Official Installer · Windows 10/11 x64 · 4.4 MB</span>
+      <a href="Tempo-Setup.exe" download class="btn btn-primary btn-lg">
+        <span class="btn-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </span>
+        <span>تحميل برنامج التثبيت (Setup.exe)</span>
+        <span class="btn-badge" dir="ltr">4.43 MB</span>
       </a>
       <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-        </svg>
-        GitHub Repository
+        <span class="btn-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+        </span>
+        <span>الكود المصدري على GitHub</span>
+        <span class="btn-badge-subtle" dir="ltr">MIT</span>
       </a>
     </div>
 
@@ -446,19 +502,19 @@
     <div class="trust-row">
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        One-click Setup (.exe)
+        <bdi>تثبيت بنقرة واحدة (Setup.exe)</bdi>
       </span>
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Auto desktop shortcuts
+        <span>اختصارات تلقائية وحذف متكامل</span>
       </span>
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Full uninstaller included
+        <span>بدون إعلانات أو تتبع</span>
       </span>
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Zero ads &amp; MIT License
+        <bdi>مفتوح المصدر MIT</bdi>
       </span>
     </div>
   </div>
@@ -714,15 +770,25 @@
       <div class="en-head">One-click installation with automatic shortcuts.</div>
       <p>حمّل ملف التثبيت الرسمي Tempo-Setup.exe وشغّله. سيتم تثبيت التطبيق وإنشاء اختصارات سطح المكتب وقائمة ابدأ تلقائياً.</p>
       <div class="cta-row">
-        <a href="Tempo-Setup.exe" download class="btn btn-primary btn-xl btn-download">
-          <span>تحميل برنامج التثبيت (Tempo-Setup.exe)</span>
-          <span class="sub">Official Setup · 4.43 MB · Auto shortcuts</span>
+        <a href="Tempo-Setup.exe" download class="btn btn-primary btn-lg">
+          <span class="btn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </span>
+          <span>تحميل برنامج التثبيت (Setup.exe)</span>
+          <span class="btn-badge" dir="ltr">4.43 MB</span>
         </a>
         <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-          </svg>
-          Source Code on GitHub
+          <span class="btn-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+          </span>
+          <span>الكود المصدري على GitHub</span>
+          <span class="btn-badge-subtle" dir="ltr">MIT</span>
         </a>
       </div>
       <div style="margin-top: 18px; font-size: .84rem; color: var(--text-2);">
