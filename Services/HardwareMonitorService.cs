@@ -703,22 +703,72 @@ namespace Tempo.Services
             return StartupImpactLevel.Low;
         }
 
+        private static bool IsAppEnabledInWindows(string appName, bool isUserScope)
+        {
+            try
+            {
+                // 1. Check HKCU (Run, Run32, StartupFolder)
+                using (var baseCu = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default))
+                {
+                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", appName, out bool enCuRun))
+                        return enCuRun;
+                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", appName, out bool enCuRun32))
+                        return enCuRun32;
+                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", appName, out bool enCuFolder))
+                        return enCuFolder;
+                }
+
+                // 2. Check HKLM in Registry64 view (Windows stores BOTH 64-bit and 32-bit StartupApproved here!)
+                using (var baseLm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                {
+                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", appName, out bool enLmRun))
+                        return enLmRun;
+                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", appName, out bool enLmRun32))
+                        return enLmRun32;
+                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", appName, out bool enLmFolder))
+                        return enLmFolder;
+                }
+            }
+            catch { }
+
+            // Default in Windows: if no StartupApproved entry exists, it is enabled by default
+            return true;
+        }
+
+        private static bool CheckApprovedKey(RegistryKey baseKey, string subPath, string appName, out bool isEnabled)
+        {
+            isEnabled = true;
+            try
+            {
+                using var key = baseKey.OpenSubKey(subPath);
+                if (key != null)
+                {
+                    var val = key.GetValue(appName);
+                    if (val is byte[] bytes && bytes.Length > 0)
+                    {
+                        // In Windows, byte 0x02 indicates Enabled.
+                        // Any other byte (0x03, 0x06, 0x07, 0x01, etc.) indicates Disabled.
+                        isEnabled = (bytes[0] == 0x02);
+                        return true;
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
         public List<StartupAppItem> GetStartupApps()
         {
             var apps = new List<StartupAppItem>();
             const string runPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-            const string approvedPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
-            const string approvedPath32 = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32";
 
-            void ReadKey(RegistryHive hive, RegistryView view, string loc, string approvedSubPath)
+            void ReadKey(RegistryHive hive, RegistryView view, string loc, bool isUserScope)
             {
                 try
                 {
                     using var baseKey = RegistryKey.OpenBaseKey(hive, view);
                     using var key = baseKey.OpenSubKey(runPath);
                     if (key == null) return;
-
-                    using var approvedKey = baseKey.OpenSubKey(approvedSubPath);
 
                     foreach (var valueName in key.GetValueNames())
                     {
@@ -740,20 +790,10 @@ namespace Tempo.Services
                         }
                         catch { }
 
-                        // Check Windows StartupApproved status:
-                        // Byte 0x02 is Enabled in Windows Task Manager.
-                        // Byte 0x03 or any non-02 means user disabled it in Task Manager.
-                        bool isEnabledInWindows = true;
-                        if (approvedKey != null)
-                        {
-                            var approvedVal = approvedKey.GetValue(valueName);
-                            if (approvedVal is byte[] bytes && bytes.Length > 0)
-                            {
-                                isEnabledInWindows = (bytes[0] == 0x02);
-                            }
-                        }
-
+                        // 100% Authoritative Windows Startup Status Check
+                        bool isEnabledInWindows = IsAppEnabledInWindows(valueName, isUserScope);
                         bool isEnabled = pathExists && isEnabledInWindows;
+
                         var icon = ExtractIconFromCommand(cmd);
                         var baseImpact = ClassifyImpact(valueName, cmd);
 
@@ -771,9 +811,9 @@ namespace Tempo.Services
                 catch { }
             }
 
-            ReadKey(RegistryHive.CurrentUser, RegistryView.Default, "HKCU", approvedPath);
-            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry64, "HKLM-64", approvedPath);
-            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry32, "HKLM-32", approvedPath32);
+            ReadKey(RegistryHive.CurrentUser, RegistryView.Default, "HKCU", true);
+            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry64, "HKLM-64", false);
+            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry32, "HKLM-32", false);
 
             return apps;
         }

@@ -367,32 +367,37 @@
                         </Grid>
                     </Border>
 
-                    <!-- Column 1: Info (Name, Security Badge, Status, Impact) -->
+                    <!-- Column 1: Info (Row 1: Title & Shield, Row 2: Status, Impact Pill, Scope) -->
                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,8,0">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding DisplayName}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="155" VerticalAlignment="Center"/>
-                            <Border Visibility="{Binding SecurityBadgeVisibility}" Background="#25FFB77D" BorderBrush="#FFB77D" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{Binding SecurityTooltipText}">
+                        <!-- Row 1: App Title & Security Shield -->
+                        <DockPanel LastChildFill="True">
+                            <Border DockPanel.Dock="Right" Visibility="{Binding SecurityBadgeVisibility}" Background="#25FFB77D" BorderBrush="#FFB77D" BorderThickness="1" CornerRadius="3" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center" ToolTip="{Binding SecurityTooltipText}">
                                 <StackPanel Orientation="Horizontal">
                                     <Path FlowDirection="LeftToRight" Data="M12,1 L3,5 L3,11 C3,16.55 6.84,21.74 12,23 C17.16,21.74 21,16.55 21,11 L21,5 L12,1 Z" Fill="{StaticResource AmberWarn}" Width="8" Height="9" Stretch="Uniform" Margin="0,0,3,0"/>
                                     <TextBlock Text="🛡️" FontSize="8" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Border>
-                            <!-- Startup Impact Badge -->
-                            <Border Background="{Binding ImpactBadgeBg}" CornerRadius="3" Padding="5,1" Margin="5,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding ImpactLabel}" Foreground="{Binding ImpactBadgeFg}" FontSize="8.5" FontWeight="SemiBold"/>
-                            </Border>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                            <TextBlock Text="{Binding DisplayName}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                        </DockPanel>
+
+                        <!-- Row 2: Status Dot + Status Label + Impact Badge + Scope -->
+                        <StackPanel Orientation="Horizontal" Margin="0,3,0,0" VerticalAlignment="Center">
                             <!-- Real Dynamic Status Dot (Teal for Enabled, Gray for Disabled) -->
                             <Ellipse Width="5" Height="5" Fill="{Binding StatusDotBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding StatusLabel}" Foreground="{Binding StatusDotBrush}" FontSize="9" FontWeight="Medium" Margin="0,0,5,0" VerticalAlignment="Center"/>
+
+                            <!-- Startup Impact Badge (Cleanly on Line 2 without pushing against button) -->
+                            <Border Background="{Binding ImpactBadgeBg}" CornerRadius="3" Padding="4,1" Margin="0,0,5,0" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding ImpactLabel}" Foreground="{Binding ImpactBadgeFg}" FontSize="8.5" FontWeight="SemiBold"/>
+                            </Border>
+
                             <TextBlock Text="•" Foreground="{StaticResource TextMuted}" FontSize="9" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="{Binding LocationFriendly}" Foreground="{StaticResource TextMuted}" FontSize="9" TextTrimming="CharacterEllipsis" MaxWidth="145" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding LocationFriendly}" Foreground="{StaticResource TextMuted}" FontSize="9" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                         </StackPanel>
                     </StackPanel>
 
                     <!-- Column 2: Action Button -->
-                    <Button Grid.Column="2" Height="26" Style="{StaticResource ActionBtnStencil}" Content="{Binding ActionText}" Click="BtnDisableStartupApp_Click" VerticalAlignment="Center"/>
+                    <Button Grid.Column="2" MinWidth="68" Height="26" Style="{StaticResource ActionBtnStencil}" Content="{Binding ActionText}" Click="BtnDisableStartupApp_Click" VerticalAlignment="Center"/>
                 </Grid>
             </Border>
         </DataTemplate>
