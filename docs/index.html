@@ -4,420 +4,984 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tempo — Windows PC Optimizer & Diagnostic</title>
-  <meta name="description" content="برنامج تثبيت خفيف وعالي الدقة لتشخيص وتحسين أداء ويندوز 10 و 11. تعزيز فوري للذاكرة، تنظيف كاش المطورين، ومنظم بدء التشغيل بأيقونات حقيقية.">
+  <meta name="description" content="أداة هندسية خفيفة وعالية الدقة لتشخيص وتحسين أداء نظام ويندوز. مراقبة فورية للعتاد، تنظيف ذكي للكاش، وشريط مصاحب خفيف.">
   <link rel="icon" type="image/x-icon" href="assets/app.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --bg:           #08090F;
-      --bg-subtle:    #0D1017;
-      --surface:      #111420;
-      --surface-hi:   #171D2E;
-      --border:       #202535;
-      --border-light: #2A3248;
+      --bg-subtle:    #0D111A;
+      --surface:      #121624;
+      --surface-hi:   #181F33;
+      --border:       #1F273D;
+      --border-light: #2A3654;
 
       --blue:         #3B82F6;
-      --blue-dark:    #2563EB;
-      --blue-dim:     rgba(59,130,246,.12);
-      --blue-ring:    rgba(59,130,246,.35);
+      --blue-hover:   #60A5FA;
+      --blue-dark:    #1D4ED8;
+      --blue-dim:     rgba(59,130,246,0.12);
+      --blue-glow:    rgba(59,130,246,0.25);
 
       --green:        #10B981;
+      --green-dim:    rgba(16,185,129,0.15);
 
-      --text:         #EDF0F7;
-      --text-2:       #8B97B0;
-      --text-3:       #535D72;
+      --text:         #F1F5F9;
+      --text-2:       #94A3B8;
+      --text-3:       #55657E;
 
+      --ff-ar:   'Cairo', sans-serif;
       --ff-en:   'Inter', sans-serif;
-      --ff-ar:   'Cairo', 'Inter', sans-serif;
       --ff-mono: 'JetBrains Mono', monospace;
 
       --r-sm:  8px;
       --r-md:  12px;
       --r-lg:  16px;
-      --r-xl:  20px;
+      --r-xl:  22px;
 
-      --ease: cubic-bezier(.4,0,.2,1);
+      --ease: cubic-bezier(.4, 0, .2, 1);
     }
 
-    ::selection { background: var(--blue-ring); color: #fff; }
+    /* Directional / Typography */
+    html[dir="rtl"] body { font-family: var(--ff-ar); }
+    html[dir="ltr"] body { font-family: var(--ff-en); }
 
-    ::-webkit-scrollbar { width: 7px; }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    ::selection { background: var(--blue-glow); color: #fff; }
+
+    ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: #1E2539; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #2C3652; }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    ::-webkit-scrollbar-thumb { background: #1B2236; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #283350; }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: var(--ff-ar);
-      line-height: 1.7;
+      line-height: 1.65;
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
-    .en, .en-head, .en-title, .en-sub, .hero-subtitle-en {
-      direction: ltr;
-      unicode-bidi: isolate;
-      text-align: center;
-    }
-    .detail-text .en, .feat-card .en-title, .specs-head .en, .spec-lbl .en, .stat-en {
-      text-align: inherit;
+    .wrap {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 20px;
+      position: relative;
+      z-index: 1;
     }
 
+    /* Ambient Background Glow */
     .hero-glow {
-      position: absolute; top: 0; left: 50%;
+      position: absolute;
+      top: 0;
+      left: 50%;
       transform: translateX(-50%);
-      width: min(900px, 100%); height: 520px;
-      background: radial-gradient(60% 90% at 50% 0%, rgba(59,130,246,.1) 0%, transparent 100%);
-      pointer-events: none; z-index: 0;
+      width: min(1000px, 100vw);
+      height: 540px;
+      background: radial-gradient(55% 85% at 50% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(14, 165, 233, 0.04) 50%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
     }
-
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
     /* ─── BUTTONS ─── */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-      font-family: var(--ff-ar); font-weight: 600; text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      font-weight: 600;
+      text-decoration: none;
       border: 1px solid transparent;
-      transition: background .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease), transform .15s var(--ease), color .15s var(--ease);
-      cursor: pointer; white-space: nowrap;
+      transition: all .2s var(--ease);
+      cursor: pointer;
+      white-space: nowrap;
       position: relative;
+      user-select: none;
     }
-    .btn:active { transform: scale(.98) !important; }
+    .btn:active { transform: scale(0.98); }
 
-    /* Sizes */
-    .btn-md  { padding: 9px 18px; font-size: .88rem; border-radius: var(--r-sm); }
-    .btn-lg  { padding: 13px 26px; font-size: .96rem; min-height: 52px; border-radius: var(--r-md); }
-    .btn-xl  { padding: 15px 30px; font-size: 1rem; min-height: 54px; border-radius: var(--r-md); }
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      border-radius: var(--r-sm);
+    }
+    .btn-md {
+      padding: 9px 18px;
+      font-size: 0.88rem;
+      border-radius: var(--r-sm);
+    }
+    .btn-lg {
+      padding: 13px 24px;
+      font-size: 0.96rem;
+      min-height: 50px;
+      border-radius: var(--r-md);
+    }
 
-    /* Primary modern gradient */
     .btn-primary {
       background: linear-gradient(180deg, #3B82F6 0%, #1D4ED8 100%);
       border: 1px solid rgba(147, 197, 253, 0.35);
-      color: #fff;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 8px 24px -4px rgba(37, 99, 235, .45), inset 0 1px 0 rgba(255, 255, 255, .3);
+      color: #FFFFFF;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 8px 24px -4px rgba(37, 99, 235, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     .btn-primary:hover {
       background: linear-gradient(180deg, #60A5FA 0%, #2563EB 100%);
       border-color: rgba(191, 219, 254, 0.55);
-      color: #fff;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, .3), 0 12px 28px -4px rgba(37, 99, 235, .65), inset 0 1px 0 rgba(255, 255, 255, .45);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 12px 28px -4px rgba(37, 99, 235, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45);
       transform: translateY(-2px);
+      color: #FFFFFF;
     }
 
-    /* Ghost */
     .btn-ghost {
-      background: rgba(17, 20, 32, 0.85);
+      background: rgba(18, 22, 36, 0.85);
       backdrop-filter: blur(8px);
       border: 1px solid var(--border-light);
       color: var(--text);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, .2), inset 0 1px 0 rgba(255, 255, 255, .05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .btn-ghost:hover {
-      background: rgba(23, 29, 46, 0.95);
+      background: rgba(24, 31, 51, 0.95);
       border-color: rgba(59, 130, 246, 0.45);
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, .35), 0 0 16px rgba(59, 130, 246, .15);
+      color: #FFFFFF;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 16px rgba(59, 130, 246, 0.15);
       transform: translateY(-2px);
     }
 
-    /* Micro-Badges & Icons */
-    .btn-icon { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
     .btn-badge {
-      display: inline-flex; align-items: center;
-      padding: 3px 8px; border-radius: 6px;
-      font-size: .72rem; font-family: var(--ff-mono); font-weight: 500;
-      background: rgba(255, 255, 255, .18);
-      border: 1px solid rgba(255, 255, 255, .25);
-      color: #fff;
-      letter-spacing: .02em;
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-family: var(--ff-mono);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
       direction: ltr;
-      unicode-bidi: isolate;
     }
     .btn-badge-subtle {
-      display: inline-flex; align-items: center;
-      padding: 3px 8px; border-radius: 6px;
-      font-size: .72rem; font-family: var(--ff-mono); font-weight: 500;
-      background: rgba(255, 255, 255, .05);
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-family: var(--ff-mono);
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--border);
       color: var(--text-2);
-      letter-spacing: .02em;
       direction: ltr;
-      unicode-bidi: isolate;
-      transition: border-color .15s, color .15s;
-    }
-    .btn:hover .btn-badge-subtle {
-      border-color: rgba(59, 130, 246, .35);
-      color: var(--text);
     }
 
+    /* ─── NAVBAR ─── */
     nav {
-      position: sticky; top: 0; z-index: 200;
-      height: 64px; display: flex; align-items: center;
-      background: rgba(8,9,15,.88);
+      position: sticky;
+      top: 0;
+      z-index: 300;
+      height: 66px;
+      display: flex;
+      align-items: center;
+      background: rgba(8, 9, 15, 0.88);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
     }
 
     .nav-inner {
-      display: flex; align-items: center; justify-content: space-between; width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
     }
 
     .brand {
-      display: flex; align-items: center; gap: 10px;
-      text-decoration: none; color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      flex-shrink: 0;
     }
-    .brand img { width: 32px; height: 32px; border-radius: 7px; display: block; }
-    .brand-name { font-family: var(--ff-en); font-weight: 700; font-size: 1.1rem; letter-spacing: -.02em; }
+    .brand img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: block;
+    }
+    .brand-name {
+      font-family: var(--ff-en);
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
     .brand-ver {
-      font-family: var(--ff-mono); font-size: .7rem;
-      color: var(--text-3); border: 1px solid var(--border);
-      padding: 1px 6px; border-radius: 4px;
+      font-family: var(--ff-mono);
+      font-size: 0.7rem;
+      color: var(--text-3);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: 1px 6px;
+      border-radius: 4px;
     }
 
-    .nav-links { display: flex; gap: 24px; list-style: none; }
-    .nav-links a { color: var(--text-2); text-decoration: none; font-size: .88rem; font-weight: 500; transition: color .15s; }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-2);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
     .nav-links a:hover { color: var(--text); }
 
-    .nav-end { display: flex; align-items: center; gap: 10px; }
-
-    .hero { padding: 88px 0 72px; text-align: center; }
-
-    .pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 100px; padding: 5px 14px;
-      font-size: .8rem; color: var(--text-2);
-      margin-bottom: 28px;
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
-    .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    /* Language Switcher Button */
+    .lang-switcher {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s var(--ease);
+    }
+    .lang-switcher:hover {
+      border-color: var(--blue);
+      color: var(--text);
+      background: var(--surface-hi);
+    }
+    .lang-switcher svg {
+      color: var(--blue);
+      flex-shrink: 0;
+    }
+
+    /* Mobile Hamburger */
+    .mobile-menu-btn {
+      display: none;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--r-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* Mobile Drawer */
+    .mobile-drawer {
+      display: none;
+      position: fixed;
+      top: 66px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(8, 9, 15, 0.96);
+      backdrop-filter: blur(20px);
+      z-index: 290;
+      padding: 24px 20px;
+      flex-direction: column;
+      gap: 16px;
+      border-bottom: 1px solid var(--border);
+      animation: fadeIn 0.2s ease-out;
+    }
+    .mobile-drawer.open {
+      display: flex;
+    }
+    .mobile-drawer a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 1.05rem;
+      font-weight: 600;
+      padding: 12px 14px;
+      border-radius: var(--r-sm);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .mobile-drawer .drawer-actions {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      padding: 68px 0 54px;
+      text-align: center;
+    }
+
+    .pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border-light);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 0.82rem;
+      color: var(--text-2);
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
 
     .hero h1 {
-      font-size: clamp(2.2rem, 5vw, 3.4rem);
-      font-weight: 800; letter-spacing: -.03em;
-      line-height: 1.18; max-width: 780px;
-      margin: 0 auto 10px; color: #fff;
+      font-size: clamp(2rem, 4.5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      max-width: 820px;
+      margin: 0 auto 14px;
+      color: #FFFFFF;
     }
 
     .hero-subtitle {
-      font-size: clamp(.95rem, 2vw, 1.12rem);
-      color: var(--text-2); max-width: 580px;
-      margin: 12px auto 0; line-height: 1.7;
-    }
-    .hero-subtitle-en {
-      font-family: var(--ff-en);
-      font-size: .9rem; color: var(--text-3);
-      max-width: 560px; margin: 6px auto 0;
-      line-height: 1.6;
+      font-size: clamp(0.95rem, 2vw, 1.12rem);
+      color: var(--text-2);
+      max-width: 620px;
+      margin: 0 auto 30px;
+      line-height: 1.7;
     }
 
     .hero-actions {
-      display: flex; align-items: center; justify-content: center;
-      gap: 14px; flex-wrap: wrap; margin-top: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
     }
 
-    .installer-info-sub {
-      display: flex; align-items: center; justify-content: center;
-      gap: 16px; margin-top: 14px; font-size: .85rem; color: var(--text-2);
+    .hero-subinfo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 14px;
+      font-size: 0.85rem;
+      color: var(--text-3);
+      flex-wrap: wrap;
     }
-    .installer-info-sub a {
-      color: var(--blue); text-decoration: none; font-weight: 500;
+    .hero-subinfo a {
+      color: var(--blue-hover);
+      text-decoration: none;
+      font-weight: 500;
     }
-    .installer-info-sub a:hover { text-decoration: underline; }
+    .hero-subinfo a:hover { text-decoration: underline; }
 
-    .trust-row {
-      display: flex; align-items: center; justify-content: center;
-      gap: 24px; flex-wrap: wrap;
-      margin-top: 22px; font-size: .82rem;
-      color: var(--text-3); font-family: var(--ff-en);
+    .trust-badges {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 26px;
+      font-size: 0.82rem;
+      color: var(--text-2);
     }
-    .trust-row span { display: flex; align-items: center; gap: 6px; }
-    .trust-row svg { flex-shrink: 0; }
+    .trust-badges span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .trust-badges svg {
+      color: var(--green);
+      flex-shrink: 0;
+    }
 
+    /* ─── STATS BAR ─── */
     .stats-bar {
-      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
       background: var(--bg-subtle);
-      padding: 32px 0;
+      padding: 24px 0;
+      margin: 20px 0 60px;
     }
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
-    .stat {
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .stat-card {
       text-align: center;
-      border-left: 1px solid var(--border);
-      padding: 0 24px;
+      padding: 10px 16px;
+      position: relative;
     }
-    .stat:last-child { border-left: none; }
+    .stat-card:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 15%;
+      height: 70%;
+      width: 1px;
+      background: var(--border);
+    }
+    html[dir="rtl"] .stat-card:not(:last-child)::after { left: 0; }
+    html[dir="ltr"] .stat-card:not(:last-child)::after { right: 0; }
+
     .stat-val {
-      display: block; font-family: var(--ff-mono);
-      font-size: 1.8rem; font-weight: 600;
-      color: var(--blue); letter-spacing: -.03em;
+      display: block;
+      font-family: var(--ff-mono);
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--blue-hover);
+      letter-spacing: -0.02em;
     }
-    .stat-ar { font-size: .88rem; color: var(--text-2); margin-top: 2px; }
-    .stat-en { font-size: .75rem; color: var(--text-3); font-family: var(--ff-en); }
+    .stat-lbl {
+      font-size: 0.86rem;
+      color: var(--text-2);
+      margin-top: 4px;
+      font-weight: 500;
+    }
 
-    .sec-head { text-align: center; max-width: 580px; margin: 0 auto 48px; }
+    /* ─── SECTION HEADERS ─── */
+    .sec-head {
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto 36px;
+    }
     .sec-head h2 {
-      font-size: clamp(1.5rem, 3vw, 2rem);
-      font-weight: 700; letter-spacing: -.02em;
+      font-size: clamp(1.45rem, 3vw, 1.95rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
       margin-bottom: 8px;
+      color: #FFFFFF;
     }
-    .sec-head p { color: var(--text-2); font-size: .95rem; }
-    .sec-head .en { font-family: var(--ff-en); font-size: .82rem; color: var(--text-3); margin-top: 3px; }
+    .sec-head p {
+      color: var(--text-2);
+      font-size: 0.94rem;
+      line-height: 1.6;
+    }
 
-    .showcase { padding: 72px 0; }
-
+    /* ─── SHOWCASE ─── */
+    .showcase {
+      padding: 10px 0 70px;
+    }
     .window-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r-xl); overflow: hidden;
-      box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(59,130,246,.08);
-      max-width: 920px; margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(59,130,246,0.08);
+      max-width: 960px;
+      margin: 0 auto;
     }
     .window-bar {
-      background: #0B0E18; padding: 11px 18px;
-      display: flex; align-items: center; justify-content: space-between;
+      background: #090C14;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       border-bottom: 1px solid var(--border);
     }
-    .window-title-row { display: flex; align-items: center; gap: 8px; font-family: var(--ff-en); font-size: .82rem; color: var(--text-3); }
+    .window-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--ff-en);
+      font-size: 0.82rem;
+      color: var(--text-3);
+    }
     .window-btns { display: flex; gap: 6px; }
-    .wbtn { width: 10px; height: 10px; border-radius: 50%; background: var(--border-light); }
-    .wbtn.red { background: #FF5F56; } .wbtn.yellow { background: #FEBC2E; } .wbtn.green { background: #28C840; }
+    .wbtn { width: 10px; height: 10px; border-radius: 50%; }
+    .wbtn.red { background: #FF5F56; }
+    .wbtn.yellow { background: #FEBC2E; }
+    .wbtn.green { background: #28C840; }
 
     .window-body {
-      display: grid; grid-template-columns: 1.15fr 1fr;
-      align-items: stretch; background: #08090F;
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      align-items: stretch;
+      background: #07090F;
     }
-    .window-img { padding: 20px; display: flex; align-items: center; justify-content: center; }
-    .window-img img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
-
-    .window-details { padding: 36px 32px; display: flex; flex-direction: column; gap: 26px; border-right: 1px solid var(--border); }
-    .detail-item { display: flex; gap: 14px; align-items: flex-start; }
-    .detail-num {
-      font-family: var(--ff-mono); font-size: .8rem; font-weight: 600;
-      color: var(--blue); background: var(--blue-dim);
-      border: 1px solid rgba(59,130,246,.22);
-      width: 26px; height: 26px; border-radius: 6px;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    .window-img {
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #06080D;
     }
-    .detail-text h4 { font-size: .98rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-    .detail-text .ar { font-size: .85rem; color: var(--text-2); line-height: 1.55; }
-    .detail-text .en { font-family: var(--ff-en); font-size: .76rem; color: var(--text-3); margin-top: 2px; }
+    .window-img img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      display: block;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+    }
 
-    .features { padding: 72px 0; }
-    .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .window-details {
+      padding: 34px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 24px;
+    }
+    html[dir="rtl"] .window-details { border-right: 1px solid var(--border); }
+    html[dir="ltr"] .window-details { border-left: 1px solid var(--border); }
 
+    .detail-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .detail-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--blue-dim);
+      border: 1px solid rgba(59,130,246,0.22);
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: var(--ff-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+    .detail-text h4 {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .detail-text p {
+      font-size: 0.87rem;
+      color: var(--text-2);
+      line-height: 1.55;
+    }
+
+    /* ─── CORE FEATURES (Concise 4-Card Grid) ─── */
+    .features {
+      padding: 20px 0 70px;
+    }
+    .feat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
     .feat-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r-lg); padding: 28px;
-      transition: border-color .2s, background .2s;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 26px;
+      transition: transform 0.2s var(--ease), border-color 0.2s var(--ease), background 0.2s var(--ease);
+      display: flex;
+      flex-direction: column;
     }
-    .feat-card:hover { background: var(--surface-hi); border-color: var(--border-light); }
-
+    .feat-card:hover {
+      transform: translateY(-3px);
+      background: var(--surface-hi);
+      border-color: var(--border-light);
+    }
+    .feat-top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
     .feat-icon {
-      width: 40px; height: 40px; border-radius: 9px;
-      background: var(--blue-dim); border: 1px solid rgba(59,130,246,.2);
-      display: flex; align-items: center; justify-content: center;
-      color: var(--blue); margin-bottom: 18px;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--blue-dim);
+      border: 1px solid rgba(59,130,246,0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue-hover);
+      flex-shrink: 0;
     }
-    .feat-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
-    .feat-card .en-title { font-family: var(--ff-en); font-size: .8rem; color: var(--text-3); margin-bottom: 10px; }
-    .feat-card p { font-size: .87rem; color: var(--text-2); line-height: 1.62; }
+    .feat-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    .feat-card p {
+      font-size: 0.9rem;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
 
-    .companion { padding: 72px 0; }
+    /* ─── COMPANION BAR ─── */
+    .companion {
+      padding: 20px 0 70px;
+    }
     .companion-inner {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r-xl); padding: 48px;
-      display: grid; grid-template-columns: 1fr 1.1fr;
-      gap: 48px; align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 36px;
+      align-items: center;
     }
     .companion-copy h2 {
       font-size: clamp(1.3rem, 2.5vw, 1.8rem);
-      font-weight: 700; letter-spacing: -.02em; margin-bottom: 6px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      color: #FFFFFF;
     }
-    .companion-copy .en-head { font-family: var(--ff-en); font-size: .88rem; color: var(--text-3); margin-bottom: 14px; }
-    .companion-copy p { font-size: .92rem; color: var(--text-2); line-height: 1.7; margin-bottom: 20px; }
-    .companion-copy .en-sub { font-family: var(--ff-en); font-size: .8rem; color: var(--text-3); margin-top: -14px; margin-bottom: 20px; }
-    .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .companion-copy p {
+      font-size: 0.94rem;
+      color: var(--text-2);
+      line-height: 1.65;
+      margin-bottom: 20px;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
     .tag {
-      font-family: var(--ff-mono); font-size: .74rem;
-      background: var(--bg-subtle); border: 1px solid var(--border);
-      padding: 5px 10px; border-radius: 6px; color: var(--text-2);
+      font-family: var(--ff-mono);
+      font-size: 0.76rem;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      padding: 5px 11px;
+      border-radius: 6px;
+      color: var(--text-2);
     }
     .companion-visual {
-      background: var(--bg-subtle); border: 1px solid var(--border);
-      border-radius: var(--r-lg); padding: 28px;
-      display: flex; align-items: center; justify-content: center;
+      background: #07090F;
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
     }
-    .companion-visual img { max-width: 100%; height: auto; border-radius: 12px; display: block; }
+    .companion-visual img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      display: block;
+    }
 
-    .specs { padding: 72px 0; }
+    /* ─── SPECS & VERIFICATION ─── */
+    .specs {
+      padding: 20px 0 70px;
+    }
     .specs-card {
-      max-width: 780px; margin: 0 auto;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r-lg); overflow: hidden;
+      max-width: 820px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
     }
     .specs-head {
-      padding: 20px 28px; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0C101A;
     }
-    .specs-head h3 { font-size: 1rem; font-weight: 600; }
-    .specs-head .en { font-family: var(--ff-en); font-size: .78rem; color: var(--text-3); }
-    .mono-badge { font-family: var(--ff-mono); font-size: .72rem; color: var(--text-3); background: var(--bg-subtle); border: 1px solid var(--border); padding: 3px 8px; border-radius: 5px; }
+    .specs-head h3 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+    .mono-badge {
+      font-family: var(--ff-mono);
+      font-size: 0.74rem;
+      color: var(--blue-hover);
+      background: var(--blue-dim);
+      border: 1px solid rgba(59,130,246,0.25);
+      padding: 3px 8px;
+      border-radius: 5px;
+    }
 
-    .spec-list { display: grid; grid-template-columns: 1fr 1fr; }
+    .spec-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
     .spec-item {
-      display: flex; justify-content: space-between; align-items: baseline;
-      padding: 14px 28px; border-bottom: 1px solid var(--border);
-      font-size: .88rem; gap: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 24px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      gap: 16px;
     }
     .spec-item:nth-last-child(-n+2) { border-bottom: none; }
-    .spec-lbl { color: var(--text-2); }
-    .spec-lbl .en { font-family: var(--ff-en); font-size: .74rem; color: var(--text-3); display: block; margin-top: 1px; }
-    .spec-v { font-family: var(--ff-mono); font-size: .82rem; color: var(--text); font-weight: 500; text-align: left; }
-
-    .cta { padding: 40px 0 100px; }
-    .cta-box {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--r-xl); padding: 56px 36px;
-      text-align: center; max-width: 780px; margin: 0 auto;
+    .spec-lbl {
+      color: var(--text-2);
+      font-weight: 500;
     }
-    .cta-box h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 6px; }
-    .cta-box .en-head { font-family: var(--ff-en); font-size: .9rem; color: var(--text-3); margin-bottom: 14px; }
-    .cta-box p { color: var(--text-2); font-size: .95rem; max-width: 480px; margin-inline: auto; margin-bottom: 32px; }
-    .cta-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+    .spec-v {
+      font-family: var(--ff-mono);
+      font-size: 0.82rem;
+      color: var(--text);
+      font-weight: 600;
+      direction: ltr;
+      text-align: right;
+    }
 
+    /* PowerShell snippet card */
+    .verify-card {
+      margin-top: 16px;
+      padding: 16px 20px;
+      background: #0B0E17;
+      border-top: 1px solid var(--border);
+    }
+    .verify-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .verify-lbl {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .code-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #05070B;
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 8px 12px;
+      gap: 10px;
+    }
+    .code-box code {
+      font-family: var(--ff-mono);
+      font-size: 0.78rem;
+      color: var(--blue-hover);
+      direction: ltr;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .copy-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover {
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    /* ─── CTA ─── */
+    .cta {
+      padding: 20px 0 80px;
+    }
+    .cta-box {
+      background: linear-gradient(180deg, var(--surface) 0%, #0A0D15 100%);
+      border: 1px solid var(--border-light);
+      border-radius: var(--r-xl);
+      padding: 48px 24px;
+      text-align: center;
+      max-width: 820px;
+      margin: 0 auto;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    }
+    .cta-box h2 {
+      font-size: clamp(1.5rem, 3.2vw, 2rem);
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #FFFFFF;
+    }
+    .cta-box p {
+      color: var(--text-2);
+      font-size: 0.95rem;
+      max-width: 520px;
+      margin: 0 auto 28px;
+    }
+    .cta-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── FOOTER ─── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 36px 0;
-      font-size: .82rem; color: var(--text-3);
+      padding: 30px 0;
+      font-size: 0.84rem;
+      color: var(--text-3);
+      margin-top: auto;
+      background: var(--bg);
     }
-    .foot-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
-    .foot-inner a { color: var(--text-2); text-decoration: none; transition: color .15s; }
-    .foot-inner a:hover { color: var(--text); }
+    .foot-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+    .foot-inner a {
+      color: var(--text-2);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .foot-inner a:hover { color: var(--blue-hover); }
 
-    @media (max-width: 880px) {
+    /* ─── RESPONSIVE BREAKPOINTS ─── */
+    @media (max-width: 900px) {
       .nav-links { display: none; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .stat { border-left: none; border-bottom: 1px solid var(--border); padding: 20px; }
-      .stat:nth-child(n+3) { border-bottom: none; }
-      .feat-grid { grid-template-columns: 1fr 1fr; }
-      .window-body { grid-template-columns: 1fr; }
-      .window-details { border-right: none; border-top: 1px solid var(--border); }
-      .companion-inner { grid-template-columns: 1fr; }
-      .spec-list { grid-template-columns: 1fr; }
-      .spec-item:nth-last-child(2) { border-bottom: 1px solid var(--border); }
+      .mobile-menu-btn { display: inline-flex; }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      .stat-card:not(:last-child)::after { display: none; }
+      .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        padding: 16px;
+      }
+
+      .window-body {
+        grid-template-columns: 1fr;
+      }
+      html[dir="rtl"] .window-details,
+      html[dir="ltr"] .window-details {
+        border: none;
+        border-top: 1px solid var(--border);
+        padding: 26px 20px;
+      }
+
+      .companion-inner {
+        grid-template-columns: 1fr;
+        padding: 30px 24px;
+      }
+
+      .spec-list {
+        grid-template-columns: 1fr;
+      }
+      .spec-item:nth-last-child(2) {
+        border-bottom: 1px solid var(--border);
+      }
     }
-    @media (max-width: 560px) {
-      .feat-grid { grid-template-columns: 1fr; }
-      .hero-actions { flex-direction: column; align-items: stretch; }
-      .btn { justify-content: center; }
-      .trust-row { gap: 14px; }
-      .cta-row { flex-direction: column; }
-      .companion-inner { padding: 28px 20px; }
-      .foot-inner { justify-content: center; text-align: center; }
+
+    @media (max-width: 640px) {
+      .feat-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero {
+        padding: 48px 0 40px;
+      }
+      .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-lg {
+        width: 100%;
+      }
+      .cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .cta-actions .btn {
+        width: 100%;
+      }
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .stat-val {
+        font-size: 1.55rem;
+      }
+      .stat-lbl {
+        font-size: 0.78rem;
+      }
+      .foot-inner {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+      }
+      .spec-item {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+      .spec-v {
+        text-align: start;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .wrap {
+        padding: 0 14px;
+      }
+      .brand-name {
+        font-size: 1rem;
+      }
+      .brand-ver {
+        display: none;
+      }
+      .nav-actions .btn-md {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -435,134 +999,157 @@
     </a>
 
     <ul class="nav-links">
-      <li><a href="#showcase">نظرة عامة</a></li>
-      <li><a href="#features">الميزات</a></li>
-      <li><a href="#companion">الشريط المصاحب</a></li>
-      <li><a href="#specs">المواصفات</a></li>
-      <li><a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/blob/main/CHANGELOG.md" target="_blank">سجل التغييرات</a></li>
+      <li><a href="#overview" data-i18n="nav_overview">نظرة عامة</a></li>
+      <li><a href="#features" data-i18n="nav_features">الميزات</a></li>
+      <li><a href="#companion" data-i18n="nav_companion">الشريط المصاحب</a></li>
+      <li><a href="#specs" data-i18n="nav_specs">المواصفات</a></li>
+      <li><a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/blob/main/CHANGELOG.md" target="_blank" data-i18n="nav_changelog">سجل التغييرات</a></li>
     </ul>
 
-    <div class="nav-end">
-      <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-md">
+    <div class="nav-actions">
+      <!-- Language Switcher -->
+      <button id="langToggle" class="lang-switcher" type="button" aria-label="تبديل اللغة / Switch Language">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>
+        </svg>
+        <span id="langLabel">English</span>
+      </button>
+
+      <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-sm" aria-label="GitHub Repository">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
         </svg>
-        GitHub
+        <span style="font-family: var(--ff-en);">GitHub</span>
       </a>
+
       <a href="Tempo-Setup.exe" download class="btn btn-primary btn-md">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
           <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 11l5 5 5-5M12 4v12"/>
         </svg>
-        تحميل البرنامج (.exe)
+        <span data-i18n="nav_download">تحميل (.exe)</span>
       </a>
+
+      <!-- Mobile Menu Toggle -->
+      <button id="menuToggle" class="mobile-menu-btn" type="button" aria-label="القائمة / Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
     </div>
   </div>
 </nav>
 
+<!-- Mobile Navigation Drawer -->
+<div id="mobileDrawer" class="mobile-drawer">
+  <a href="#overview" class="drawer-link" data-i18n="nav_overview">نظرة عامة</a>
+  <a href="#features" class="drawer-link" data-i18n="nav_features">الميزات</a>
+  <a href="#companion" class="drawer-link" data-i18n="nav_companion">الشريط المصاحب</a>
+  <a href="#specs" class="drawer-link" data-i18n="nav_specs">المواصفات</a>
+  <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/blob/main/CHANGELOG.md" target="_blank" data-i18n="nav_changelog">سجل التغييرات</a>
+  
+  <div class="drawer-actions">
+    <a href="Tempo-Setup.exe" download class="btn btn-primary btn-lg" style="color: #fff; justify-content: center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 11l5 5 5-5M12 4v12"/>
+      </svg>
+      <span data-i18n="hero_btn_setup">تحميل برنامج التثبيت (Setup.exe)</span>
+    </a>
+  </div>
+</div>
+
 <!-- ─── HERO ─── -->
 <header class="hero">
   <div class="wrap">
-    <div class="pill">
+    <div class="pill-badge">
       <span class="pill-dot"></span>
-      <span>برنامج تثبيت رسمي • Setup.exe • 4.65 MB</span>
+      <span data-i18n="hero_pill">إصدار رسمي معتمد • Setup.exe • 4.65 MB</span>
     </div>
 
-    <h1>تشخيص حقيقي وأداء أفضل لنظام ويندوز</h1>
-    <p class="hero-subtitle">أداة هندسية خفيفة لتشخيص وتحسين أداء ويندوز 10 و 11. الآن بملف تثبيت تنفيذي رسمي (Setup.exe) يثبت البرنامج ويُنشئ الاختصارات تلقائياً.</p>
-    <p class="hero-subtitle-en">A high-precision Windows diagnostic &amp; optimization engine. Now with an automated Setup installer (.exe) that handles shortcuts and uninstaller automatically.</p>
+    <h1 data-i18n="hero_title">تشخيص دقيق وأداء أسرع لنظام ويندوز</h1>
+    <p class="hero-subtitle" data-i18n="hero_sub">أداة هندسية خفيفة وعالية الكفاءة لتشخيص العتاد وتحسين أداء ويندوز 10 و 11 بنقرة واحدة، دون إعلانات أو عمليات وهمية.</p>
 
     <div class="hero-actions">
       <a href="Tempo-Setup.exe" download class="btn btn-primary btn-lg">
-        <span class="btn-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-        </span>
-        <span>تحميل برنامج التثبيت (Setup.exe)</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span data-i18n="hero_btn_setup">تحميل برنامج التثبيت (Setup.exe)</span>
         <span class="btn-badge" dir="ltr">4.65 MB</span>
       </a>
+
       <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
-        <span class="btn-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-          </svg>
-        </span>
-        <span>الكود المصدري على GitHub</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        <span data-i18n="hero_btn_github">المشروع على GitHub</span>
         <span class="btn-badge-subtle" dir="ltr">MIT</span>
       </a>
     </div>
 
-    <div class="installer-info-sub">
-      <span>تثبيت تلقائي بنقرة واحدة مع اختصارات سطح المكتب وقائمة ابدأ</span>
+    <div class="hero-subinfo">
+      <span data-i18n="hero_install_hint">تثبيت فوري مع إنشاء تلقائي للاختصارات</span>
       <span>•</span>
-      <a href="Tempo-v2.2.0-win-x64.zip" download>أو حمّل النسخة المحمولة (ZIP بدون تثبيت)</a>
+      <a href="Tempo-v2.2.0-win-x64.zip" download data-i18n="hero_portable_link">أو حمّل النسخة المحمولة (Portable ZIP)</a>
     </div>
 
-    <div class="trust-row">
+    <div class="trust-badges">
       <span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        <bdi>تثبيت بنقرة واحدة (Setup.exe)</bdi>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="badge_light">خفيف وعالي الاستجابة</span>
       </span>
       <span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>اختصارات تلقائية وحذف متكامل</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="badge_safe">آمن وبدون إعلانات</span>
       </span>
       <span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        <span>بدون إعلانات أو تتبع</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="badge_real">قياسات عتاد حقيقية</span>
       </span>
       <span>
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        <bdi>مفتوح المصدر MIT</bdi>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <span data-i18n="badge_license">مفتوح المصدر (MIT)</span>
       </span>
     </div>
   </div>
 </header>
 
 <!-- ─── STATS BAR ─── -->
-<div class="stats-bar">
+<section class="stats-bar">
   <div class="wrap">
     <div class="stats-grid">
-      <div class="stat">
-        <span class="stat-val">4.43 MB</span>
-        <div class="stat-ar">حجم ملف التثبيت</div>
-        <div class="stat-en">Installer file size</div>
+      <div class="stat-card">
+        <span class="stat-val">4.65 MB</span>
+        <div class="stat-lbl" data-i18n="stat_size">حجم ملف التثبيت</div>
       </div>
-      <div class="stat">
+      <div class="stat-card">
         <span class="stat-val">0%</span>
-        <div class="stat-ar">استهلاك المعالج في الخمول</div>
-        <div class="stat-en">CPU usage when idle</div>
+        <div class="stat-lbl" data-i18n="stat_idle">استهلاك المعالج في الخمول</div>
       </div>
-      <div class="stat">
+      <div class="stat-card">
         <span class="stat-val">15+</span>
-        <div class="stat-ar">خدمة ويندوز محمية</div>
-        <div class="stat-en">Protected NT services</div>
+        <div class="stat-lbl" data-i18n="stat_services">خدمة ويندوز محمية</div>
       </div>
-      <div class="stat">
+      <div class="stat-card">
         <span class="stat-val">100%</span>
-        <div class="stat-ar">قياسات حقيقية بلا تزوير</div>
-        <div class="stat-en">Real hardware metrics</div>
+        <div class="stat-lbl" data-i18n="stat_accuracy">دقة القياسات والبيانات</div>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- ─── PRODUCT SHOWCASE ─── -->
-<section id="showcase" class="showcase">
+<!-- ─── SHOWCASE (OVERVIEW) ─── -->
+<section id="overview" class="showcase">
   <div class="wrap">
     <div class="sec-head">
-      <h2>لوحة تحكم كاملة وفورية</h2>
-      <p>مراقبة مباشرة للعتاد والشبكة وأعلى العمليات استهلاكاً للذاكرة.</p>
-      <div class="en">Full real-time diagnostic dashboard — CPU, RAM, Network, top processes.</div>
+      <h2 data-i18n="showcase_title">لوحة تشخيص متكاملة وسريعة</h2>
+      <p data-i18n="showcase_desc">رصد لحظي لمؤشرات المعالج والذاكرة والشبكة وأعلى العمليات استهلاكاً في واجهة مظلمة أنيقة.</p>
     </div>
 
     <div class="window-card">
       <div class="window-bar">
         <div class="window-title-row">
-          <img src="assets/app.png" width="14" height="14" alt="">
-          <span>Tempo Diagnostic — Dashboard</span>
+          <img src="assets/app.png" width="14" height="14" alt="Tempo">
+          <span>Tempo Diagnostic — Overview</span>
         </div>
         <div class="window-btns">
           <div class="wbtn red"></div>
@@ -578,27 +1165,26 @@
 
         <div class="window-details">
           <div class="detail-item">
-            <div class="detail-num">1</div>
+            <div class="detail-icon">1</div>
             <div class="detail-text">
-              <h4>قياسات حية للمعالج والذاكرة</h4>
-              <div class="ar">مؤشرات CPU و RAM الحية بالألوان وفق مستوى الاستهلاك.</div>
-              <div class="en">Color-coded live CPU &amp; RAM gauges from real hardware sensors.</div>
+              <h4 data-i18n="detail_1_title">مؤشرات حية للعتاد</h4>
+              <p data-i18n="detail_1_desc">عدادات دقيقة للـ CPU و RAM والشبكة تتلون تلقائياً حسب شدة الضغط والاستهلاك.</p>
             </div>
           </div>
+
           <div class="detail-item">
-            <div class="detail-num">2</div>
+            <div class="detail-icon">2</div>
             <div class="detail-text">
-              <h4>تعزيز الذاكرة الخاملة</h4>
-              <div class="ar">تفريغ Working Sets للبرامج الخاملة بحماية 15 خدمة NT أساسية.</div>
-              <div class="en">Free inactive working sets while protecting 15 critical NT services.</div>
+              <h4 data-i18n="detail_2_title">تعزيز فوري للذاكرة</h4>
+              <p data-i18n="detail_2_desc">تفريغ المساحات المهدرة في الذاكرة بضغطة واحدة مع حماية أكثر من 15 خدمة أساسية للنظام.</p>
             </div>
           </div>
+
           <div class="detail-item">
-            <div class="detail-num">3</div>
+            <div class="detail-icon">3</div>
             <div class="detail-text">
-              <h4>تثبيت الموضع والاستقرار</h4>
-              <div class="ar">تثبيت تلقائي فوق شريط المهام مع حفظ الموضع عند إعادة التشغيل.</div>
-              <div class="en">Auto-docks above the taskbar and restores geometry on relaunch.</div>
+              <h4 data-i18n="detail_3_title">محاذاة ذكية وحفظ الموضع</h4>
+              <p data-i18n="detail_3_desc">يلتصق أعلى شريط المهام بسلاسة ويستعيد مكانه وإعداداته تلقائياً عند إعادة التشغيل.</p>
             </div>
           </div>
         </div>
@@ -607,86 +1193,65 @@
   </div>
 </section>
 
-<!-- ─── FEATURES ─── -->
+<!-- ─── CORE FEATURES (Clean 4 Pillars) ─── -->
 <section id="features" class="features">
   <div class="wrap">
     <div class="sec-head">
-      <h2>أدوات بوظائف واضحة</h2>
-      <p>كل وظيفة تؤدي غرضاً محدداً — بدون تعقيد أو خيارات مضللة.</p>
-      <div class="en">Every tool has one clear job — no bloat, no fake operations.</div>
+      <h2 data-i18n="features_title">أدوات واضحة بوظائف محددة</h2>
+      <p data-i18n="features_desc">كل ميزة صُممت لحل مشكلة حقيقية وتسريع أداء جهازك دون تعقيد أو خيارات مضللة.</p>
     </div>
 
     <div class="feat-grid">
-      <!-- 1 -->
+      <!-- Feature 1 -->
       <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-          </svg>
+        <div class="feat-top">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <h3 data-i18n="feat_1_title">مراقبة العتاد والشبكة</h3>
         </div>
-        <h3>مراقبة العتاد والشبكة</h3>
-        <div class="en-title">Hardware &amp; Network Monitor</div>
-        <p>قياس سرعة رفع وتنزيل حقيقية عبر واجهات الشبكة، ورصد أعلى 5 برامج استهلاكاً للذاكرة في الوقت الفعلي.</p>
+        <p data-i18n="feat_1_desc">متابعة فورية لسرعة الرفع والتنزيل الحقيقية للشبكة، ورصد أعلى البرامج استهلاكاً للموارد في الوقت الفعلي.</p>
       </div>
 
-      <!-- 2 -->
+      <!-- Feature 2 -->
       <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
-          </svg>
+        <div class="feat-top">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+            </svg>
+          </div>
+          <h3 data-i18n="feat_2_title">تنظيف كاش النظام وحزم التطوير</h3>
         </div>
-        <h3>تنظيف الكاش وحزم التطوير</h3>
-        <div class="en-title">Cache &amp; Dev Packages Cleaner</div>
-        <p>مسح آمن لملفات Temp وسلة المحذوفات وكاش Chrome و Edge، ومخلفات npm و NuGet و pip — مع تأكيد صريح قبل كل حذف.</p>
+        <p data-i18n="feat_2_desc">حذف آمن لملفات Temp والمخلفات المؤقتة وكاش المتصفحات ومخلفات أدوات التطوير مع تأكيد صريح قبل أي مسح.</p>
       </div>
 
-      <!-- 3 -->
+      <!-- Feature 3 -->
       <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
-          </svg>
+        <div class="feat-top">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+          </div>
+          <h3 data-i18n="feat_3_title">منظم الإقلاع وأدوات ويندوز</h3>
         </div>
-        <h3>منظم بدء التشغيل</h3>
-        <div class="en-title">Startup Apps Manager</div>
-        <p>فحص إدخالات السجل مع استخراج الأيقونات الأصلية من الملفات التنفيذية، وكشف تلقائي لبرامج الحماية لمنع تعطيلها.</p>
+        <p data-i18n="feat_3_desc">تسريع بدء تشغيل ويندوز بالتحكم في البرامج التي تقلع مع النظام، مع وصول فوري لأدوات إدارة النظام الرسمية.</p>
       </div>
 
-      <!-- 4 -->
+      <!-- Feature 4 (Auto Updates - Clean, NO external app reference) -->
       <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/>
-          </svg>
+        <div class="feat-top">
+          <div class="feat-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3 data-i18n="feat_4_title">تحديثات تلقائية ذكية</h3>
         </div>
-        <h3>كشف SSD وأمر TRIM</h3>
-        <div class="en-title">SSD Detection &amp; TRIM</div>
-        <p>التعرف التلقائي على نوع التخزين (SSD أو HDD) وتنفيذ TRIM للحفاظ على سرعة الكتابة دون تأثير على الأقراص الميكانيكية.</p>
-      </div>
-
-      <!-- 5 -->
-      <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-            <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/>
-          </svg>
-        </div>
-        <h3>أدوات ويندوز السريعة</h3>
-        <div class="en-title">Windows Quick Tools</div>
-        <p>اختصارات مباشرة لفتح Task Manager و Resource Monitor وDisk Management وServices وDevice Manager وNetwork Connections.</p>
-      </div>
-
-      <!-- 6 -->
-      <div class="feat-card">
-        <div class="feat-icon">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-            <path d="M4 15l8 8 8-8M12 3v20"/>
-          </svg>
-        </div>
-        <h3>تحديثات ذكية بشارة ديسكورد</h3>
-        <div class="en-title">Discord-Style Auto Updates</div>
-        <p>فحص دوري خفيف للتحديثات مع شارة تنزيل خضراء لافتة، وتحقق أمني صارم من بصمة SHA256، وتثبيت صامت فوري بنقرة واحدة.</p>
+        <p data-i18n="feat_4_desc">فحص دوري خفيف للإصدارات الجديدة مع شارة تنزيل غير مزعجة، والتحقق من بصمة SHA-256، وتثبيت بنقرة واحدة.</p>
       </div>
     </div>
   </div>
@@ -697,19 +1262,17 @@
   <div class="wrap">
     <div class="companion-inner">
       <div class="companion-copy">
-        <h2>الشريط المصاحب لسطح المكتب</h2>
-        <div class="en-head">Compact Desktop Companion Bar</div>
-        <p>صغّر التطبيق إلى كبسولة أفقية علوية أو شريط جانبي نحيف (34px فقط) يلتصق بحافة الشاشة ويعرض قياسات حية للمعالج والذاكرة والشبكة.</p>
-        <p class="en-sub">Minimize to a slim horizontal capsule or a 34px sidebar with live CPU, RAM, and network speed — with auto-hide and peek on hover.</p>
+        <h2 data-i18n="comp_title">الشريط المصاحب لسطح المكتب</h2>
+        <p data-i18n="comp_desc">صغّر التطبيق إلى كبسولة أفقية أو شريط جانبي نحيف (34px فقط) يلتصق بحافة الشاشة ويعرض قياسات المعالج والذاكرة والشبكة دون حجب مساحة العمل.</p>
         <div class="tags">
-          <span class="tag">Horizontal Capsule (42px)</span>
-          <span class="tag">Vertical Sidebar (34px)</span>
-          <span class="tag">Auto-Peek on hover</span>
-          <span class="tag">Persistent position</span>
+          <span class="tag" data-i18n="comp_tag1">كبسولة أفقية (42px)</span>
+          <span class="tag" data-i18n="comp_tag2">شريط جانبي (34px)</span>
+          <span class="tag" data-i18n="comp_tag3">ظهور ذكي عند التمرير</span>
+          <span class="tag" data-i18n="comp_tag4">حفظ الموضع تلقائياً</span>
         </div>
       </div>
       <div class="companion-visual">
-        <img src="assets/screen_toolbar_top.png" alt="Companion Toolbar Preview">
+        <img src="assets/screen_toolbar_top.png" alt="Companion Bar">
       </div>
     </div>
   </div>
@@ -719,52 +1282,63 @@
 <section id="specs" class="specs">
   <div class="wrap">
     <div class="sec-head">
-      <h2>المواصفات الفنية وطرق التحميل</h2>
-      <p>متطلبات التشغيل، ونوع التثبيت، والترخيص البرمجي.</p>
-      <div class="en">System requirements, installation options, and license info.</div>
+      <h2 data-i18n="specs_title">المواصفات الفنية والتحقق</h2>
+      <p data-i18n="specs_desc">متطلبات النظام والتشغيل والتحقق الأمني من سلامة الحزمة.</p>
     </div>
 
     <div class="specs-card">
       <div class="specs-head">
-        <div>
-          <h3>System Requirements &amp; Specs</h3>
-          <div class="en">متطلبات النظام والمواصفات</div>
-        </div>
+        <h3 data-i18n="specs_card_title">متطلبات النظام والمواصفات</h3>
         <span class="mono-badge">x64 Native</span>
       </div>
 
       <div class="spec-list">
         <div class="spec-item">
-          <span class="spec-lbl">نوع التثبيت<span class="en">Setup Type</span></span>
-          <span class="spec-v">Installer (.exe) &amp; Portable (.zip)</span>
+          <span class="spec-lbl" data-i18n="spec_type_lbl">نوع التثبيت</span>
+          <span class="spec-v" data-i18n="spec_type_val">Installer (.exe) &amp; Portable (.zip)</span>
         </div>
         <div class="spec-item">
-          <span class="spec-lbl">نظام التشغيل<span class="en">Operating System</span></span>
+          <span class="spec-lbl" data-i18n="spec_os_lbl">نظام التشغيل</span>
           <span class="spec-v">Windows 10 / 11 (64-bit)</span>
         </div>
         <div class="spec-item">
-          <span class="spec-lbl">بيئة التشغيل<span class="en">Runtime</span></span>
+          <span class="spec-lbl" data-i18n="spec_runtime_lbl">بيئة التشغيل</span>
           <span class="spec-v">.NET 10.0 WPF</span>
         </div>
         <div class="spec-item">
-          <span class="spec-lbl">حجم ملف التثبيت<span class="en">Installer Size</span></span>
+          <span class="spec-lbl" data-i18n="spec_size_lbl">حجم ملف التثبيت</span>
           <span class="spec-v">4.65 MB (.exe)</span>
         </div>
         <div class="spec-item">
-          <span class="spec-lbl">الصلاحيات<span class="en">Privilege Level</span></span>
+          <span class="spec-lbl" data-i18n="spec_priv_lbl">مستوى الصلاحيات</span>
           <span class="spec-v">asInvoker (Standard)</span>
         </div>
         <div class="spec-item">
-          <span class="spec-lbl">التحديثات التلقائية<span class="en">Auto-Updates</span></span>
-          <span class="spec-v">In-App + SHA256 Verified</span>
+          <span class="spec-lbl" data-i18n="spec_license_lbl">الترخيص البرمجي</span>
+          <span class="spec-v">MIT License (Free &amp; Open)</span>
         </div>
-        <div class="spec-item">
-          <span class="spec-lbl">بصمة التجزئة<span class="en">SHA256 Checksum</span></span>
-          <span class="spec-v" style="font-family: var(--ff-mono); font-size: 0.72rem; word-break: break-all;" dir="ltr">2e5c8baaef6a67528fcaf415693159a848e14865a4c2364183d1ac6c73c2e243</span>
+      </div>
+
+      <!-- Verification card -->
+      <div class="verify-card">
+        <div class="verify-top">
+          <span class="verify-lbl">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+            </svg>
+            <span data-i18n="verify_title">التحقق الأمني من بصمة الملف (PowerShell):</span>
+          </span>
+          <span class="mono-badge">SHA-256</span>
         </div>
-        <div class="spec-item">
-          <span class="spec-lbl">إلغاء التثبيت<span class="en">Uninstaller</span></span>
-          <span class="spec-v">Supported in Windows Settings</span>
+
+        <div class="code-box">
+          <code id="cmdCode">Get-FileHash .\Tempo-Setup.exe -Algorithm SHA256</code>
+          <button id="copyBtn" class="copy-btn" type="button">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+            </svg>
+            <span id="copyText" data-i18n="btn_copy">نسخ</span>
+          </button>
         </div>
       </div>
     </div>
@@ -775,49 +1349,25 @@
 <section class="cta">
   <div class="wrap">
     <div class="cta-box">
-      <h2>ابدأ الآن — تثبيت فوري بنقرة واحدة</h2>
-      <div class="en-head">One-click installation with automatic shortcuts.</div>
-      <p>حمّل ملف التثبيت الرسمي Tempo-Setup.exe وشغّله. سيتم تثبيت التطبيق وإنشاء اختصارات سطح المكتب وقائمة ابدأ تلقائياً.</p>
-      <div class="cta-row">
+      <h2 data-i18n="cta_title">جاهز لتسريع أداء جهازك؟</h2>
+      <p data-i18n="cta_desc">حمّل ملف التثبيت الرسمي الآن بنقرة واحدة واستمتع بتجربة فحص وتحسين نظيفة وسريعة.</p>
+      
+      <div class="cta-actions">
         <a href="Tempo-Setup.exe" download class="btn btn-primary btn-lg">
-          <span class="btn-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-              <polyline points="7 10 12 15 17 10"/>
-              <line x1="12" y1="15" x2="12" y2="3"/>
-            </svg>
-          </span>
-          <span>تحميل برنامج التثبيت (Setup.exe)</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span data-i18n="hero_btn_setup">تحميل برنامج التثبيت (Setup.exe)</span>
           <span class="btn-badge" dir="ltr">4.65 MB</span>
         </a>
-        <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
-          <span class="btn-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
-            </svg>
-          </span>
-          <span>الكود المصدري على GitHub</span>
-          <span class="btn-badge-subtle" dir="ltr">MIT</span>
+
+        <a href="Tempo-v2.2.0-win-x64.zip" download class="btn btn-ghost btn-lg">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          <span data-i18n="cta_btn_zip">تحميل حزمة Portable (ZIP)</span>
+          <span class="btn-badge-subtle" dir="ltr">3.19 MB</span>
         </a>
-      </div>
-
-      <!-- Verification & SmartScreen Note -->
-      <div style="margin-top: 24px; padding: 14px 18px; background: rgba(17, 20, 32, 0.95); border: 1px solid var(--border-light); border-radius: var(--r-md); text-align: start;">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-          <span style="font-size: 0.84rem; font-weight: 600; color: var(--text);">🔐 التحقق من البصمة الرقمية (PowerShell Verification):</span>
-          <span class="btn-badge" dir="ltr" style="font-size: 0.7rem;">SHA-256</span>
-        </div>
-        <div style="font-family: var(--ff-mono); font-size: 0.78rem; background: #07090E; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); color: #60A5FA; overflow-x: auto; direction: ltr; unicode-bidi: isolate;">
-          Get-FileHash .\Tempo-Setup-v2.2.0.exe -Algorithm SHA256
-        </div>
-        <div style="margin-top: 10px; font-size: 0.78rem; color: var(--text-2); line-height: 1.6;">
-          💡 <b>ملاحظة لمستخدمي Windows SmartScreen:</b> نظراً لأن البرنامج أداة مجانية ومفتوحة المصدر ومستقلة بدون شهادة رقمية تجارية مدفوعة (EV Code Signing)، قد تظهر نافذة الفحص الذكي SmartScreen عند أول تشغيل. اضغط على <b>"More info" (مزيد من المعلومات)</b> ثم <b>"Run anyway" (تشغيل على أي حال)</b> للمتابعة بأمان بعد التحقق من مطابقة بصمة SHA256 أعلاه.
-        </div>
-      </div>
-
-      <div style="margin-top: 18px; font-size: .84rem; color: var(--text-2);">
-        <span>تفضل النسخة المحمولة بدون تثبيت؟ </span>
-        <a href="Tempo-v2.2.0-win-x64.zip" download style="color: var(--blue); text-decoration: none;">تحميل حزمة Portable ZIP (3.19 MB)</a>
       </div>
     </div>
   </div>
@@ -826,11 +1376,218 @@
 <!-- ─── FOOTER ─── -->
 <footer>
   <div class="wrap foot-inner">
-    <span>Tempo Diagnostic &amp; PC Optimizer — v2.2.0 (<a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/blob/main/CHANGELOG.md" target="_blank" style="color: var(--blue); text-decoration: none;">سجل التغييرات / Changelog</a>)</span>
+    <span>Tempo Diagnostic &amp; PC Optimizer — v2.2.0</span>
     <span>Designed &amp; Engineered by <a href="https://github.com/Abdelrahman-Tamer" target="_blank">Eng. Abdelrahman Emam</a></span>
     <span>MIT License © 2026</span>
   </div>
 </footer>
+
+<!-- ─── SCRIPT (Bilingual i18n & Interactions) ─── -->
+<script>
+  const i18nData = {
+    ar: {
+      html_title: "Tempo — Windows PC Optimizer & Diagnostic",
+      html_desc: "أداة هندسية خفيفة وعالية الدقة لتشخيص وتحسين أداء نظام ويندوز. مراقبة فورية للعتاد، تنظيف ذكي للكاش، وشريط مصاحب خفيف.",
+      nav_overview: "نظرة عامة",
+      nav_features: "الميزات",
+      nav_companion: "الشريط المصاحب",
+      nav_specs: "المواصفات",
+      nav_changelog: "سجل التغييرات",
+      nav_download: "تحميل (.exe)",
+      hero_pill: "إصدار رسمي معتمد • Setup.exe • 4.65 MB",
+      hero_title: "تشخيص دقيق وأداء أسرع لنظام ويندوز",
+      hero_sub: "أداة هندسية خفيفة وعالية الكفاءة لتشخيص العتاد وتحسين أداء ويندوز 10 و 11 بنقرة واحدة، دون إعلانات أو عمليات وهمية.",
+      hero_btn_setup: "تحميل برنامج التثبيت (Setup.exe)",
+      hero_btn_github: "المشروع على GitHub",
+      hero_install_hint: "تثبيت فوري مع إنشاء تلقائي للاختصارات",
+      hero_portable_link: "أو حمّل النسخة المحمولة (Portable ZIP)",
+      badge_light: "خفيف وعالي الاستجابة",
+      badge_safe: "آمن وبدون إعلانات",
+      badge_real: "قياسات عتاد حقيقية",
+      badge_license: "مفتوح المصدر (MIT)",
+      stat_size: "حجم ملف التثبيت",
+      stat_idle: "استهلاك المعالج في الخمول",
+      stat_services: "خدمة ويندوز محمية",
+      stat_accuracy: "دقة القياسات والبيانات",
+      showcase_title: "لوحة تشخيص متكاملة وسريعة",
+      showcase_desc: "رصد لحظي لمؤشرات المعالج والذاكرة والشبكة وأعلى العمليات استهلاكاً في واجهة مظلمة أنيقة.",
+      detail_1_title: "مؤشرات حية للعتاد",
+      detail_1_desc: "عدادات دقيقة للـ CPU و RAM والشبكة تتلون تلقائياً حسب شدة الضغط والاستهلاك.",
+      detail_2_title: "تعزيز فوري للذاكرة",
+      detail_2_desc: "تفريغ المساحات المهدرة في الذاكرة بضغطة واحدة مع حماية أكثر من 15 خدمة أساسية للنظام.",
+      detail_3_title: "محاذاة ذكية وحفظ الموضع",
+      detail_3_desc: "يلتصق أعلى شريط المهام بسلاسة ويستعيد مكانه وإعداداته تلقائياً عند إعادة التشغيل.",
+      features_title: "أدوات واضحة بوظائف محددة",
+      features_desc: "كل ميزة صُممت لحل مشكلة حقيقية وتسريع أداء جهازك دون تعقيد أو خيارات مضللة.",
+      feat_1_title: "مراقبة العتاد والشبكة",
+      feat_1_desc: "متابعة فورية لسرعة الرفع والتنزيل الحقيقية للشبكة، ورصد أعلى البرامج استهلاكاً للموارد في الوقت الفعلي.",
+      feat_2_title: "تنظيف كاش النظام وحزم التطوير",
+      feat_2_desc: "حذف آمن لملفات Temp والمخلفات المؤقتة وكاش المتصفحات ومخلفات أدوات التطوير مع تأكيد صريح قبل أي مسح.",
+      feat_3_title: "منظم الإقلاع وأدوات ويندوز",
+      feat_3_desc: "تسريع بدء تشغيل ويندوز بالتحكم في البرامج التي تقلع مع النظام، مع وصول فوري لأدوات إدارة النظام الرسمية.",
+      feat_4_title: "تحديثات تلقائية ذكية",
+      feat_4_desc: "فحص دوري خفيف للإصدارات الجديدة مع شارة تنزيل غير مزعجة، والتحقق من بصمة SHA-256، وتثبيت بنقرة واحدة.",
+      comp_title: "الشريط المصاحب لسطح المكتب",
+      comp_desc: "صغّر التطبيق إلى كبسولة أفقية أو شريط جانبي نحيف (34px فقط) يلتصق بحافة الشاشة ويعرض قياسات المعالج والذاكرة والشبكة دون حجب مساحة العمل.",
+      comp_tag1: "كبسولة أفقية (42px)",
+      comp_tag2: "شريط جانبي (34px)",
+      comp_tag3: "ظهور ذكي عند التمرير",
+      comp_tag4: "حفظ الموضع تلقائياً",
+      specs_title: "المواصفات الفنية والتحقق",
+      specs_desc: "متطلبات النظام والتشغيل والتحقق الأمني من سلامة الحزمة.",
+      specs_card_title: "متطلبات النظام والمواصفات",
+      spec_type_lbl: "نوع التثبيت",
+      spec_type_val: "برنامج تثبيت (.exe) ونسخة محمولة (.zip)",
+      spec_os_lbl: "نظام التشغيل",
+      spec_runtime_lbl: "بيئة التشغيل",
+      spec_size_lbl: "حجم ملف التثبيت",
+      spec_priv_lbl: "مستوى الصلاحيات",
+      spec_license_lbl: "الترخيص البرمجي",
+      verify_title: "التحقق الأمني من بصمة الملف (PowerShell):",
+      btn_copy: "نسخ",
+      btn_copied: "تم النسخ!",
+      cta_title: "جاهز لتسريع أداء جهازك؟",
+      cta_desc: "حمّل ملف التثبيت الرسمي الآن بنقرة واحدة واستمتع بتجربة فحص وتحسين نظيفة وسريعة.",
+      cta_btn_zip: "تحميل حزمة Portable (ZIP)",
+      lang_btn_text: "English"
+    },
+    en: {
+      html_title: "Tempo — Windows PC Optimizer & Diagnostic",
+      html_desc: "Lightweight, precision engineering tool to diagnose and optimize Windows 10 & 11. Real-time hardware monitoring, safe cache cleaning, and compact companion bar.",
+      nav_overview: "Overview",
+      nav_features: "Features",
+      nav_companion: "Companion Bar",
+      nav_specs: "Specs",
+      nav_changelog: "Changelog",
+      nav_download: "Download (.exe)",
+      hero_pill: "Official Windows Release • Setup.exe • 4.65 MB",
+      hero_title: "Precision Diagnostics & Speed for Windows",
+      hero_sub: "A lightweight, high-precision utility for real-time hardware diagnostics and instant optimization on Windows 10 & 11 — zero ads, zero fake metrics.",
+      hero_btn_setup: "Download Installer (Setup.exe)",
+      hero_btn_github: "Source on GitHub",
+      hero_install_hint: "One-click install with automatic desktop shortcuts",
+      hero_portable_link: "Or download portable version (ZIP)",
+      badge_light: "Ultra Lightweight",
+      badge_safe: "Clean & Ad-Free",
+      badge_real: "Real Hardware Sensors",
+      badge_license: "Open Source (MIT)",
+      stat_size: "Installer Size",
+      stat_idle: "CPU Usage When Idle",
+      stat_services: "Protected NT Services",
+      stat_accuracy: "Sensor Data Accuracy",
+      showcase_title: "Real-Time System Overview",
+      showcase_desc: "Monitor live CPU, RAM, and network throughput alongside resource-heavy processes in a dark, sleek dashboard.",
+      detail_1_title: "Live Hardware Gauges",
+      detail_1_desc: "Accurate CPU, RAM, and network indicators that dynamically color-code based on workload intensity.",
+      detail_2_title: "Instant RAM Optimization",
+      detail_2_desc: "Safely flush inactive working sets with built-in protection for 15+ essential Windows NT services.",
+      detail_3_title: "Smart Docking & Persistence",
+      detail_3_desc: "Snaps seamlessly above the taskbar and automatically restores screen geometry upon restart.",
+      features_title: "Focused Tools, Clear Jobs",
+      features_desc: "Every feature serves a distinct purpose — engineered to speed up your system without bloat or confusing menus.",
+      feat_1_title: "Hardware & Network Monitor",
+      feat_1_desc: "Live upload and download speed telemetry alongside real-time tracking of top memory-consuming processes.",
+      feat_2_title: "Smart Cache & Dev Cleaner",
+      feat_2_desc: "Safely purge temp files, browser caches, and orphaned dev packages (npm, NuGet, pip) with explicit confirmation.",
+      feat_3_title: "Startup & System Tools",
+      feat_3_desc: "Optimize boot times by managing startup apps, with one-click shortcuts to official Windows administrative tools.",
+      feat_4_title: "Seamless Auto-Updates",
+      feat_4_desc: "Unobtrusive periodic update checks with clean badge alerts, SHA-256 integrity verification, and silent install.",
+      comp_title: "Compact Desktop Companion",
+      comp_desc: "Dock Tempo into a slim horizontal capsule or a 34px edge sidebar with live hardware meters without interrupting your workflow.",
+      comp_tag1: "Horizontal Capsule (42px)",
+      comp_tag2: "Vertical Sidebar (34px)",
+      comp_tag3: "Auto-Peek on Hover",
+      comp_tag4: "Persistent Placement",
+      specs_title: "Technical Specs & Integrity",
+      specs_desc: "System requirements, runtime specifications, and package verification.",
+      specs_card_title: "System Requirements & Specs",
+      spec_type_lbl: "Installation Type",
+      spec_type_val: "Setup Installer (.exe) & Portable (.zip)",
+      spec_os_lbl: "Operating System",
+      spec_runtime_lbl: "Runtime Environment",
+      spec_size_lbl: "Installer File Size",
+      spec_priv_lbl: "Privilege Level",
+      spec_license_lbl: "Software License",
+      verify_title: "PowerShell Integrity Check:",
+      btn_copy: "Copy",
+      btn_copied: "Copied!",
+      cta_title: "Ready to optimize your PC?",
+      cta_desc: "Download the official installer now and experience a fast, clean Windows diagnostic utility.",
+      cta_btn_zip: "Download Portable (ZIP)",
+      lang_btn_text: "العربية"
+    }
+  };
+
+  let currentLang = localStorage.getItem('tempo_lang') || 'ar';
+
+  function applyLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem('tempo_lang', lang);
+
+    const isAr = lang === 'ar';
+    document.documentElement.lang = isAr ? 'ar' : 'en';
+    document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+
+    const t = i18nData[lang];
+    document.title = t.html_title;
+    const descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) descMeta.content = t.html_desc;
+
+    // Update all elements with data-i18n attribute
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (t[key]) el.textContent = t[key];
+    });
+
+    // Update Language Toggle Label
+    const langLabel = document.getElementById('langLabel');
+    if (langLabel) {
+      langLabel.textContent = t.lang_btn_text;
+    }
+  }
+
+  // Language Button Click
+  document.getElementById('langToggle').addEventListener('click', () => {
+    applyLanguage(currentLang === 'ar' ? 'en' : 'ar');
+  });
+
+  // Mobile Menu Toggle
+  const menuToggle = document.getElementById('menuToggle');
+  const mobileDrawer = document.getElementById('mobileDrawer');
+  if (menuToggle && mobileDrawer) {
+    menuToggle.addEventListener('click', () => {
+      mobileDrawer.classList.toggle('open');
+    });
+    // Close drawer when link clicked
+    document.querySelectorAll('.drawer-link').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileDrawer.classList.remove('open');
+      });
+    });
+  }
+
+  // PowerShell Copy Button
+  const copyBtn = document.getElementById('copyBtn');
+  const copyText = document.getElementById('copyText');
+  const cmdCode = document.getElementById('cmdCode');
+  if (copyBtn && cmdCode) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(cmdCode.textContent.trim()).then(() => {
+        const original = copyText.textContent;
+        copyText.textContent = i18nData[currentLang].btn_copied;
+        setTimeout(() => {
+          copyText.textContent = original;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy', err);
+      });
+    });
+  }
+
+  // Initialize
+  applyLanguage(currentLang);
+</script>
 
 </body>
 </html>

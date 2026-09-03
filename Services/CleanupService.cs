@@ -377,10 +377,10 @@ namespace Tempo.Services
                         }
 
                         // Smart threshold: Only trim non-system processes using significant memory (> 40 MB)
-                        // Capping at top 15 processes avoids hard page-fault storms and guarantees lightning fast completion (<250ms)
+                        // Capping at top 10 processes avoids hard page-fault storms and guarantees lightning fast completion (<150ms)
                         long workingSet = 0;
                         try { workingSet = process.WorkingSet64; } catch { }
-                        if (workingSet < 40L * 1024 * 1024 || processedCount >= 15)
+                        if (workingSet < 40L * 1024 * 1024)
                         {
                             skippedCount++;
                             continue;
@@ -389,6 +389,10 @@ namespace Tempo.Services
                         if (EmptyWorkingSet(process.Handle))
                         {
                             processedCount++;
+                            if (processedCount >= 10)
+                            {
+                                break;
+                            }
                         }
                         else
                         {

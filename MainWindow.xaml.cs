@@ -1085,43 +1085,18 @@ namespace Tempo
         {
             try
             {
+                // Never show toast popups or hide metrics when in Toolbar companion mode
+                if (_currentView == AppViewMode.Toolbar)
+                {
+                    return;
+                }
+
                 var brush = (SolidColorBrush)FindResource(isWarning ? "AmberWarn" : "TealHealth");
                 string iconData = isWarning
                     ? "M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M13,17 L11,17 L11,15 L13,15 L13,17 Z M13,13 L11,13 L11,7 L13,7 L13,13 Z"
                     : "M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M10,17 L5,12 L6.41,10.59 L10,14.17 L17.59,6.58 L19,8 L10,17 Z";
 
                 _toastTimer?.Stop();
-
-                if (_currentView == AppViewMode.Toolbar)
-                {
-                    ToastBanner.Visibility = Visibility.Collapsed;
-
-                    if (ToolbarToastH != null && ToolbarMetricsContainerH != null)
-                    {
-                        ToolbarToastTextH.Text = message;
-                        ToolbarToastTextH.Foreground = brush;
-                        ToolbarToastH.BorderBrush = brush;
-                        if (ToolbarToastIconH != null)
-                        {
-                            ToolbarToastIconH.Fill = brush;
-                            ToolbarToastIconH.Data = Geometry.Parse(iconData);
-                        }
-
-                        ToolbarMetricsContainerH.Visibility = Visibility.Collapsed;
-                        ToolbarToastH.Visibility = Visibility.Visible;
-
-                        _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3.5) };
-                        _toastTimer.Tick += (s, e) =>
-                        {
-                            _toastTimer.Stop();
-                            ToolbarToastH.Visibility = Visibility.Collapsed;
-                            ToolbarMetricsContainerH.Visibility = Visibility.Visible;
-                        };
-                        _toastTimer.Start();
-                    }
-                }
-                else
-                {
                     if (ToolbarToastH != null) ToolbarToastH.Visibility = Visibility.Collapsed;
                     if (ToolbarMetricsContainerH != null) ToolbarMetricsContainerH.Visibility = Visibility.Visible;
 
@@ -1143,7 +1118,6 @@ namespace Tempo
                         ToastBanner.Visibility = Visibility.Collapsed;
                     };
                     _toastTimer.Start();
-                }
             }
             catch { }
         }
@@ -1227,20 +1201,150 @@ namespace Tempo
             }
         }
 
-        public void BtnToolbarBoost_Click(object sender, RoutedEventArgs e)
+        private void TriggerToolbarBoostMotions()
         {
             try
             {
-                var da = new DoubleAnimation(0, 360, TimeSpan.FromMilliseconds(550))
+                // 1. Lightning Icon Rotation: Fast 720° spin with smooth quartic deceleration
+                var rotAnim = new DoubleAnimation(0, 720, TimeSpan.FromMilliseconds(700))
                 {
                     EasingFunction = new QuarticEase { EasingMode = EasingMode.EaseOut }
                 };
-                if (ToolbarBoostIconH != null) ToolbarBoostIconH.RenderTransform.BeginAnimation(RotateTransform.AngleProperty, da);
-                if (ToolbarBoostIconV != null) ToolbarBoostIconV.RenderTransform.BeginAnimation(RotateTransform.AngleProperty, da);
+
+                // 2. Button Scale Punch: Elastic bounce from 1.0 -> 1.22 -> 1.0
+                var scaleAnim = new DoubleAnimationUsingKeyFrames
+                {
+                    Duration = TimeSpan.FromMilliseconds(550)
+                };
+                scaleAnim.KeyFrames.Add(new SplineDoubleKeyFrame(1.22, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(160))));
+                scaleAnim.KeyFrames.Add(new SplineDoubleKeyFrame(1.0, KeyTime.FromTimeSpan(TimeSpan.FromMilliseconds(550)), new KeySpline(0.2, 0.8, 0.4, 1.0)));
+
+                if (ToolbarBoostRotateH != null) ToolbarBoostRotateH.BeginAnimation(RotateTransform.AngleProperty, rotAnim);
+                if (ToolbarBoostRotateV != null) ToolbarBoostRotateV.BeginAnimation(RotateTransform.AngleProperty, rotAnim);
+
+                if (ToolbarBoostScaleH != null)
+                {
+                    ToolbarBoostScaleH.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                    ToolbarBoostScaleH.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+                }
+                if (ToolbarBoostScaleV != null)
+                {
+                    ToolbarBoostScaleV.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                    ToolbarBoostScaleV.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+                }
+
+                if (BtnToolbarBoostScaleH != null)
+                {
+                    BtnToolbarBoostScaleH.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                    BtnToolbarBoostScaleH.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+                }
+                if (BtnToolbarBoostScaleV != null)
+                {
+                    BtnToolbarBoostScaleV.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                    BtnToolbarBoostScaleV.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+                }
+
+                // 3. Toolbar Pod Border Ripple: Subtle emerald glow ripple across the border
+                var borderAnim = new ColorAnimation
+                {
+                    From = Color.FromRgb(0x2E, 0x3A, 0x52),
+                    To = Color.FromRgb(0x10, 0xB9, 0x81),
+                    Duration = TimeSpan.FromMilliseconds(300),
+                    AutoReverse = true,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                };
+
+                if (CompanionBarHorizontal != null && CompanionBarHorizontal.BorderBrush is SolidColorBrush hBrush)
+                {
+                    var animatedBrush = hBrush.Clone();
+                    CompanionBarHorizontal.BorderBrush = animatedBrush;
+                    animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, borderAnim);
+                }
+                if (CompanionBarVertical != null && CompanionBarVertical.BorderBrush is SolidColorBrush vBrush)
+                {
+                    var animatedBrush = vBrush.Clone();
+                    CompanionBarVertical.BorderBrush = animatedBrush;
+                    animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, borderAnim);
+                }
+
+                // 4. RAM Telemetry Pod: Spin RAM icon and soft shimmer text
+                var ramRotAnim = new DoubleAnimation(0, 360, TimeSpan.FromMilliseconds(600))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                if (BarRamRotateH != null) BarRamRotateH.BeginAnimation(RotateTransform.AngleProperty, ramRotAnim);
+                if (BarRamRotateV != null) BarRamRotateV.BeginAnimation(RotateTransform.AngleProperty, ramRotAnim);
+
+                var textFade = new DoubleAnimation(1.0, 0.35, TimeSpan.FromMilliseconds(220))
+                {
+                    AutoReverse = true,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                };
+                if (BarRamTextH != null) BarRamTextH.BeginAnimation(OpacityProperty, textFade);
+                if (BarRamTextV != null) BarRamTextV.BeginAnimation(OpacityProperty, textFade);
+
+                // 5. Status Dot Pulse
+                if (ToolbarPulseScaleH != null)
+                {
+                    var dotAnim = new DoubleAnimation(1.0, 1.8, TimeSpan.FromMilliseconds(250))
+                    {
+                        AutoReverse = true,
+                        EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                    };
+                    ToolbarPulseScaleH.BeginAnimation(ScaleTransform.ScaleXProperty, dotAnim);
+                    ToolbarPulseScaleH.BeginAnimation(ScaleTransform.ScaleYProperty, dotAnim);
+                }
             }
             catch { }
+        }
 
-            BtnHeroOptimize_Click(sender, e);
+        private void TriggerToolbarCompletionMotions()
+        {
+            try
+            {
+                // Soft fade in for live updated metrics
+                var completionFade = new DoubleAnimation(0.4, 1.0, TimeSpan.FromMilliseconds(350))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+                };
+                if (BarRamTextH != null) BarRamTextH.BeginAnimation(OpacityProperty, completionFade);
+                if (BarRamTextV != null) BarRamTextV.BeginAnimation(OpacityProperty, completionFade);
+                if (BarCpuTextH != null) BarCpuTextH.BeginAnimation(OpacityProperty, completionFade);
+                if (BarCpuTextV != null) BarCpuTextV.BeginAnimation(OpacityProperty, completionFade);
+            }
+            catch { }
+        }
+
+        public void BtnToolbarBoost_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+
+            // Trigger smooth, rich in-bar motions (no notification popups/banners)
+            TriggerToolbarBoostMotions();
+
+            Task.Run(async () =>
+            {
+                var ramRes = _cleanupService.OptimizeRamWorkingSets();
+                var tempRes = _cleanupService.QuickCleanTemp();
+
+                // Allow 350ms for Windows Memory Manager and filesystem to stabilize
+                await Task.Delay(350);
+
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (btn != null) btn.IsEnabled = true;
+
+                    // Live update telemetry & counters without toast banners
+                    FetchTelemetryAsync();
+                    LoadStorageDrivesFast();
+                    LoadRecycleBinInfo();
+                    TxtRecTempSize.Text = "0 MB";
+
+                    // Trigger completion ripple motion
+                    TriggerToolbarCompletionMotions();
+                });
+            });
         }
 
         public void BtnToolbarPin_Click(object sender, RoutedEventArgs e)
