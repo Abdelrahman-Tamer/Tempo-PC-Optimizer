@@ -36,27 +36,66 @@ namespace Tempo.Services
             if (string.IsNullOrWhiteSpace(path)) return false;
             try
             {
-                string fullPath = Path.GetFullPath(path).TrimEnd('\\');
+                string fullPath = Path.GetFullPath(path).TrimEnd('\\', '/');
+
+                // Check if path is a reparse point (symlink/junction) on disk
+                if (File.Exists(fullPath) || Directory.Exists(fullPath))
+                {
+                    var attr = File.GetAttributes(fullPath);
+                    if ((attr & FileAttributes.ReparsePoint) != 0)
+                        return false;
+                }
+
+                // Root of drive must never be deleted (e.g. C:\)
+                string? pathRoot = Path.GetPathRoot(fullPath);
+                if (!string.IsNullOrEmpty(pathRoot) && fullPath.Equals(pathRoot.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+
+                // User profile root itself must never be deleted
+                if (fullPath.Equals(userProfile.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
+                    return false;
 
                 // Protected system and user directory roots that must NEVER be deleted
-                var forbiddenRoots = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                var forbiddenRoots = new List<string>
                 {
-                    Path.GetPathRoot(fullPath) ?? "",
-                    Environment.GetFolderPath(Environment.SpecialFolder.Windows),
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32"),
+                    winDir,
+                    Path.Combine(winDir, "System32"),
                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
                     Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                     Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                     Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                     Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                     Environment.GetFolderPath(Environment.SpecialFolder.MyMusic),
                     Environment.GetFolderPath(Environment.SpecialFolder.MyVideos),
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads"),
-                    AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\')
+                    Path.Combine(userProfile, "Downloads"),
+                    AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\', '/')
                 };
 
-                if (forbiddenRoots.Contains(fullPath)) return false;
+                foreach (var root in forbiddenRoots)
+                {
+                    if (string.IsNullOrWhiteSpace(root)) continue;
+                    string cleanRoot = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+                    // Explicitly permit C:\Windows\Temp under Windows
+                    if (cleanRoot.Equals(winDir.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
+                    {
+                        string winTemp = Path.Combine(winDir, "Temp").TrimEnd('\\', '/');
+                        if (fullPath.StartsWith(winTemp + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+                            fullPath.Equals(winTemp, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (fullPath.Equals(cleanRoot, StringComparison.OrdinalIgnoreCase) ||
+                        fullPath.StartsWith(cleanRoot + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+                }
 
                 // Forbidden source / project extensions
                 string ext = Path.GetExtension(fullPath);
@@ -65,10 +104,7 @@ namespace Tempo.Services
                     ".cs", ".xaml", ".csproj", ".sln", ".config", ".cpp", ".h", ".py", ".java", ".go", ".rs"
                 };
 
-                // Only disallow source code files outside pure cache and temp folders
-                if (forbiddenExts.Contains(ext) &&
-                    !fullPath.Contains("Cache", StringComparison.OrdinalIgnoreCase) &&
-                    !fullPath.Contains("Temp", StringComparison.OrdinalIgnoreCase))
+                if (forbiddenExts.Contains(ext))
                 {
                     return false;
                 }
@@ -79,6 +115,99 @@ namespace Tempo.Services
             {
                 return false;
             }
+        }
+
+        public static IEnumerable<FileInfo> SafeEnumerateFiles(DirectoryInfo rootDir, bool apply24HourCutoff = false)
+        {
+            if (!rootDir.Exists) yield break;
+
+            try
+            {
+                if ((rootDir.Attributes & FileAttributes.ReparsePoint) != 0)
+                    yield break;
+            }
+            catch { yield break; }
+
+            var cutoff = DateTime.Now.AddHours(-24);
+            var stack = new Stack<DirectoryInfo>();
+            stack.Push(rootDir);
+
+            while (stack.Count > 0)
+            {
+                var currentDir = stack.Pop();
+                try
+                {
+                    if ((currentDir.Attributes & FileAttributes.ReparsePoint) != 0)
+                        continue;
+                }
+                catch { continue; }
+
+                FileInfo[] files;
+                try
+                {
+                    files = currentDir.GetFiles();
+                }
+                catch { continue; }
+
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        if ((file.Attributes & FileAttributes.ReparsePoint) != 0)
+                            continue;
+
+                        if (apply24HourCutoff)
+                        {
+                            if (file.LastWriteTime > cutoff || file.CreationTime > cutoff)
+                                continue;
+                        }
+                    }
+                    catch { continue; }
+
+                    yield return file;
+                }
+
+                DirectoryInfo[] subDirs;
+                try
+                {
+                    subDirs = currentDir.GetDirectories();
+                }
+                catch { continue; }
+
+                foreach (var sub in subDirs)
+                {
+                    try
+                    {
+                        if ((sub.Attributes & FileAttributes.ReparsePoint) == 0)
+                        {
+                            stack.Push(sub);
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        public static void SafeDeleteEmptySubdirectories(DirectoryInfo dir)
+        {
+            try
+            {
+                if ((dir.Attributes & FileAttributes.ReparsePoint) != 0) return;
+                foreach (var sub in dir.GetDirectories())
+                {
+                    try
+                    {
+                        if ((sub.Attributes & FileAttributes.ReparsePoint) != 0) continue;
+                        SafeDeleteEmptySubdirectories(sub);
+                        if (sub.GetFileSystemInfos().Length == 0 && IsSafePath(sub.FullName))
+                        {
+                            sub.Delete();
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
@@ -140,7 +269,7 @@ namespace Tempo.Services
             "fontdrvhost",          // 12. User-mode Font Driver Host
             "Memory Compression",   // 13. Windows 11 Compressed Store
             "audiodg",              // 14. Windows Audio Device Graph (Prevents audio crackle)
-            "Zenith"                // 15. The Zenith App itself
+            "Tempo"                 // 15. The Tempo App itself
         };
 
         private readonly string _logFilePath;
@@ -242,35 +371,24 @@ namespace Tempo.Services
             var result = new CleanupResult { ActionName = "Quick Clean (Temp)" };
             Log("Starting Quick Clean (Temp)...");
 
-            var directoriesToClean = new List<(string path, bool checkDate)>
+            var directoriesToClean = new List<string>
             {
-                (Path.GetTempPath(), false),
-                (Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"), false),
-                // Prefetch removed to protect Windows startup cache
+                Path.GetTempPath(),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp")
             };
 
             long totalFreedBytes = 0;
             int deletedFiles = 0;
             int skippedFiles = 0;
-            DateTime prefetchCutoff = DateTime.Now.AddDays(-7);
 
-            foreach (var (dirPath, checkDate) in directoriesToClean)
+            foreach (var dirPath in directoriesToClean)
             {
                 if (!Directory.Exists(dirPath))
                     continue;
 
                 DirectoryInfo dirInfo = new DirectoryInfo(dirPath);
-                FileInfo[] files;
-                try
-                {
-                    files = dirInfo.GetFiles("*", SearchOption.TopDirectoryOnly);
-                }
-                catch
-                {
-                    continue;
-                }
 
-                foreach (FileInfo file in files)
+                foreach (FileInfo file in SafeEnumerateFiles(dirInfo, apply24HourCutoff: true))
                 {
                     try
                     {
@@ -292,25 +410,8 @@ namespace Tempo.Services
                     }
                 }
 
-                if (dirPath.Equals(Path.GetTempPath(), StringComparison.OrdinalIgnoreCase))
-                {
-                    try
-                    {
-                        DirectoryInfo[] subDirs = dirInfo.GetDirectories();
-                        foreach (DirectoryInfo subDir in subDirs)
-                        {
-                            try 
-                            { 
-                                if (IsSafePath(subDir.FullName))
-                                {
-                                    subDir.Delete(true); 
-                                }
-                            } 
-                            catch { }
-                        }
-                    }
-                    catch { }
-                }
+                // Safely clean empty subdirectories without touching or traversing reparse points
+                SafeDeleteEmptySubdirectories(dirInfo);
             }
 
             result.Success = true;
@@ -510,11 +611,11 @@ namespace Tempo.Services
                 try
                 {
                     DirectoryInfo dir = new DirectoryInfo(cacheDir);
-                    FileInfo[] files = dir.GetFiles("*", SearchOption.AllDirectories);
-                    foreach (FileInfo file in files)
+                    foreach (FileInfo file in SafeEnumerateFiles(dir, apply24HourCutoff: false))
                     {
                         try
                         {
+                            if (!IsSafePath(file.FullName)) continue;
                             long size = file.Length;
                             file.Delete();
                             freedBytes += size;
@@ -522,6 +623,7 @@ namespace Tempo.Services
                         }
                         catch { }
                     }
+                    SafeDeleteEmptySubdirectories(dir);
                 }
                 catch { }
             }
@@ -556,47 +658,32 @@ namespace Tempo.Services
             int deletedFiles = 0;
             string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-            // 1. npm cache (%LocalAppData%\npm-cache)
-            string npmCacheDir = Path.Combine(localAppData, "npm-cache");
-            if (Directory.Exists(npmCacheDir))
+            var devDirs = new[]
             {
-                try
-                {
-                    DirectoryInfo dir = new DirectoryInfo(npmCacheDir);
-                    foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
-                    {
-                        try { long s = file.Length; file.Delete(); freedBytes += s; deletedFiles++; } catch { }
-                    }
-                }
-                catch { }
-            }
+                Path.Combine(localAppData, "npm-cache"),
+                Path.Combine(localAppData, "pip", "cache"),
+                Path.Combine(localAppData, "NuGet", "v3-cache")
+            };
 
-            // 2. pip cache (%LocalAppData%\pip\cache)
-            string pipCacheDir = Path.Combine(localAppData, "pip", "cache");
-            if (Directory.Exists(pipCacheDir))
+            foreach (var devDir in devDirs)
             {
+                if (!Directory.Exists(devDir)) continue;
                 try
                 {
-                    DirectoryInfo dir = new DirectoryInfo(pipCacheDir);
-                    foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
+                    DirectoryInfo dir = new DirectoryInfo(devDir);
+                    foreach (FileInfo file in SafeEnumerateFiles(dir, apply24HourCutoff: false))
                     {
-                        try { long s = file.Length; file.Delete(); freedBytes += s; deletedFiles++; } catch { }
+                        try
+                        {
+                            if (!IsSafePath(file.FullName)) continue;
+                            long s = file.Length;
+                            file.Delete();
+                            freedBytes += s;
+                            deletedFiles++;
+                        }
+                        catch { }
                     }
-                }
-                catch { }
-            }
-
-            // 3. NuGet http-cache ONLY (%LocalAppData%\NuGet\v3-cache) - Never touches global-packages!
-            string nugetHttpCache = Path.Combine(localAppData, "NuGet", "v3-cache");
-            if (Directory.Exists(nugetHttpCache))
-            {
-                try
-                {
-                    DirectoryInfo dir = new DirectoryInfo(nugetHttpCache);
-                    foreach (FileInfo file in dir.GetFiles("*", SearchOption.AllDirectories))
-                    {
-                        try { long s = file.Length; file.Delete(); freedBytes += s; deletedFiles++; } catch { }
-                    }
+                    SafeDeleteEmptySubdirectories(dir);
                 }
                 catch { }
             }
@@ -756,7 +843,7 @@ namespace Tempo.Services
         {
             var summary = new CleanupScanSummary();
 
-            // 1. Temp Files Scan
+            // 1. Temp Files Scan (using same safe 24-hour cutoff as QuickCleanTemp)
             try
             {
                 var dirs = new[]
@@ -771,10 +858,11 @@ namespace Tempo.Services
                     var di = new DirectoryInfo(dir);
                     try
                     {
-                        foreach (var fi in di.GetFiles("*", SearchOption.TopDirectoryOnly))
+                        foreach (var fi in SafeEnumerateFiles(di, apply24HourCutoff: true))
                         {
                             try
                             {
+                                if (!IsSafePath(fi.FullName)) continue;
                                 summary.TempBytes += fi.Length;
                                 summary.TempFiles++;
                             }
@@ -795,7 +883,7 @@ namespace Tempo.Services
             }
             catch { }
 
-            // 3. Browser Cache Scan
+            // 3. Browser Cache Scan (using SafeEnumerateFiles without symlink traversal)
             try
             {
                 var browserDirs = GetBrowserCacheDirectories();
@@ -806,10 +894,11 @@ namespace Tempo.Services
                     var di = new DirectoryInfo(bd);
                     try
                     {
-                        foreach (var fi in di.GetFiles("*", SearchOption.AllDirectories))
+                        foreach (var fi in SafeEnumerateFiles(di, apply24HourCutoff: false))
                         {
                             try
                             {
+                                if (!IsSafePath(fi.FullName)) continue;
                                 summary.BrowserCacheBytes += fi.Length;
                                 summary.BrowserCacheFiles++;
                             }
@@ -821,7 +910,7 @@ namespace Tempo.Services
             }
             catch { }
 
-            // 4. Dev Cache Scan
+            // 4. Dev Cache Scan (using SafeEnumerateFiles without symlink traversal)
             try
             {
                 string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -838,10 +927,11 @@ namespace Tempo.Services
                     var di = new DirectoryInfo(dd);
                     try
                     {
-                        foreach (var fi in di.GetFiles("*", SearchOption.AllDirectories))
+                        foreach (var fi in SafeEnumerateFiles(di, apply24HourCutoff: false))
                         {
                             try
                             {
+                                if (!IsSafePath(fi.FullName)) continue;
                                 summary.DevCacheBytes += fi.Length;
                                 summary.DevCacheFiles++;
                             }

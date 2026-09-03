@@ -214,9 +214,18 @@ namespace Tempo
 
         private void LoadAppIconAndLogos()
         {
+            bool isAr = (LocalizationManager.CurrentLanguage == "ar");
             if (TxtAboutVersion != null)
             {
-                TxtAboutVersion.Text = $"Version {UpdateService.GetCurrentVersion()} (Windows Native x64)";
+                TxtAboutVersion.Text = isAr
+                    ? $"الإصدار {UpdateService.GetCurrentVersion()} (ويندوز x64)"
+                    : $"Version {UpdateService.GetCurrentVersion()} (Windows Native x64)";
+            }
+            if (TxtAboutAuthor != null)
+            {
+                TxtAboutAuthor.Text = isAr
+                    ? "تصميم وتطوير: م. عبدالرحمن إمام"
+                    : "Designed & Engineered by Eng. Abdelrahman Emam";
             }
 
             try
@@ -753,7 +762,9 @@ namespace Tempo
                     if (ListStartupSecurityApps != null) ListStartupSecurityApps.ItemsSource = securityApps;
                     if (ListStartupRegularApps != null) ListStartupRegularApps.ItemsSource = regularApps;
 
-                    TxtRecStartupCount.Text = $"{apps.Count} Apps";
+                    TxtRecStartupCount.Text = (LocalizationManager.CurrentLanguage == "ar")
+                        ? $"{apps.Count} تطبيق"
+                        : $"{apps.Count} Apps";
                     if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count}";
                     if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count}";
                 });
@@ -780,7 +791,9 @@ namespace Tempo
                     var cDrive = drives.FirstOrDefault(d => d.DriveLetter.StartsWith("C", StringComparison.OrdinalIgnoreCase));
                     if (cDrive != null)
                     {
-                        TxtStorageFree.Text = $"{cDrive.FreeGb:F1} GB Free";
+                        TxtStorageFree.Text = (LocalizationManager.CurrentLanguage == "ar")
+                            ? $"\u200E{cDrive.FreeGb:F1} GB\u200E متاح"
+                            : $"\u200E{cDrive.FreeGb:F1} GB\u200E Free";
                         ProgStorageUsed.Value = cDrive.UsedPercent;
                     }
                 });
@@ -1041,9 +1054,10 @@ namespace Tempo
                 string letter = vm.DriveLetter.TrimEnd(':', '\\', '/');
                 bool isSsd = vm.MediaType.Equals("SSD", StringComparison.OrdinalIgnoreCase);
 
+                bool isAr = (LocalizationManager.CurrentLanguage == "ar");
                 string actionMsg = isSsd
-                    ? $"جاري تنشيط خلايا SSD عبر TRIM للقرص {letter}:... يرجى الانتظار."
-                    : $"جاري تحسين وإلغاء تجزئة القرص {letter}:... يرجى الانتظار.";
+                    ? (isAr ? $"جاري تنشيط خلايا SSD عبر TRIM للقرص {letter}:... يرجى الانتظار." : $"Optimizing SSD via TRIM on drive {letter}:... please wait.")
+                    : (isAr ? $"جاري تحسين وإلغاء تجزئة القرص {letter}:... يرجى الانتظار." : $"Optimizing and defragmenting drive {letter}:... please wait.");
 
                 ShowToast(actionMsg, false);
                 btn.IsEnabled = false;
@@ -1195,8 +1209,11 @@ namespace Tempo
 
                 UpdateToolbarSettingsUI();
                 SaveSettings();
-                string posName = (_toolbarDock == DockPosition.Side) ? "الجانب" : "أعلى الشاشة";
-                ShowToast($"تم ضبط موضع الشريط: {posName}", false);
+                bool isAr = (LocalizationManager.CurrentLanguage == "ar");
+                string posName = (_toolbarDock == DockPosition.Side)
+                    ? (isAr ? "الجانب" : "Side of Screen")
+                    : (isAr ? "أعلى الشاشة" : "Top of Screen");
+                ShowToast(isAr ? $"تم ضبط موضع الشريط: {posName}" : $"Toolbar position set to: {posName}", false);
 
                 if (_currentView == AppViewMode.Toolbar)
                 {
@@ -1402,6 +1419,7 @@ namespace Tempo
             menu.Items.Add(new TrayToolStripSeparator());
             menu.Items.Add(isAr ? "إغلاق التطبيق نهائياً" : "Exit Tempo", null, (s, e) => ExitApp());
 
+            _trayIcon.Text = isAr ? "Tempo - تنظيف وتسريع الجهاز" : "Tempo Diagnostic & Optimizer";
             _trayIcon.ContextMenuStrip = menu;
         }
 
@@ -1419,7 +1437,7 @@ namespace Tempo
                 _trayIcon.Icon = System.Drawing.SystemIcons.Application;
             }
 
-            _trayIcon.Text = "Tempo Diagnostic";
+            _trayIcon.Text = (LocalizationManager.CurrentLanguage == "ar") ? "Tempo - تنظيف وتسريع الجهاز" : "Tempo Diagnostic & Optimizer";
             _trayIcon.Visible = true;
 
             UpdateTrayMenu();
@@ -1533,8 +1551,11 @@ namespace Tempo
                 {
                     TxtSettingsUpdateBadge.Text = (LocalizationManager.CurrentLanguage == "ar") ? "أنت تستخدم أحدث إصدار" : "Up to date";
                     TxtSettingsUpdateBadge.Foreground = (Brush)FindResource("TealHealth");
-                    MessageBox.Show("أنت تستخدم أحدث إصدار بالفعل من Tempo PC Optimizer (v" + UpdateService.GetCurrentVersion() + ").\nلا توجد تحديثات جديدة متاحة حالياً.",
-                                    "التحقق من التحديثات", MessageBoxButton.OK, MessageBoxImage.Information);
+                    string msg = (LocalizationManager.CurrentLanguage == "ar")
+                        ? $"أنت تستخدم أحدث إصدار بالفعل من Tempo PC Optimizer (v{UpdateService.GetCurrentVersion()}).\nلا توجد تحديثات جديدة متاحة حالياً."
+                        : $"You are already using the latest version of Tempo PC Optimizer (v{UpdateService.GetCurrentVersion()}).\nNo new updates available at this time.";
+                    string title = (LocalizationManager.CurrentLanguage == "ar") ? "التحقق من التحديثات" : "Check for Updates";
+                    MessageBox.Show(msg, title, MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
         }
@@ -1732,6 +1753,19 @@ namespace Tempo
             {
                 BtnLangArabic.Background = isAr ? activeBg : inactiveBg;
                 BtnLangArabic.Foreground = isAr ? activeFg : inactiveFg;
+            }
+
+            if (TxtAboutVersion != null)
+            {
+                TxtAboutVersion.Text = isAr
+                    ? $"الإصدار {UpdateService.GetCurrentVersion()} (ويندوز x64)"
+                    : $"Version {UpdateService.GetCurrentVersion()} (Windows Native x64)";
+            }
+            if (TxtAboutAuthor != null)
+            {
+                TxtAboutAuthor.Text = isAr
+                    ? "تصميم وتطوير: م. عبدالرحمن إمام"
+                    : "Designed & Engineered by Eng. Abdelrahman Emam";
             }
 
             // Refresh data views to re-evaluate formatted text in current language

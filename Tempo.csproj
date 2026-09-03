@@ -17,8 +17,22 @@
     <Version>2.2.0</Version>
     <AssemblyVersion>2.2.0.0</AssemblyVersion>
     <FileVersion>2.2.0.0</FileVersion>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <NoWarn>WFO0003;CS0104;CS0414</NoWarn>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <Target Name="RemoveNonWindowsRuntimes" AfterTargets="Publish">
+    <ItemGroup>
+      <_UnwantedPdb Include="$(PublishDir)*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(_UnwantedPdb)" />
+    <Exec Command="powershell -NoProfile -Command &quot;if (Test-Path '$(PublishDir)runtimes') { Get-ChildItem '$(PublishDir)runtimes' -Directory | Where-Object { $_.Name -notmatch '^win' } | Remove-Item -Recurse -Force }&quot;" />
+  </Target>
 
   <ItemGroup>
     <Resource Include="app.ico" />

@@ -40,6 +40,7 @@
     <system:String x:Key="TopProcessesTitle">Apps Using Most RAM</system:String>
     <system:String x:Key="ProcessColName">App Name</system:String>
     <system:String x:Key="ProcessColRam">RAM</system:String>
+    <system:String x:Key="CardStorageTitle">Storage</system:String>
     <system:String x:Key="TxtFreeDiskSpace">Free Space on C:</system:String>
     <system:String x:Key="TxtRecommendations">Quick Actions</system:String>
     <system:String x:Key="TxtTempTitleShort">Temporary Files</system:String>

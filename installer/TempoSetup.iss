@@ -47,7 +47,7 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\tempo_v2.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent runascurrentuser
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall runascurrentuser
 
 [Code]
 function IsDotNet10DesktopInstalled(): Boolean;
@@ -89,15 +89,8 @@ end;
 procedure CleanOldAppDataInstallation();
 var
   OldDir: String;
-  OldUninst: String;
-  ResultCode: Integer;
 begin
   OldDir := ExpandConstant('{localappdata}\Programs\Tempo PC Optimizer');
-  OldUninst := OldDir + '\unins000.exe';
-  if FileExists(OldUninst) then
-  begin
-    Exec(OldUninst, '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
-  end;
   if DirExists(OldDir) then
   begin
     DelTree(OldDir, True, True, True);

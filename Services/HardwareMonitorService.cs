@@ -68,6 +68,10 @@ namespace Tempo.Services
               $"Scope: {LocationFriendly}" +
               (IsSecurityApp ? "\n\n⚠️ Safety Notice: This service is vital for system protection. Disabling is not recommended." : "");
 
+        public string SecurityTooltipText => (LocalizationManager.CurrentLanguage == "ar")
+            ? "خدمة أمنية - يُوصى بالإبقاء عليها قيد التشغيل"
+            : "Security service - Recommended to keep enabled";
+
         // Security App Detection (Point 5)
         public bool IsSecurityApp =>
             Name.IndexOf("Security", StringComparison.OrdinalIgnoreCase) >= 0 ||
