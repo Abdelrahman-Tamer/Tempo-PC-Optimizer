@@ -3,889 +3,744 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tempo Diagnostic & PC Optimizer — الأداء الحقيقي لنظام ويندوز</title>
-  <meta name="description" content="أداة هندسية خفيفة وعالية الدقة لتشخيص وتحسين أداء ويندوز 10 و 11. تعزيز فوري للذاكرة، تنظيف كاش المطورين، ومنظم بدء التشغيل بأيقونات حقيقية.">
+  <title>Tempo — Windows PC Optimizer & Diagnostic</title>
+  <meta name="description" content="Lightweight Windows diagnostic and optimization tool. Real hardware metrics, safe RAM boost, startup manager, SSD TRIM. Free & open source.">
   <link rel="icon" type="image/x-icon" href="assets/app.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Readex+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
+    /* ─── TOKENS ─── */
     :root {
-      --bg: #090B10;
-      --surface: #0F131C;
-      --surface-raised: #151A26;
-      --border: #1E2536;
-      --border-hover: #2E384F;
-      --primary: #0066FF;
-      --primary-hover: #1A75FF;
-      --primary-active: #0052CC;
-      --accent-cyan: #00E5FF;
-      --text: #F8FAFC;
-      --text-muted: #94A3B8;
-      --text-dim: #64748B;
-      --font-base: 'Readex Pro', sans-serif;
-      --font-display: 'Plus Jakarta Sans', 'Readex Pro', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
+      --bg:           #08090F;
+      --bg-subtle:    #0D1017;
+      --surface:      #111420;
+      --surface-hi:   #171D2E;
+      --border:       #202535;
+      --border-light: #2A3248;
+
+      --blue:         #3B82F6;
+      --blue-dark:    #2563EB;
+      --blue-dim:     rgba(59,130,246,.12);
+      --blue-ring:    rgba(59,130,246,.35);
+
+      --green:        #10B981;
+
+      --text:         #EDF0F7;
+      --text-2:       #8B97B0;
+      --text-3:       #535D72;
+
+      --ff-en:   'Inter', sans-serif;
+      --ff-ar:   'Cairo', 'Inter', sans-serif;
+      --ff-mono: 'JetBrains Mono', monospace;
+
+      --r-sm:  8px;
+      --r-md:  12px;
+      --r-lg:  16px;
+      --r-xl:  20px;
+
+      --ease: cubic-bezier(.4,0,.2,1);
     }
 
-    ::selection {
-      background: rgba(0, 102, 255, 0.35);
-      color: #FFF;
-    }
+    ::selection { background: var(--blue-ring); color: #fff; }
 
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: var(--bg);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #1C2333;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #2D374D;
-    }
+    ::-webkit-scrollbar { width: 7px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: #1E2539; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2C3652; }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-font-smoothing: antialiased;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background-color: var(--bg);
+      background: var(--bg);
       color: var(--text);
-      font-family: var(--font-base);
-      line-height: 1.65;
+      font-family: var(--ff-ar);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
 
-    /* Ambient Subtle Grid Line */
-    .ambient-glow {
-      position: absolute;
-      top: 0;
-      left: 50%;
+    /* ─── AMBIENT ─── */
+    .hero-glow {
+      position: absolute; top: 0; left: 50%;
       transform: translateX(-50%);
-      width: 100%;
-      max-width: 1200px;
-      height: 480px;
-      background: radial-gradient(50% 100% at 50% 0%, rgba(0, 102, 255, 0.12) 0%, transparent 100%);
-      pointer-events: none;
-      z-index: 0;
+      width: min(900px, 100%); height: 520px;
+      background: radial-gradient(60% 90% at 50% 0%, rgba(59,130,246,.1) 0%, transparent 100%);
+      pointer-events: none; z-index: 0;
     }
 
-    .container {
-      max-width: 1140px;
-      margin: 0 auto;
-      padding: 0 24px;
-      position: relative;
-      z-index: 1;
-    }
+    /* ─── LAYOUT ─── */
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
-    /* Navigation */
-    nav {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: rgba(9, 11, 16, 0.85);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-bottom: 1px solid var(--border);
-      height: 68px;
-      display: flex;
+    /* ─── BUTTONS ─── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-weight: 600; text-decoration: none;
+      border: 1px solid transparent;
+      transition: background .15s var(--ease), border-color .15s var(--ease), box-shadow .15s var(--ease), transform .1s var(--ease);
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn:active { transform: scale(.98); }
+
+    /* Sizes */
+    .btn-md  { padding: 10px 20px; font-size: .9rem;  border-radius: var(--r-sm); }
+    .btn-lg  { padding: 14px 28px; font-size: 1rem;   border-radius: var(--r-md); }
+    .btn-xl  { padding: 16px 36px; font-size: 1.05rem; border-radius: var(--r-md); }
+
+    /* Solid blue */
+    .btn-primary {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); box-shadow: 0 4px 20px rgba(59,130,246,.35); }
+
+    /* Ghost */
+    .btn-ghost {
+      background: var(--surface);
+      border-color: var(--border);
+      color: var(--text-2);
+    }
+    .btn-ghost:hover { background: var(--surface-hi); border-color: var(--border-light); color: var(--text); }
+
+    /* Download special — stacked text */
+    .btn-download {
+      flex-direction: column;
       align-items: center;
+      line-height: 1.3;
+    }
+    .btn-download .sub {
+      font-size: .73rem;
+      font-family: var(--ff-mono);
+      font-weight: 400;
+      color: rgba(255,255,255,.7);
+      margin-top: 2px;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 64px; display: flex; align-items: center;
+      background: rgba(8,9,15,.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
     }
 
     .nav-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
+      display: flex; align-items: center; justify-content: space-between; width: 100%;
     }
 
     .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none; color: var(--text);
+    }
+    .brand img { width: 32px; height: 32px; border-radius: 7px; display: block; }
+    .brand-name { font-family: var(--ff-en); font-weight: 700; font-size: 1.1rem; letter-spacing: -.02em; }
+    .brand-ver {
+      font-family: var(--ff-mono); font-size: .7rem;
+      color: var(--text-3); border: 1px solid var(--border);
+      padding: 1px 6px; border-radius: 4px;
     }
 
-    .brand img {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      display: block;
-    }
+    .nav-links { display: flex; gap: 24px; list-style: none; }
+    .nav-links a { color: var(--text-2); text-decoration: none; font-size: .88rem; font-weight: 500; transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
 
-    .brand span.name {
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 1.15rem;
-      letter-spacing: -0.02em;
-    }
+    .nav-end { display: flex; align-items: center; gap: 10px; }
 
-    .brand span.tag {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--text-dim);
-      border: 1px solid var(--border);
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-weight: 600;
-    }
+    /* ─── HERO ─── */
+    .hero { padding: 88px 0 72px; text-align: center; }
 
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      list-style: none;
+    .pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 100px; padding: 5px 14px;
+      font-size: .8rem; color: var(--text-2);
+      margin-bottom: 28px;
     }
-
-    .nav-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.92rem;
-      font-weight: 500;
-      transition: color 0.15s ease;
-    }
-
-    .nav-links a:hover {
-      color: var(--text);
-    }
-
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 8px 16px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 600;
-      transition: all 0.15s ease;
-    }
-
-    .btn-secondary:hover {
-      background: var(--surface-raised);
-      border-color: var(--border-hover);
-    }
-
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: var(--primary);
-      color: #FFFFFF;
-      padding: 9px 20px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-size: 0.92rem;
-      font-weight: 600;
-      transition: all 0.15s ease;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-primary:active {
-      background: var(--primary-active);
-    }
-
-    /* Hero */
-    .hero {
-      padding: 90px 0 70px;
-      text-align: center;
-    }
-
-    .version-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 5px 14px;
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #10B981;
-    }
+    .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 
     .hero h1 {
-      font-size: 3.2rem;
-      font-weight: 800;
-      line-height: 1.2;
-      letter-spacing: -0.03em;
-      max-width: 820px;
-      margin: 0 auto 20px;
-      color: #FFFFFF;
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 800; letter-spacing: -.03em;
+      line-height: 1.18; max-width: 780px;
+      margin: 0 auto 10px; color: #fff;
     }
 
-    .hero p.lead {
-      font-size: 1.15rem;
-      color: var(--text-muted);
-      max-width: 640px;
-      margin: 0 auto 36px;
-      font-weight: 400;
-      line-height: 1.7;
+    .hero-subtitle {
+      font-size: clamp(.95rem, 2vw, 1.12rem);
+      color: var(--text-2); max-width: 580px;
+      margin: 12px auto 0; line-height: 1.7;
     }
-
-    .hero-actions {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .btn-hero-download {
-      padding: 14px 34px;
-      font-size: 1.05rem;
-      border-radius: 10px;
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      line-height: 1.25;
-    }
-
-    .btn-hero-download span.sub {
-      font-size: 0.75rem;
-      font-family: var(--font-mono);
-      opacity: 0.8;
-      font-weight: 400;
-      margin-top: 4px;
-    }
-
-    .hero-proof-list {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 28px;
-      margin-top: 24px;
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      font-family: var(--font-mono);
-    }
-
-    .hero-proof-list span {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* Product Frame Showcase */
-    .product-frame-section {
-      padding: 20px 0 90px;
-    }
-
-    .frame-wrapper {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
-      max-width: 960px;
-      margin: 0 auto;
-    }
-
-    .frame-topbar {
-      background: #0B0E15;
-      padding: 12px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .window-title {
-      font-family: var(--font-display);
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .window-dots {
-      display: flex;
-      gap: 7px;
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #1C2333;
-    }
-
-    .frame-body {
-      display: grid;
-      grid-template-columns: 1.2fr 1fr;
-      align-items: center;
-      background: #080A0E;
-    }
-
-    .frame-image {
-      padding: 24px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .frame-image img {
-      max-width: 100%;
-      max-height: 520px;
-      border-radius: 8px;
-      display: block;
-      border: 1px solid var(--border);
-    }
-
-    .frame-info {
-      padding: 40px;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .info-item {
-      display: flex;
-      gap: 16px;
-    }
-
-    .info-num {
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      color: var(--primary);
-      font-weight: 600;
-      background: rgba(0, 102, 255, 0.1);
-      border: 1px solid rgba(0, 102, 255, 0.2);
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .info-text h3 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-
-    .info-text p {
-      font-size: 0.88rem;
-      color: var(--text-muted);
+    .hero-subtitle-en {
+      font-family: var(--ff-en);
+      font-size: .9rem; color: var(--text-3);
+      max-width: 560px; margin: 6px auto 0;
       line-height: 1.6;
     }
 
-    /* Architectural Pillars (Section) */
-    .section {
-      padding: 80px 0;
+    .hero-actions {
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; flex-wrap: wrap; margin-top: 36px;
     }
 
-    .section-header {
+    .trust-row {
+      display: flex; align-items: center; justify-content: center;
+      gap: 24px; flex-wrap: wrap;
+      margin-top: 22px; font-size: .82rem;
+      color: var(--text-3); font-family: var(--ff-en);
+    }
+    .trust-row span { display: flex; align-items: center; gap: 6px; }
+    .trust-row svg { flex-shrink: 0; }
+
+    /* ─── STATS ─── */
+    .stats-bar {
+      border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      background: var(--bg-subtle);
+      padding: 32px 0;
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+    .stat {
       text-align: center;
-      max-width: 600px;
-      margin: 0 auto 50px;
+      border-left: 1px solid var(--border);
+      padding: 0 24px;
     }
-
-    .section-header h2 {
-      font-size: 2.1rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin-bottom: 12px;
+    .stat:last-child { border-left: none; }
+    .stat-val {
+      display: block; font-family: var(--ff-mono);
+      font-size: 1.8rem; font-weight: 600;
+      color: var(--blue); letter-spacing: -.03em;
     }
+    .stat-ar { font-size: .88rem; color: var(--text-2); margin-top: 2px; }
+    .stat-en { font-size: .75rem; color: var(--text-3); font-family: var(--ff-en); }
 
-    .section-header p {
-      color: var(--text-muted);
-      font-size: 1rem;
+    /* ─── SECTION HEADINGS ─── */
+    .sec-head { text-align: center; max-width: 580px; margin: 0 auto 48px; }
+    .sec-head h2 {
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700; letter-spacing: -.02em;
+      margin-bottom: 8px;
     }
+    .sec-head p { color: var(--text-2); font-size: .95rem; }
+    .sec-head .en { font-family: var(--ff-en); font-size: .82rem; color: var(--text-3); margin-top: 3px; }
 
-    .pillars-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
+    /* ─── PRODUCT SHOWCASE ─── */
+    .showcase { padding: 72px 0; }
+
+    .window-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-xl); overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,.55), 0 0 0 1px rgba(59,130,246,.08);
+      max-width: 920px; margin: 0 auto;
     }
-
-    .pillar-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 30px;
-      transition: border-color 0.2s ease, background-color 0.2s ease;
-    }
-
-    .pillar-card:hover {
-      border-color: var(--border-hover);
-      background: var(--surface-raised);
-    }
-
-    .pillar-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 8px;
-      background: #111622;
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--primary);
-      margin-bottom: 20px;
-    }
-
-    .pillar-card h3 {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin-bottom: 10px;
-      color: var(--text);
-    }
-
-    .pillar-card p {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      line-height: 1.65;
-    }
-
-    /* Companion Bar Visual Feature */
-    .companion-feature {
-      margin-top: 40px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 40px;
-      display: grid;
-      grid-template-columns: 1fr 1.2fr;
-      gap: 40px;
-      align-items: center;
-    }
-
-    .companion-text h3 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-bottom: 12px;
-      letter-spacing: -0.02em;
-    }
-
-    .companion-text p {
-      color: var(--text-muted);
-      font-size: 0.95rem;
-      line-height: 1.7;
-      margin-bottom: 20px;
-    }
-
-    .companion-badges {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .badge-pill {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      color: var(--text);
-      background: #111622;
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 6px;
-    }
-
-    .companion-visuals {
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-      align-items: center;
-    }
-
-    .toolbar-preview-box {
-      width: 100%;
-      background: #090B10;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .toolbar-preview-box img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 20px;
-      display: block;
-    }
-
-    /* Specs Table */
-    .specs-section {
-      padding: 60px 0 100px;
-    }
-
-    .specs-wrapper {
-      max-width: 820px;
-      margin: 0 auto;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    .specs-header {
-      padding: 24px 30px;
+    .window-bar {
+      background: #0B0E18; padding: 11px 18px;
+      display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
     }
+    .window-title-row { display: flex; align-items: center; gap: 8px; font-family: var(--ff-en); font-size: .82rem; color: var(--text-3); }
+    .window-btns { display: flex; gap: 6px; }
+    .wbtn { width: 10px; height: 10px; border-radius: 50%; background: var(--border-light); }
+    .wbtn.red { background: #FF5F56; } .wbtn.yellow { background: #FEBC2E; } .wbtn.green { background: #28C840; }
 
-    .specs-header h3 {
-      font-size: 1.2rem;
-      font-weight: 600;
+    .window-body {
+      display: grid; grid-template-columns: 1.15fr 1fr;
+      align-items: stretch; background: #08090F;
     }
+    .window-img { padding: 20px; display: flex; align-items: center; justify-content: center; }
+    .window-img img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); display: block; }
 
-    .specs-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .window-details { padding: 36px 32px; display: flex; flex-direction: column; gap: 26px; border-right: 1px solid var(--border); }
+    .detail-item { display: flex; gap: 14px; align-items: flex-start; }
+    .detail-num {
+      font-family: var(--ff-mono); font-size: .8rem; font-weight: 600;
+      color: var(--blue); background: var(--blue-dim);
+      border: 1px solid rgba(59,130,246,.22);
+      width: 26px; height: 26px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
+    .detail-text h4 { font-size: .98rem; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .detail-text .ar { font-size: .85rem; color: var(--text-2); line-height: 1.55; }
+    .detail-text .en { font-family: var(--ff-en); font-size: .76rem; color: var(--text-3); margin-top: 2px; }
 
-    .spec-row {
-      padding: 16px 30px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.9rem;
+    /* ─── FEATURES GRID ─── */
+    .features { padding: 72px 0; }
+    .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+    .feat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 28px;
+      transition: border-color .2s, background .2s;
     }
+    .feat-card:hover { background: var(--surface-hi); border-color: var(--border-light); }
 
-    .spec-row:nth-last-child(-n+2) {
-      border-bottom: none;
+    .feat-icon {
+      width: 40px; height: 40px; border-radius: 9px;
+      background: var(--blue-dim); border: 1px solid rgba(59,130,246,.2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--blue); margin-bottom: 18px;
     }
+    .feat-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+    .feat-card .en-title { font-family: var(--ff-en); font-size: .8rem; color: var(--text-3); margin-bottom: 10px; }
+    .feat-card p { font-size: .87rem; color: var(--text-2); line-height: 1.62; }
 
-    .spec-label {
-      color: var(--text-muted);
+    /* ─── COMPANION BAR ─── */
+    .companion { padding: 72px 0; }
+    .companion-inner {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-xl); padding: 48px;
+      display: grid; grid-template-columns: 1fr 1.1fr;
+      gap: 48px; align-items: center;
     }
-
-    .spec-val {
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-weight: 500;
+    .companion-copy h2 {
+      font-size: clamp(1.3rem, 2.5vw, 1.8rem);
+      font-weight: 700; letter-spacing: -.02em; margin-bottom: 6px;
     }
-
-    /* Final CTA */
-    .cta-banner {
-      margin: 40px auto 100px;
-      max-width: 820px;
-      text-align: center;
-      padding: 60px 30px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 18px;
+    .companion-copy .en-head { font-family: var(--ff-en); font-size: .88rem; color: var(--text-3); margin-bottom: 14px; }
+    .companion-copy p { font-size: .92rem; color: var(--text-2); line-height: 1.7; margin-bottom: 20px; }
+    .companion-copy .en-sub { font-family: var(--ff-en); font-size: .8rem; color: var(--text-3); margin-top: -14px; margin-bottom: 20px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      font-family: var(--ff-mono); font-size: .74rem;
+      background: var(--bg-subtle); border: 1px solid var(--border);
+      padding: 5px 10px; border-radius: 6px; color: var(--text-2);
     }
-
-    .cta-banner h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 12px;
+    .companion-visual {
+      background: var(--bg-subtle); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 28px;
+      display: flex; align-items: center; justify-content: center;
     }
+    .companion-visual img { max-width: 100%; height: auto; border-radius: 12px; display: block; }
 
-    .cta-banner p {
-      color: var(--text-muted);
-      margin-bottom: 30px;
+    /* ─── SPECS ─── */
+    .specs { padding: 72px 0; }
+    .specs-card {
+      max-width: 780px; margin: 0 auto;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-lg); overflow: hidden;
     }
+    .specs-head {
+      padding: 20px 28px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .specs-head h3 { font-size: 1rem; font-weight: 600; }
+    .specs-head .en { font-family: var(--ff-en); font-size: .78rem; color: var(--text-3); }
+    .mono-badge { font-family: var(--ff-mono); font-size: .72rem; color: var(--text-3); background: var(--bg-subtle); border: 1px solid var(--border); padding: 3px 8px; border-radius: 5px; }
 
-    /* Footer */
+    .spec-list { display: grid; grid-template-columns: 1fr 1fr; }
+    .spec-item {
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 14px 28px; border-bottom: 1px solid var(--border);
+      font-size: .88rem; gap: 16px;
+    }
+    .spec-item:nth-last-child(-n+2) { border-bottom: none; }
+    .spec-lbl { color: var(--text-2); }
+    .spec-lbl .en { font-family: var(--ff-en); font-size: .74rem; color: var(--text-3); display: block; margin-top: 1px; }
+    .spec-v { font-family: var(--ff-mono); font-size: .82rem; color: var(--text); font-weight: 500; text-align: left; }
+
+    /* ─── CTA ─── */
+    .cta { padding: 40px 0 100px; }
+    .cta-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-xl); padding: 64px 40px;
+      text-align: center; max-width: 720px; margin: 0 auto;
+    }
+    .cta-box h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 6px; }
+    .cta-box .en-head { font-family: var(--ff-en); font-size: .9rem; color: var(--text-3); margin-bottom: 14px; }
+    .cta-box p { color: var(--text-2); font-size: .95rem; margin-bottom: 32px; max-width: 480px; margin-inline: auto; margin-bottom: 32px; }
+    .cta-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
+
+    /* ─── FOOTER ─── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 40px 0;
-      font-size: 0.88rem;
-      color: var(--text-dim);
+      padding: 36px 0;
+      font-size: .82rem; color: var(--text-3);
     }
+    .foot-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+    .foot-inner a { color: var(--text-2); text-decoration: none; transition: color .15s; }
+    .foot-inner a:hover { color: var(--text); }
 
-    .footer-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-
-    .footer-author a {
-      color: var(--text-muted);
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-
-    .footer-author a:hover {
-      color: var(--text);
-    }
-
-    @media (max-width: 900px) {
-      .hero h1 { font-size: 2.4rem; }
-      .frame-body { grid-template-columns: 1fr; }
-      .pillars-grid { grid-template-columns: 1fr; }
-      .companion-feature { grid-template-columns: 1fr; }
-      .specs-grid { grid-template-columns: 1fr; }
-      .spec-row:nth-last-child(2) { border-bottom: 1px solid var(--border); }
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 880px) {
       .nav-links { display: none; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stat { border-left: none; border-bottom: 1px solid var(--border); padding: 20px; }
+      .stat:nth-child(n+3) { border-bottom: none; }
+      .feat-grid { grid-template-columns: 1fr 1fr; }
+      .window-body { grid-template-columns: 1fr; }
+      .window-details { border-right: none; border-top: 1px solid var(--border); }
+      .companion-inner { grid-template-columns: 1fr; }
+      .spec-list { grid-template-columns: 1fr; }
+      .spec-item:nth-last-child(2) { border-bottom: 1px solid var(--border); }
+    }
+    @media (max-width: 560px) {
+      .feat-grid { grid-template-columns: 1fr; }
+      .hero-actions { flex-direction: column; align-items: stretch; }
+      .btn { justify-content: center; }
+      .trust-row { gap: 14px; }
+      .cta-row { flex-direction: column; }
+      .companion-inner { padding: 28px 20px; }
+      .foot-inner { justify-content: center; text-align: center; }
     }
   </style>
 </head>
 <body>
 
-  <div class="ambient-glow"></div>
+<div class="hero-glow" aria-hidden="true"></div>
 
-  <!-- Navbar -->
-  <nav>
-    <div class="container nav-inner">
-      <a href="#" class="brand">
-        <img src="assets/app.png" alt="Tempo">
-        <span class="name">Tempo</span>
-        <span class="tag">v2.2.0</span>
+<!-- ─── NAVBAR ─── -->
+<nav>
+  <div class="wrap nav-inner">
+    <a href="#" class="brand">
+      <img src="assets/app.png" alt="Tempo Logo">
+      <span class="brand-name">Tempo</span>
+      <span class="brand-ver">v2.2.0</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#showcase">نظرة عامة</a></li>
+      <li><a href="#features">الميزات</a></li>
+      <li><a href="#companion">الشريط المصاحب</a></li>
+      <li><a href="#specs">المواصفات</a></li>
+    </ul>
+
+    <div class="nav-end">
+      <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-md">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        GitHub
       </a>
+      <a href="Tempo-v2.2.0-win-x64.zip" download class="btn btn-primary btn-md">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+          <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 11l5 5 5-5M12 4v12"/>
+        </svg>
+        تحميل مجاني
+      </a>
+    </div>
+  </div>
+</nav>
 
-      <ul class="nav-links">
-        <li><a href="#overview">نظرة عامة</a></li>
-        <li><a href="#capabilities">الميزات الهندسية</a></li>
-        <li><a href="#companion">شريط سطح المكتب</a></li>
-        <li><a href="#specs">المواصفات</a></li>
-      </ul>
+<!-- ─── HERO ─── -->
+<header class="hero">
+  <div class="wrap">
+    <div class="pill">
+      <span class="pill-dot"></span>
+      <span>إصدار رسمي • v2.2.0 • 3.19 MB</span>
+    </div>
 
-      <div class="nav-actions">
-        <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn-secondary" aria-label="GitHub Repository">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          GitHub
-        </a>
-        <a href="Tempo-v2.2.0-win-x64.zip" download class="btn-primary">
-          تحميل البرنامج
-        </a>
+    <h1>تشخيص حقيقي وأداء أفضل لنظام ويندوز</h1>
+    <p class="hero-subtitle">أداة هندسية خفيفة لتشخيص وتحسين أداء ويندوز 10 و 11 بدون إعلانات أو بيانات مرسلة.</p>
+    <p class="hero-subtitle-en">A lightweight C# / .NET 10 WPF utility for Windows — real hardware metrics, safe RAM optimization, startup manager, and a compact desktop companion bar.</p>
+
+    <div class="hero-actions">
+      <a href="Tempo-v2.2.0-win-x64.zip" download class="btn btn-primary btn-lg btn-download">
+        <span>تحميل Tempo مجاناً — Windows 64-bit</span>
+        <span class="sub">Portable v2.2.0 • No installation required</span>
+      </a>
+      <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        View Source on GitHub
+      </a>
+    </div>
+
+    <div class="trust-row">
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        3.19 MB · No install
+      </span>
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Zero ads &amp; telemetry
+      </span>
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        MIT Open Source
+      </span>
+      <span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Windows 10 &amp; 11 x64
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- ─── STATS BAR ─── -->
+<div class="stats-bar">
+  <div class="wrap">
+    <div class="stats-grid">
+      <div class="stat">
+        <span class="stat-val">3.19 MB</span>
+        <div class="stat-ar">حجم الحزمة</div>
+        <div class="stat-en">Package size</div>
+      </div>
+      <div class="stat">
+        <span class="stat-val">0%</span>
+        <div class="stat-ar">استهلاك المعالج في الخمول</div>
+        <div class="stat-en">CPU usage when idle</div>
+      </div>
+      <div class="stat">
+        <span class="stat-val">15+</span>
+        <div class="stat-ar">خدمة ويندوز محمية</div>
+        <div class="stat-en">Protected NT services</div>
+      </div>
+      <div class="stat">
+        <span class="stat-val">100%</span>
+        <div class="stat-ar">قياسات حقيقية بلا تزوير</div>
+        <div class="stat-en">Real hardware metrics</div>
       </div>
     </div>
-  </nav>
+  </div>
+</div>
 
-  <!-- Hero Section -->
-  <header class="hero">
-    <div class="container">
-      <div class="version-pill">
-        <span class="status-dot"></span>
-        <span>إصدار رسمي فائق الخفة • 3.2 ميجابايت</span>
-      </div>
-
-      <h1>تشخيص دقيق وتحسين حقيقي لأداء ويندوز</h1>
-      <p class="lead">
-        تطبيق C# / .NET 10 WPF هندسي لنظام ويندوز 10 و 11. يمنحك قراءات عتاد حية بدون أي أرقام وهمية، تحريراً آمناً للذاكرة الخاملة، ومنظم بدء التشغيل بالأيقونات الأصلية.
-      </p>
-
-      <div class="hero-actions">
-        <a href="Tempo-v2.2.0-win-x64.zip" download class="btn-primary btn-hero-download">
-          <span>تحميل مجاني (Windows 64-bit)</span>
-          <span class="sub">نسخة محمولة v2.2.0 • لا تتطلب تثبيتاً</span>
-        </a>
-        <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn-secondary" style="padding: 18px 24px;">
-          الكود المصدري على GitHub
-        </a>
-      </div>
-
-      <div class="hero-proof-list">
-        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> خفيف (3.2 MB)</span>
-        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> بدون إعلانات أو تتبع</span>
-        <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> مفتوح المصدر (MIT)</span>
-      </div>
+<!-- ─── PRODUCT SHOWCASE ─── -->
+<section id="showcase" class="showcase">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>لوحة تحكم كاملة وفورية</h2>
+      <p>مراقبة مباشرة للعتاد والشبكة وأعلى العمليات استهلاكاً للذاكرة.</p>
+      <div class="en">Full real-time diagnostic dashboard — CPU, RAM, Network, top processes.</div>
     </div>
-  </header>
 
-  <!-- Product Frame Showcase -->
-  <section id="overview" class="product-frame-section">
-    <div class="container">
-      <div class="frame-wrapper">
-        <div class="frame-topbar">
-          <div class="window-title">
-            <img src="assets/app.png" width="16" height="16" alt="icon">
-            <span>Tempo Diagnostic PRO — Dashboard</span>
-          </div>
-          <div class="window-dots">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-          </div>
+    <div class="window-card">
+      <div class="window-bar">
+        <div class="window-title-row">
+          <img src="assets/app.png" width="14" height="14" alt="">
+          <span>Tempo Diagnostic — Dashboard</span>
+        </div>
+        <div class="window-btns">
+          <div class="wbtn red"></div>
+          <div class="wbtn yellow"></div>
+          <div class="wbtn green"></div>
+        </div>
+      </div>
+
+      <div class="window-body">
+        <div class="window-img">
+          <img src="assets/screen_overview.png" alt="Tempo Dashboard Screenshot">
         </div>
 
-        <div class="frame-body">
-          <div class="frame-image">
-            <img src="assets/screen_overview.png" alt="Tempo Main Window">
-          </div>
-          <div class="frame-info">
-            <div class="info-item">
-              <div class="info-num">1</div>
-              <div class="info-text">
-                <h3>قياسات حقيقية للمعالج والذاكرة</h3>
-                <p>مراقبة حية بنسبة مئوية ملونة ومقياس موحد لنسب استهلاك CPU و RAM بدقة عتاد مباشرة.</p>
-              </div>
+        <div class="window-details">
+          <div class="detail-item">
+            <div class="detail-num">1</div>
+            <div class="detail-text">
+              <h4>قياسات حية للمعالج والذاكرة</h4>
+              <div class="ar">مؤشرات CPU و RAM الحية بالألوان وفق مستوى الاستهلاك.</div>
+              <div class="en">Color-coded live CPU &amp; RAM gauges from real hardware sensors.</div>
             </div>
-
-            <div class="info-item">
-              <div class="info-num">2</div>
-              <div class="info-text">
-                <h3>تفريغ الذاكرة الخاملة بأمان</h3>
-                <p>تفريغ Working Sets للبرامج المهملة بضغطة زر مع حماية 15 خدمة أساسية لنظام التشغيل.</p>
-              </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-num">2</div>
+            <div class="detail-text">
+              <h4>تعزيز الذاكرة الخاملة</h4>
+              <div class="ar">تفريغ Working Sets للبرامج الخاملة بحماية 15 خدمة NT أساسية.</div>
+              <div class="en">Free inactive working sets while protecting 15 critical NT services.</div>
             </div>
-
-            <div class="info-item">
-              <div class="info-num">3</div>
-              <div class="info-text">
-                <h3>استقرار الإحداثيات وتثبيت الزاوية</h3>
-                <p>استقرار تلقائي فوق شريط المهام في الركن السفلي الأيمن مع حفظ واسترجاع موضع النافذة المفضل بدقة.</p>
-              </div>
+          </div>
+          <div class="detail-item">
+            <div class="detail-num">3</div>
+            <div class="detail-text">
+              <h4>تثبيت الموضع والاستقرار</h4>
+              <div class="ar">تثبيت تلقائي فوق شريط المهام مع حفظ الموضع عند إعادة التشغيل.</div>
+              <div class="en">Auto-docks above the taskbar and restores geometry on relaunch.</div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Core Pillars Grid -->
-  <section id="capabilities" class="section">
-    <div class="container">
-      <div class="section-header">
-        <h2>أدوات مصممة بوظائف واضحة</h2>
-        <p>بدون تعقيد أو خيارات مضللة، كل وظيفة تؤدي غرضاً محدداً يحتاجه نظامك.</p>
+<!-- ─── FEATURES ─── -->
+<section id="features" class="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>أدوات بوظائف واضحة</h2>
+      <p>كل وظيفة تؤدي غرضاً محدداً — بدون تعقيد أو خيارات مضللة.</p>
+      <div class="en">Every tool has one clear job — no bloat, no fake operations.</div>
+    </div>
+
+    <div class="feat-grid">
+      <!-- 1 -->
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+          </svg>
+        </div>
+        <h3>مراقبة العتاد والشبكة</h3>
+        <div class="en-title">Hardware &amp; Network Monitor</div>
+        <p>قياس سرعة رفع وتنزيل حقيقية عبر واجهات الشبكة، ورصد أعلى 5 برامج استهلاكاً للذاكرة في الوقت الفعلي.</p>
       </div>
 
-      <div class="pillars-grid">
-        <!-- 1 -->
-        <div class="pillar-card">
-          <div class="pillar-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </div>
-          <h3>مراقبة العتاد والشبكة الحية</h3>
-          <p>قياس سرعة الرفع والتنزيل الحقيقية عبر واجهات الشبكة مباشرة، مع رصد أعلى 5 برامج استهلاكاً للذاكرة.</p>
+      <!-- 2 -->
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
         </div>
-
-        <!-- 2 -->
-        <div class="pillar-card">
-          <div class="pillar-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-          </div>
-          <h3>تنظيف كاش المتصفح وحزم التطوير</h3>
-          <p>تنظيف آمن لملفات Temp وسلة المحذوفات وكاش Chrome و Edge ومخلفات حزم npm و NuGet و pip بتأكيد صريح.</p>
-        </div>
-
-        <!-- 3 -->
-        <div class="pillar-card">
-          <div class="pillar-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
-          </div>
-          <h3>منظم بدء التشغيل بأيقونات أصلية</h3>
-          <p>استخراج الأيقونات الرسمية للبرامج من ملفاتها الأصلية، مع كشف تلقائي لبرامج الحماية والأمان لمنع تعطيلها خطأً.</p>
-        </div>
+        <h3>تنظيف الكاش وحزم التطوير</h3>
+        <div class="en-title">Cache &amp; Dev Packages Cleaner</div>
+        <p>مسح آمن لملفات Temp وسلة المحذوفات وكاش Chrome و Edge، ومخلفات npm و NuGet و pip — مع تأكيد صريح قبل كل حذف.</p>
       </div>
 
-      <!-- Companion Bar Detail -->
-      <div id="companion" class="companion-feature">
-        <div class="companion-text">
-          <h3>شريط سطح المكتب المصاحب</h3>
-          <p>
-            يمكنك تصغير التطبيق إلى كبسولة أفقية علوية أو شريط جانبي نحيف جداً بعرض 34px فقط. يوفر مؤشرات حية فورية لاستهلاك المعالج والذاكرة وسرعة الشبكة، مع ميزة الاختفاء التلقائي عند الاقتراب (Peek) لتوفير أقصى مساحة عمل.
-          </p>
-          <div class="companion-badges">
-            <span class="badge-pill">وضع الكبسولة الأفقية (42px)</span>
-            <span class="badge-pill">وضع الشريط الجانبي (34px)</span>
-            <span class="badge-pill">Auto-Peek للتخفي التلقائي</span>
-          </div>
+      <!-- 3 -->
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
         </div>
+        <h3>منظم بدء التشغيل</h3>
+        <div class="en-title">Startup Apps Manager</div>
+        <p>فحص إدخالات السجل مع استخراج الأيقونات الأصلية من الملفات التنفيذية، وكشف تلقائي لبرامج الحماية لمنع تعطيلها.</p>
+      </div>
 
-        <div class="companion-visuals">
-          <div class="toolbar-preview-box">
-            <img src="assets/screen_toolbar_top.png" alt="Top Companion Bar">
-          </div>
+      <!-- 4 -->
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/>
+          </svg>
+        </div>
+        <h3>كشف SSD وأمر TRIM</h3>
+        <div class="en-title">SSD Detection &amp; TRIM</div>
+        <p>التعرف التلقائي على نوع التخزين (SSD أو HDD) وتنفيذ TRIM للحفاظ على سرعة الكتابة دون تأثير على الأقراص الميكانيكية.</p>
+      </div>
+
+      <!-- 5 -->
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+            <path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.33 8 20.5v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14H5v1.5c0 .83-.67 1.5-1.5 1.5S2 16.33 2 15.5 2.67 14 3.5 14z"/><path d="M14 14.5c0-.83.67-1.5 1.5-1.5h5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5h-5c-.83 0-1.5-.67-1.5-1.5z"/><path d="M15.5 19H14v1.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/><path d="M10 9.5C10 8.67 9.33 8 8.5 8h-5C2.67 8 2 8.67 2 9.5S2.67 11 3.5 11h5c.83 0 1.5-.67 1.5-1.5z"/><path d="M8.5 5H10V3.5C10 2.67 9.33 2 8.5 2S7 2.67 7 3.5 7.67 5 8.5 5z"/>
+          </svg>
+        </div>
+        <h3>أدوات ويندوز السريعة</h3>
+        <div class="en-title">Windows Quick Tools</div>
+        <p>اختصارات مباشرة لفتح Task Manager و Resource Monitor وDisk Management وServices وDevice Manager وNetwork Connections.</p>
+      </div>
+
+      <!-- 6 -->
+      <div class="feat-card">
+        <div class="feat-icon">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+            <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </div>
+        <h3>إعدادات وتخصيص</h3>
+        <div class="en-title">Settings &amp; Customization</div>
+        <p>ضبط موضع الشريط المصاحب، وتردد قراءة البيانات، واختيار مكان دائم للوحة التحكم على الشاشة.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── COMPANION BAR ─── -->
+<section id="companion" class="companion">
+  <div class="wrap">
+    <div class="companion-inner">
+      <div class="companion-copy">
+        <h2>الشريط المصاحب لسطح المكتب</h2>
+        <div class="en-head">Compact Desktop Companion Bar</div>
+        <p>صغّر التطبيق إلى كبسولة أفقية علوية أو شريط جانبي نحيف (34px فقط) يلتصق بحافة الشاشة ويعرض قياسات حية للمعالج والذاكرة والشبكة.</p>
+        <p class="en-sub">Minimize to a slim horizontal capsule or a 34px sidebar with live CPU, RAM, and network speed — with auto-hide and peek on hover.</p>
+        <div class="tags">
+          <span class="tag">Horizontal Capsule (42px)</span>
+          <span class="tag">Vertical Sidebar (34px)</span>
+          <span class="tag">Auto-Peek on hover</span>
+          <span class="tag">Persistent position</span>
+        </div>
+      </div>
+      <div class="companion-visual">
+        <img src="assets/screen_toolbar_top.png" alt="Companion Toolbar Preview">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SPECS ─── -->
+<section id="specs" class="specs">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>المواصفات الفنية</h2>
+      <p>متطلبات التشغيل والترخيص البرمجي.</p>
+      <div class="en">System requirements and license information.</div>
+    </div>
+
+    <div class="specs-card">
+      <div class="specs-head">
+        <div>
+          <h3>System Requirements &amp; Specs</h3>
+          <div class="en">متطلبات النظام والمواصفات</div>
+        </div>
+        <span class="mono-badge">x64 Native</span>
+      </div>
+
+      <div class="spec-list">
+        <div class="spec-item">
+          <span class="spec-lbl">نظام التشغيل<span class="en">Operating System</span></span>
+          <span class="spec-v">Windows 10 / 11 (64-bit)</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-lbl">بيئة التشغيل<span class="en">Runtime</span></span>
+          <span class="spec-v">.NET 10.0 WPF</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-lbl">حجم الحزمة<span class="en">Package Size</span></span>
+          <span class="spec-v">3.19 MB (ZIP)</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-lbl">الصلاحيات<span class="en">Privilege Level</span></span>
+          <span class="spec-v">asInvoker (Standard)</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-lbl">الأمان<span class="en">Security</span></span>
+          <span class="spec-v">No telemetry / Virus-free</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-lbl">الترخيص<span class="en">License</span></span>
+          <span class="spec-v">MIT Open Source</span>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Specs Section -->
-  <section id="specs" class="specs-section">
-    <div class="container">
-      <div class="specs-wrapper">
-        <div class="specs-header">
-          <h3>المواصفات الفنية ومتطلبات النظام</h3>
-          <span style="color: var(--text-dim); font-size: 0.85rem; font-family: var(--font-mono);">x64 Native</span>
-        </div>
-
-        <div class="specs-grid">
-          <div class="spec-row">
-            <span class="spec-label">نظام التشغيل</span>
-            <span class="spec-val">Windows 10 / 11 (64-bit)</span>
-          </div>
-          <div class="spec-row">
-            <span class="spec-label">بيئة العمل</span>
-            <span class="spec-val">.NET 10.0 WPF</span>
-          </div>
-          <div class="spec-row">
-            <span class="spec-label">حجم التنزيل</span>
-            <span class="spec-val">3.19 MB (ZIP)</span>
-          </div>
-          <div class="spec-row">
-            <span class="spec-label">مستوى الصلاحيات</span>
-            <span class="spec-val">Standard (asInvoker)</span>
-          </div>
-          <div class="spec-row">
-            <span class="spec-label">الأمان والحماية</span>
-            <span class="spec-val">100% Virus-Free / No Telemetry</span>
-          </div>
-          <div class="spec-row">
-            <span class="spec-label">الترخيص البرمجي</span>
-            <span class="spec-val">MIT Open Source</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- CTA Box -->
-      <div class="cta-banner">
-        <h2>جاهز لتجربة أداء استثنائية؟</h2>
-        <p>قم بتحميل النسخة المحمولة الآن وابدأ فوراً بدون أي إجراءات تثبيت معقدة.</p>
-        <a href="Tempo-v2.2.0-win-x64.zip" download class="btn-primary" style="padding: 16px 36px; font-size: 1.05rem;">
-          تحميل Tempo v2.2.0 مجاناً
+<!-- ─── CTA ─── -->
+<section class="cta">
+  <div class="wrap">
+    <div class="cta-box">
+      <h2>ابدأ الآن — مجاناً وبدون تثبيت</h2>
+      <div class="en-head">Free, portable, no installer needed.</div>
+      <p>حمّل النسخة المحمولة وشغّل Tempo مباشرة. لا تسجيل، لا إعلانات، لا بيانات ترسل.</p>
+      <div class="cta-row">
+        <a href="Tempo-v2.2.0-win-x64.zip" download class="btn btn-primary btn-xl btn-download">
+          <span>تحميل Tempo v2.2.0 — Windows 64-bit</span>
+          <span class="sub">Portable · 3.19 MB · No install required</span>
+        </a>
+        <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          Source Code on GitHub
         </a>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- Footer -->
-  <footer>
-    <div class="container footer-inner">
-      <div>
-        <span>Tempo Diagnostic & PC Optimizer • v2.2.0</span>
-      </div>
-      <div class="footer-author">
-        Designed & Engineered by <a href="https://github.com/Abdelrahman-Tamer" target="_blank">Eng. Abdelrahman Emam</a>
-      </div>
-      <div>
-        <span>MIT License © 2026</span>
-      </div>
-    </div>
-  </footer>
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="wrap foot-inner">
+    <span>Tempo Diagnostic &amp; PC Optimizer — v2.2.0</span>
+    <span>Designed &amp; Engineered by <a href="https://github.com/Abdelrahman-Tamer" target="_blank">Eng. Abdelrahman Emam</a></span>
+    <span>MIT License © 2026</span>
+  </div>
+</footer>
 
 </body>
 </html>
