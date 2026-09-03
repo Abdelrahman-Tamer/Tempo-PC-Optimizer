@@ -1,102 +1,120 @@
-# ⚡ Tempo Diagnostic & PC Optimizer
-
 <div align="center">
 
-  <img src="app.png" width="120" height="120" alt="Tempo Logo" />
+  <img src="app.png" width="100" height="100" alt="Tempo PC Optimizer Logo" style="border-radius: 20px; box-shadow: 0 8px 24px rgba(0,102,255,0.3);" />
 
-  ### High-Precision Windows Diagnostic, Telemetry & Performance Engine
-  **أداة تشخيص وتحسين أداء نظام ويندوز فائقة الدقة والسرعة**
+  # Tempo Diagnostic & PC Optimizer
+  **High-Precision Windows Diagnostic, Telemetry & Performance Engine**
 
-  [![Release](https://img.shields.io/badge/Release-v2.2.0-0066FF.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases)
+  *أداة هندسية خفيفة وعالية الدقة لتشخيص وتحسين أداء ويندوز 10 و 11*
+
+  <br />
+
+  [![Release](https://img.shields.io/badge/Release-v2.2.0-0066FF.svg?style=for-the-badge&logo=windows)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest)
+  [![Size](https://img.shields.io/badge/Size-3.19%20MB-10B981.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest)
   [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20x64-00E5FF.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
-  [![Framework](https://img.shields.io/badge/Framework-.NET%2010.0%20WPF-44DDC1.svg?style=for-the-badge)](https://dotnet.microsoft.com/)
+  [![Framework](https://img.shields.io/badge/Framework-.NET%2010.0%20WPF-6366F1.svg?style=for-the-badge)](https://dotnet.microsoft.com/)
   [![License](https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge)](LICENSE)
 
-  [**Download Latest Release (v2.2.0)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest) • [**Live Website & Download Page**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/)
+  <br />
+
+  [**🌐 Official Website & Download Page**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/) • [**📦 Download Latest Release (v2.2.0)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest) • [**🐛 Report an Issue**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/issues)
 
 </div>
 
 ---
 
-## 🌟 Overview / نظرة عامة
+## ⚡ Highlights / أبرز المميزات
 
-**Tempo Diagnostic & PC Optimizer** is an ultra-fast, lightweight (3.2 MB), native Windows utility engineered in **C# / .NET 10.0 WPF**. Designed with Fluent Design principles and precision dark-mode aesthetics, it offers zero-fake metrics, deep system memory optimization, safe storage cleanup, registry startup management with authentic app icons, and an ultra-compact desktop companion toolbar.
-
-تم تصميم **Tempo** ليوفر أقصى سرعة واستجابة للنظام مع استهلاك شبه معدوم لموارد المعالج والذاكرة، وبدون أي إعلانات أو برمجيات تتبع.
+- **🚀 Zero-Fake Metrics**: Real hardware and network polling directly via Windows API and hardware sensors — zero artificial or simulated numbers.
+- **🧠 Smart Working Sets Optimization**: Instant RAM relief by freeing inactive application working sets while safeguarding 15 core Windows NT kernel services.
+- **📦 Startup Apps Manager with 100% Authentic Icons**: Reads Windows registry startup entries and extracts genuine associated icons from executable binaries with zero text collisions and friendly naming.
+- **🧹 Developer & Browser Cache Purge**: Safely inspects and clears temporary caches, Win32 Shell Recycle Bin, Chrome & Edge caches, and developer package caches (`npm`, `NuGet http-cache`, `pip`).
+- **💽 SSD Discovery & Elevated TRIM**: Automatically differentiates between SSDs and HDDs, ensuring TRIM operations maintain solid-state speeds while protecting mechanical drives from strain.
+- **📌 Compact Companion Toolbar**: Ultra-compact horizontal capsule (42px) and slim vertical sidebar (34px) with live telemetry and auto-peek screen edge docking.
+- **🪶 Ultra-Lightweight Footprint**: Complete portable distribution is only **3.19 MB** with 0% CPU consumption during idle.
 
 ---
 
-## 🚀 Key Features / الميزات الرئيسية
+## 📸 Visual Showcase / معرض شاشات التطبيق
 
-### 1. ⚡ Real-Time Hardware Telemetry (قياسات حقيقية دقيقة)
-- **CPU & Memory Live Gauges**: Real-time hardware polling with color-coded status rings (Green `<60%`, Yellow `60-85%`, Red `>85%`).
-- **Live Network Throughput**: True byte-delta telemetry tracking real-time network upload/download speeds.
-- **Top 5 RAM Consumers**: Live process working set tracking to identify background memory hogs instantly.
+<div align="center">
+  <table>
+    <tr>
+      <td width="50%" align="center">
+        <b>📊 Main Diagnostic Dashboard</b><br />
+        <img src="docs/assets/screen_overview.png" width="100%" alt="Tempo Dashboard" />
+      </td>
+      <td width="50%" align="center">
+        <b>🚀 Startup Manager with Authentic Icons</b><br />
+        <img src="docs/assets/screen_startup.png" width="100%" alt="Startup Apps Manager" />
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" align="center">
+        <b>📌 Dual-Mode Companion Desktop Bar (Top Capsule & Side Slim Dock)</b><br />
+        <img src="docs/assets/screen_toolbar_top.png" width="85%" alt="Top Toolbar" />
+      </td>
+    </tr>
+  </table>
+</div>
 
-### 2. 🧠 Smart Working Sets Memory Boost (تعزيز الذاكرة الذكي)
-- Frees inactive and cached application working sets using safe Windows API calls (`EmptyWorkingSet`).
-- **Whitelisted Safety**: Protects 15 critical Windows NT kernel and system services (`dwm.exe`, `explorer.exe`, `csrss.exe`, etc.).
+---
 
-### 3. 🧹 Safe Cache & Deep System Cleaner (تنظيف آمن وشامل)
-- **Temporary Files & Prefetch**: One-click wipe for temporary junk caches.
-- **Recycle Bin**: Win32 Shell inspection with explicit confirmation dialog for permanent deletion.
-- **Browser Caches**: Chrome & Edge cache clearing with browser-active detection.
-- **Developer Package Caches**: Safe purge for `npm`, `NuGet (http-cache)`, and `pip` package directories.
+## 📥 Quick Download / التنزيل المباشر
 
-### 4. 📦 Startup Apps Manager with Native Icons (منظم بدء التشغيل)
-- Enumerates registry run entries (`HKCU` and `HKLM`).
-- **100% Authentic Native Icons**: Automatically extracts high-resolution associated icons from executable binaries.
-- **Clean Naming & Zero Collisions**: Strips raw GUIDs and registry hex codes into clean, human-readable app names.
-- **Security App Protection**: Highlights security software (Defender, Antivirus, Avast) with an amber warning badge.
+| Package | Version | Architecture | Size | Checksum / Status | Direct Link |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Tempo-v2.2.0-win-x64.zip** | `2.2.0` | `x64` | **3.19 MB** | `Verified Safe / Clean` | [**Download ZIP**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.0/Tempo-v2.2.0-win-x64.zip) |
+| **Portable Source Code** | `2.2.0` | `Any` | — | `MIT License` | [**Source (ZIP)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/archive/refs/tags/v2.2.0.zip) |
 
-### 5. 💽 SSD Discovery & Elevated TRIM (دعم أقراص SSD والـ TRIM)
-- Automatically detects drive storage type (SSD vs HDD).
-- Safe TRIM command for solid-state storage to maintain peak write speeds while protecting rotational hard drives from wear.
+*No installation required. Unzip anywhere and launch `Tempo.exe`.*
 
-### 6. 📌 Compact Companion Toolbar (شريط سطح المكتب المصاحب)
-- **Horizontal Capsule Mode**: Sleek 42px capsule with telemetry pods and auto-dismiss notifications.
-- **Vertical Slim Dock Mode**: Ultra-slim 34px sidebar docked to the screen edge with auto-peek and auto-hide.
-- **Persistent Geometry**: Remembers your exact preferred screen coordinates across reboots (`position.json`).
+---
+
+## 🛡️ Architecture & Safety Whitelist / الأمان والموثوقية
+
+Tempo is engineered with a strict **Least Privilege (`asInvoker`)** security model. Unlike other aggressive PC cleaners, it will **never** terminate random background processes or break running services:
+
+1. **Kernel Protection Whitelist**: The memory optimizer strictly excludes 15 critical Windows services:
+   `System`, `Registry`, `smss.exe`, `csrss.exe`, `wininit.exe`, `services.exe`, `lsass.exe`, `svchost.exe`, `fontdrvhost.exe`, `dwm.exe`, `explorer.exe`, `ShellExperienceHost.exe`, `StartMenuExperienceHost.exe`, `SearchHost.exe`, `SearchIndexer.exe`.
+2. **Explicit Confirmation on Permanent Actions**: Recycle Bin purge, developer cache clearance, and startup app unregistration all require explicit user confirmation with default safe selection (`No`).
+3. **Registry Safety**: Only modifies user-scoped `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` entries when explicitly requested by the user.
 
 ---
 
 ## 💻 System Requirements / متطلبات التشغيل
 
-- **Operating System**: Windows 10 (64-bit) / Windows 11 (64-bit)
-- **Architecture**: x64
-- **Runtime**: [.NET 10.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
-- **Privileges**: Standard user (`asInvoker`). UAC prompt only required when executing SSD TRIM operations.
+- **Operating System**: Windows 10 (Build 19041+) or Windows 11 (64-bit).
+- **Architecture**: x64.
+- **Prerequisites**: [.NET 10.0 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (if not already installed).
+- **Permissions**: Runs cleanly under standard user permissions. UAC elevation is only requested when triggering Windows TRIM optimization for SSDs.
 
 ---
 
-## 📦 Download & Installation / التحميل والتشغيل
+## 🛠️ Developer & Build Guide / دليل البناء البرمجي
 
-1. Go to the [**Releases Page**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest) or visit the [**Official Website**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/).
-2. Download `Tempo-v2.2.0-win-x64.zip` (3.2 MB).
-3. Extract the ZIP file to any folder of your choice (e.g. `C:\Program Files\Tempo` or Desktop).
-4. Run `Tempo.exe`!
-
----
-
-## 🛠️ Building from Source / البناء من الكود المصدري
+To clone and compile Tempo locally from source:
 
 ```bash
-# Clone repository
+# Clone the repository
 git clone https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer.git
 cd Tempo-PC-Optimizer
 
-# Restore & Build
+# Restore dependencies
 dotnet restore
+
+# Build release binary
 dotnet build -c Release
 
-# Publish portable win-x64 distribution
+# Publish lean win-x64 package
 dotnet publish Tempo.csproj -c Release -r win-x64 --self-contained false -o publish_tempo
 ```
 
 ---
 
-## 👨‍💻 Author & Engineering Credits
+## 👨‍💻 Engineering Credits & Author
 
-- **Architect & Lead Developer**: **Eng. Abdelrahman Emam**
+- **Architect & Developer**: **Eng. Abdelrahman Emam**
 - **GitHub**: [@Abdelrahman-Tamer](https://github.com/Abdelrahman-Tamer)
-- **License**: [MIT License](LICENSE) © 2026 Eng. Abdelrahman Emam.
+- **Copyright**: © 2026 Eng. Abdelrahman Emam. All rights reserved.
+- **License**: Released under the [MIT License](LICENSE).
