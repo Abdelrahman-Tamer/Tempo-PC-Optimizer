@@ -132,4 +132,12 @@
     <system:String x:Key="BtnHeroOptimizeMini">تسريع</system:String>
     <system:String x:Key="BtnStateEnabled">مفعّل</system:String>
     <system:String x:Key="BtnStateDisabled">معطّل</system:String>
+
+    <!-- Startup Diagnostics & Boot Performance -->
+    <system:String x:Key="CardBootPerformanceTitle">أداء إقلاع النظام وتأثير البرامج</system:String>
+    <system:String x:Key="TxtBiosTimeLabel">وقت إقلاع BIOS</system:String>
+    <system:String x:Key="TxtEstBootTimeLabel">الوقت المقدر للإقلاع</system:String>
+    <system:String x:Key="TxtActiveImpactLabel">تأخير البرامج النشطة</system:String>
+    <system:String x:Key="SettingsStartWithWindowsTitle">تشغيل Tempo تلقائياً مع بدء ويندوز</system:String>
+    <system:String x:Key="SettingsStartWithWindowsDesc">بدء التشغيل بهدوء في شريط الأدوات المصغر دون التأثير على سرعة الإقلاع</system:String>
 </ResourceDictionary>

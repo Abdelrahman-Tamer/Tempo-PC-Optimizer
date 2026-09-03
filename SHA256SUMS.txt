@@ -1,2 +1,2 @@
-16413ccfd3411fea265b5a822705c4ac4be80921c7b10d732e8488d7e47b8baf  dist/Tempo-Setup-v2.2.1.exe
-751d6ad392d5cff4b3a51a67e34a2a66465ded19a7ae4e9e87df2a70d29accc7  dist/Tempo-v2.2.1-win-x64.zip
+ef7fe592b631b54dcdf657806bda5291b75e1567937b459baa75f9fce2a845f4  dist/Tempo-Setup-v2.2.2.exe
+22ad480b168772ce92fa510591d44bf35331e1361028ad0f41a7c705689e1bd5  dist/Tempo-v2.2.2-win-x64.zip

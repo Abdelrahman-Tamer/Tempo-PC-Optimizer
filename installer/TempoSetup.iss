@@ -1,6 +1,6 @@
 ; Tempo PC Optimizer - Official Inno Setup 6 Script
 #define MyAppName "Tempo PC Optimizer"
-#define MyAppVersion "2.2.1"
+#define MyAppVersion "2.2.2"
 #define MyAppPublisher "Eng. Abdelrahman Emam"
 #define MyAppURL "https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/"
 #define MyAppExeName "Tempo.exe"

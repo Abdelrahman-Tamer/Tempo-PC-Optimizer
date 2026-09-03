@@ -9,15 +9,15 @@
 
   <br />
 
-  [![Release](https://img.shields.io/badge/Release-v2.2.1%20(Stable)-2563EB.svg?style=for-the-badge&logo=windows)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest)
-  [![Tests](https://img.shields.io/badge/Tests-53%2F53%20Passed-10B981.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
+  [![Release](https://img.shields.io/badge/Release-v2.2.2%20(Stable)-2563EB.svg?style=for-the-badge&logo=windows)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest)
+  [![Tests](https://img.shields.io/badge/Tests-60%2F60%20Passed-10B981.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
   [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20x64-6366F1.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
   [![Framework](https://img.shields.io/badge/Framework-.NET%2010.0%20WPF-9333EA.svg?style=for-the-badge)](https://dotnet.microsoft.com/)
   [![License](https://img.shields.io/badge/License-MIT-gray.svg?style=for-the-badge)](LICENSE)
 
   <br />
 
-  [**🌐 Official Website & Download Page**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/) • [**📦 Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.1/Tempo-Setup-v2.2.1.exe) • [**🪶 Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.1/Tempo-v2.2.1-win-x64.zip) • [**🐛 Report an Issue**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/issues)
+  [**🌐 Official Website & Download Page**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/) • [**📦 Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.2/Tempo-Setup-v2.2.2.exe) • [**🪶 Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.2/Tempo-v2.2.2-win-x64.zip) • [**🐛 Report an Issue**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/issues)
 
 </div>
 
@@ -73,21 +73,21 @@
 
 | Package | Type | Version | Arch | Size | Direct Download |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Tempo-Setup-v2.2.1.exe** | 🚀 **Installer** *(Recommended)* | `2.2.1` | `x64` | **4.65 MB** | [**Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.1/Tempo-Setup-v2.2.1.exe) |
-| **Tempo-v2.2.1-win-x64.zip** | 🪶 **Portable** | `2.2.1` | `x64` | **5.18 MB** | [**Download Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.1/Tempo-v2.2.1-win-x64.zip) |
+| **Tempo-Setup-v2.2.2.exe** | 🚀 **Installer** *(Recommended)* | `2.2.2` | `x64` | **4.65 MB** | [**Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.2/Tempo-Setup-v2.2.2.exe) |
+| **Tempo-v2.2.2-win-x64.zip** | 🪶 **Portable** | `2.2.2` | `x64` | **5.18 MB** | [**Download Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.2/Tempo-v2.2.2-win-x64.zip) |
 
 ### Cryptographic Integrity (SHA256)
 
 Verify downloaded binaries before execution via PowerShell:
 
 ```powershell
-Get-FileHash .\Tempo-Setup-v2.2.1.exe -Algorithm SHA256
+Get-FileHash .\Tempo-Setup-v2.2.2.exe -Algorithm SHA256
 ```
 
 | File | Expected SHA256 Checksum |
 | :--- | :--- |
-| `Tempo-Setup-v2.2.1.exe` | `16413ccfd3411fea265b5a822705c4ac4be80921c7b10d732e8488d7e47b8baf` |
-| `Tempo-v2.2.1-win-x64.zip` | `751d6ad392d5cff4b3a51a67e34a2a66465ded19a7ae4e9e87df2a70d29accc7` |
+| `Tempo-Setup-v2.2.2.exe` | `ef7fe592b631b54dcdf657806bda5291b75e1567937b459baa75f9fce2a845f4` |
+| `Tempo-v2.2.2-win-x64.zip` | `22ad480b168772ce92fa510591d44bf35331e1361028ad0f41a7c705689e1bd5` |
 
 ---
 

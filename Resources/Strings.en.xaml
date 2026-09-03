@@ -132,4 +132,12 @@
     <system:String x:Key="BtnHeroOptimizeMini">Boost</system:String>
     <system:String x:Key="BtnStateEnabled">Enabled</system:String>
     <system:String x:Key="BtnStateDisabled">Disabled</system:String>
+
+    <!-- Startup Diagnostics & Boot Performance -->
+    <system:String x:Key="CardBootPerformanceTitle">Boot Performance &amp; Startup Impact</system:String>
+    <system:String x:Key="TxtBiosTimeLabel">Last BIOS Time</system:String>
+    <system:String x:Key="TxtEstBootTimeLabel">Estimated Total Boot</system:String>
+    <system:String x:Key="TxtActiveImpactLabel">Active Apps Delay</system:String>
+    <system:String x:Key="SettingsStartWithWindowsTitle">Start Tempo with Windows</system:String>
+    <system:String x:Key="SettingsStartWithWindowsDesc">Launch quietly into the desktop mini bar without delaying boot</system:String>
 </ResourceDictionary>

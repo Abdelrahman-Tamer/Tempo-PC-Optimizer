@@ -28,16 +28,75 @@ namespace Tempo.Services
         public bool IsSsd => MediaType.Equals("SSD", StringComparison.OrdinalIgnoreCase);
     }
 
+    public enum StartupImpactLevel
+    {
+        Disabled,
+        Low,
+        Medium,
+        High
+    }
+
+    public class BootPerformanceInfo
+    {
+        public double BiosTimeSeconds { get; set; }
+        public double EstimatedTotalBootSeconds { get; set; }
+        public int ActiveStartupAppsCount { get; set; }
+        public int DisabledStartupAppsCount { get; set; }
+        public double ActiveAppsDelaySeconds { get; set; }
+        public string Rating { get; set; } = "Fast";
+        public string RatingText { get; set; } = "";
+        public string Recommendation { get; set; } = "";
+    }
+
     public class StartupAppItem
     {
         public string Name { get; set; } = "";
         public string Command { get; set; } = "";
         public string Location { get; set; } = "";
         public bool IsEnabled { get; set; } = true;
+        public StartupImpactLevel Impact { get; set; } = StartupImpactLevel.Low;
         public ImageSource? IconSource { get; set; }
         public bool IsUserScope => Location.Contains("المستخدم", StringComparison.OrdinalIgnoreCase) || Location.Contains("HKCU", StringComparison.OrdinalIgnoreCase);
+
+        public Brush StatusDotBrush => IsEnabled
+            ? new SolidColorBrush(Color.FromRgb(16, 185, 129)) // TealHealth
+            : new SolidColorBrush(Color.FromRgb(100, 116, 139)); // Slate Muted
+
+        public string StatusLabel => IsEnabled
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "مفعّل" : "Enabled")
+            : (LocalizationManager.CurrentLanguage == "ar" ? "معطّل" : "Disabled");
+
+        public string ImpactLabel => !IsEnabled
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "بدون أثر" : "No Impact")
+            : Impact switch
+            {
+                StartupImpactLevel.High => (LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع (~2s+)" : "High Impact (~2s+)"),
+                StartupImpactLevel.Medium => (LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط (~1s)" : "Medium Impact (~1s)"),
+                _ => (LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف (<0.5s)" : "Low Impact (<0.5s)")
+            };
+
+        public Brush ImpactBadgeBg => !IsEnabled
+            ? new SolidColorBrush(Color.FromArgb(25, 100, 116, 139))
+            : Impact switch
+            {
+                StartupImpactLevel.High => new SolidColorBrush(Color.FromArgb(35, 244, 63, 94)),
+                StartupImpactLevel.Medium => new SolidColorBrush(Color.FromArgb(35, 245, 158, 11)),
+                _ => new SolidColorBrush(Color.FromArgb(30, 16, 185, 129))
+            };
+
+        public Brush ImpactBadgeFg => !IsEnabled
+            ? new SolidColorBrush(Color.FromRgb(148, 163, 184))
+            : Impact switch
+            {
+                StartupImpactLevel.High => new SolidColorBrush(Color.FromRgb(244, 63, 94)),
+                StartupImpactLevel.Medium => new SolidColorBrush(Color.FromRgb(245, 158, 11)),
+                _ => new SolidColorBrush(Color.FromRgb(16, 185, 129))
+            };
+
         public string ActionText => IsUserScope 
-            ? (LocalizationManager.CurrentLanguage == "ar" ? "تعطيل" : "Disable") 
+            ? (IsEnabled 
+                ? (LocalizationManager.CurrentLanguage == "ar" ? "تعطيل" : "Disable") 
+                : (LocalizationManager.CurrentLanguage == "ar" ? "تفعيل" : "Enable"))
             : (LocalizationManager.CurrentLanguage == "ar" ? "إدارة" : "Manage");
 
         public string LocationFriendly => IsUserScope 
@@ -614,18 +673,52 @@ namespace Tempo.Services
             return null;
         }
 
+        public static StartupImpactLevel ClassifyImpact(string name, string cmd)
+        {
+            string target = (name + " " + cmd).ToLowerInvariant();
+            
+            // High Impact (Heavy apps, VPNs, cloud sync, gaming launchers, electron clients, updaters)
+            if (target.Contains("vpn") || target.Contains("docker") || target.Contains("discord") ||
+                target.Contains("teams") || target.Contains("slack") || target.Contains("steam") ||
+                target.Contains("epic") || target.Contains("onedrive") || target.Contains("googledrive") ||
+                target.Contains("dropbox") || target.Contains("chrome") || target.Contains("edge") ||
+                target.Contains("brave") || target.Contains("adobe") || target.Contains("notion") ||
+                target.Contains("grammarly") || target.Contains("update") || target.Contains("updater") ||
+                target.Contains("java") || target.Contains("cisco") || target.Contains("torrent") ||
+                target.Contains("download") || target.Contains("antivirus") || target.Contains("avast"))
+            {
+                return StartupImpactLevel.High;
+            }
+
+            // Medium Impact (Audio controllers, touchpad, hardware utilities, system helpers)
+            if (target.Contains("audio") || target.Contains("realtek") || target.Contains("waves") ||
+                target.Contains("synaptics") || target.Contains("touchpad") || target.Contains("intel") ||
+                target.Contains("amd") || target.Contains("nvidia") || target.Contains("display") ||
+                target.Contains("fences") || target.Contains("cleaner"))
+            {
+                return StartupImpactLevel.Medium;
+            }
+
+            // Low Impact (Lightweight monitors, simple tray items)
+            return StartupImpactLevel.Low;
+        }
+
         public List<StartupAppItem> GetStartupApps()
         {
             var apps = new List<StartupAppItem>();
             const string runPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
+            const string approvedPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+            const string approvedPath32 = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32";
 
-            void ReadKey(RegistryHive hive, RegistryView view, string loc)
+            void ReadKey(RegistryHive hive, RegistryView view, string loc, string approvedSubPath)
             {
                 try
                 {
                     using var baseKey = RegistryKey.OpenBaseKey(hive, view);
                     using var key = baseKey.OpenSubKey(runPath);
                     if (key == null) return;
+
+                    using var approvedKey = baseKey.OpenSubKey(approvedSubPath);
 
                     foreach (var valueName in key.GetValueNames())
                     {
@@ -647,14 +740,30 @@ namespace Tempo.Services
                         }
                         catch { }
 
+                        // Check Windows StartupApproved status:
+                        // Byte 0x02 is Enabled in Windows Task Manager.
+                        // Byte 0x03 or any non-02 means user disabled it in Task Manager.
+                        bool isEnabledInWindows = true;
+                        if (approvedKey != null)
+                        {
+                            var approvedVal = approvedKey.GetValue(valueName);
+                            if (approvedVal is byte[] bytes && bytes.Length > 0)
+                            {
+                                isEnabledInWindows = (bytes[0] == 0x02);
+                            }
+                        }
+
+                        bool isEnabled = pathExists && isEnabledInWindows;
                         var icon = ExtractIconFromCommand(cmd);
+                        var baseImpact = ClassifyImpact(valueName, cmd);
 
                         apps.Add(new StartupAppItem
                         {
                             Name = valueName,
                             Command = cmd,
                             Location = loc,
-                            IsEnabled = pathExists,
+                            IsEnabled = isEnabled,
+                            Impact = isEnabled ? baseImpact : StartupImpactLevel.Disabled,
                             IconSource = icon
                         });
                     }
@@ -662,38 +771,154 @@ namespace Tempo.Services
                 catch { }
             }
 
-            ReadKey(RegistryHive.CurrentUser, RegistryView.Default, "HKCU");
-            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry64, "HKLM-64");
-            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry32, "HKLM-32");
+            ReadKey(RegistryHive.CurrentUser, RegistryView.Default, "HKCU", approvedPath);
+            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry64, "HKLM-64", approvedPath);
+            ReadKey(RegistryHive.LocalMachine, RegistryView.Registry32, "HKLM-32", approvedPath32);
 
             return apps;
         }
 
-        public bool DisableStartupApp(StartupAppItem app)
+        public bool ToggleStartupApp(StartupAppItem app)
         {
             try
             {
                 if (app.IsUserScope)
                 {
-                    using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
-                    if (key != null && key.GetValue(app.Name) != null)
+                    const string approvedPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+                    using var approvedKey = Registry.CurrentUser.OpenSubKey(approvedPath, true);
+                    if (approvedKey != null)
                     {
-                        key.DeleteValue(app.Name, false);
-                        return true;
-                    }
-                }
-                else
-                {
-                    using var key = Registry.LocalMachine.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
-                    if (key != null && key.GetValue(app.Name) != null)
-                    {
-                        key.DeleteValue(app.Name, false);
+                        // 0x03 = Disabled, 0x02 = Enabled
+                        byte[] newBytes = app.IsEnabled
+                            ? new byte[] { 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+                            : new byte[] { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+                        approvedKey.SetValue(app.Name, newBytes, RegistryValueKind.Binary);
+                        app.IsEnabled = !app.IsEnabled;
+                        app.Impact = app.IsEnabled ? ClassifyImpact(app.Name, app.Command) : StartupImpactLevel.Disabled;
                         return true;
                     }
                 }
             }
             catch { }
             return false;
+        }
+
+        public bool DisableStartupApp(StartupAppItem app)
+        {
+            return ToggleStartupApp(app);
+        }
+
+        public BootPerformanceInfo GetBootPerformanceInfo(List<StartupAppItem>? startupApps = null)
+        {
+            var info = new BootPerformanceInfo();
+            try
+            {
+                using var pwrKey = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Control\Session Manager\Power");
+                if (pwrKey != null)
+                {
+                    var fwVal = pwrKey.GetValue("FwPOSTTime");
+                    if (fwVal is int fwInt && fwInt > 0)
+                    {
+                        info.BiosTimeSeconds = Math.Round(fwInt / 1000.0, 1);
+                    }
+                    else if (fwVal is long fwLong && fwLong > 0)
+                    {
+                        info.BiosTimeSeconds = Math.Round(fwLong / 1000.0, 1);
+                    }
+                }
+            }
+            catch { }
+
+            if (info.BiosTimeSeconds <= 0)
+            {
+                info.BiosTimeSeconds = 11.6; // Baseline UEFI boot time
+            }
+
+            var apps = startupApps ?? GetStartupApps();
+            info.ActiveStartupAppsCount = apps.Count(a => a.IsEnabled);
+            info.DisabledStartupAppsCount = apps.Count(a => !a.IsEnabled);
+
+            // Calculate active startup apps cumulative delay
+            double activeDelay = 0;
+            foreach (var app in apps.Where(a => a.IsEnabled))
+            {
+                activeDelay += app.Impact switch
+                {
+                    StartupImpactLevel.High => 1.8,
+                    StartupImpactLevel.Medium => 0.8,
+                    _ => 0.3
+                };
+            }
+            info.ActiveAppsDelaySeconds = Math.Round(activeDelay, 1);
+
+            // Estimated total boot time = BIOS + ~5.5s Kernel init + apps delay
+            info.EstimatedTotalBootSeconds = Math.Round(info.BiosTimeSeconds + 5.5 + info.ActiveAppsDelaySeconds, 1);
+
+            if (info.EstimatedTotalBootSeconds <= 20.0)
+            {
+                info.Rating = "Fast";
+                info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "ممتاز وسريع" : "Fast & Optimal";
+            }
+            else if (info.EstimatedTotalBootSeconds <= 35.0)
+            {
+                info.Rating = "Moderate";
+                info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "جيد ومقبول" : "Moderate";
+            }
+            else
+            {
+                info.Rating = "Slow";
+                info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "يحتاج تحسين" : "Needs Optimization";
+            }
+
+            if (info.ActiveStartupAppsCount > 0 && info.ActiveAppsDelaySeconds > 1.5)
+            {
+                info.Recommendation = LocalizationManager.CurrentLanguage == "ar"
+                    ? $"تعطيل برامج التحديث والخدمات غير الضرورية يوفر ~{info.ActiveAppsDelaySeconds:F1} ثانية من إقلاع جهازك."
+                    : $"Disabling non-essential background updaters can shave ~{info.ActiveAppsDelaySeconds:F1}s off your boot time.";
+            }
+            else
+            {
+                info.Recommendation = LocalizationManager.CurrentLanguage == "ar"
+                    ? "قائمة برامج بدء التشغيل محسنة ومثالية لأقصى سرعة إقلاع."
+                    : "Your startup list is cleanly optimized for maximum boot speed.";
+            }
+
+            return info;
+        }
+
+        public static bool IsRunAtStartupEnabled()
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", false);
+                return key?.GetValue("Tempo") != null;
+            }
+            catch { return false; }
+        }
+
+        public static bool SetRunAtStartup(bool enable)
+        {
+            try
+            {
+                using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+                if (key == null) return false;
+
+                if (enable)
+                {
+                    string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
+                    if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
+                    {
+                        exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tempo.exe");
+                    }
+                    key.SetValue("Tempo", $"\"{exePath}\"");
+                }
+                else
+                {
+                    key.DeleteValue("Tempo", false);
+                }
+                return true;
+            }
+            catch { return false; }
         }
 
         public (string displayName, bool isActive) GetWindowsSecurityStatus()

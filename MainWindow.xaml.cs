@@ -754,6 +754,8 @@ namespace Tempo
             Task.Run(() =>
             {
                 var apps = _hardwareMonitor.GetStartupApps();
+                var boot = _hardwareMonitor.GetBootPerformanceInfo(apps);
+
                 Dispatcher.InvokeAsync(() =>
                 {
                     var securityApps = apps.Where(a => a.IsSecurityApp).ToList();
@@ -762,11 +764,26 @@ namespace Tempo
                     if (ListStartupSecurityApps != null) ListStartupSecurityApps.ItemsSource = securityApps;
                     if (ListStartupRegularApps != null) ListStartupRegularApps.ItemsSource = regularApps;
 
+                    int enabledCount = apps.Count(a => a.IsEnabled);
                     TxtRecStartupCount.Text = (LocalizationManager.CurrentLanguage == "ar")
-                        ? $"{apps.Count} تطبيق"
-                        : $"{apps.Count} Apps";
-                    if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count}";
-                    if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count}";
+                        ? $"{enabledCount} مفعّل ({boot.ActiveAppsDelaySeconds:F1}s)"
+                        : $"{enabledCount} Active ({boot.ActiveAppsDelaySeconds:F1}s)";
+
+                    if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count(a => a.IsEnabled)}/{securityApps.Count}";
+                    if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count(a => a.IsEnabled)}/{regularApps.Count}";
+
+                    // Populate Boot Diagnostics Pod
+                    if (TxtBiosTimeVal != null) TxtBiosTimeVal.Text = $"{boot.BiosTimeSeconds:F1}s";
+                    if (TxtTotalBootVal != null) TxtTotalBootVal.Text = $"{boot.EstimatedTotalBootSeconds:F1}s";
+                    if (TxtAppsDelayVal != null) TxtAppsDelayVal.Text = $"+{boot.ActiveAppsDelaySeconds:F1}s";
+                    if (TxtBootRating != null) TxtBootRating.Text = boot.RatingText;
+                    if (TxtBootTip != null) TxtBootTip.Text = boot.Recommendation;
+
+                    // Initialize Start With Windows checkbox
+                    if (ChkStartWithWindows != null)
+                    {
+                        ChkStartWithWindows.IsChecked = HardwareMonitorService.IsRunAtStartupEnabled();
+                    }
                 });
             });
         }
@@ -855,6 +872,24 @@ namespace Tempo
             }
         }
 
+        private void ChkStartWithWindows_Click(object sender, RoutedEventArgs e)
+        {
+            if (ChkStartWithWindows == null) return;
+            bool enable = ChkStartWithWindows.IsChecked == true;
+            bool ok = HardwareMonitorService.SetRunAtStartup(enable);
+            if (ok)
+            {
+                ShowToast(LocalizationManager.CurrentLanguage == "ar"
+                    ? (enable ? "تم تفعيل بدء تشغيل Tempo مع ويندوز" : "تم إلغاء بدء تشغيل Tempo مع ويندوز")
+                    : (enable ? "Tempo will now start with Windows" : "Tempo startup with Windows disabled"), false);
+            }
+            else
+            {
+                ChkStartWithWindows.IsChecked = !enable;
+                ShowToast(LocalizationManager.CurrentLanguage == "ar" ? "تعذر تغيير إعداد بدء التشغيل" : "Failed to update startup setting", true);
+            }
+        }
+
         private void BtnDisableStartupApp_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.DataContext is StartupAppItem app)
@@ -867,6 +902,18 @@ namespace Tempo
                         ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تطبيقات النظام (HKLM) تتطلب إدارتها عبر نافذة ويندوز." : "System apps (HKLM) must be managed via Windows Settings.", false);
                     }
                     catch { ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "يتطلب تعديل هذا التطبيق صلاحيات مسؤول." : "Modifying this app requires Administrator privileges.", true); }
+                    return;
+                }
+
+                // If currently disabled, re-enable it immediately without warning
+                if (!app.IsEnabled)
+                {
+                    bool okEnable = _hardwareMonitor.ToggleStartupApp(app);
+                    if (okEnable)
+                    {
+                        ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم تفعيل {app.DisplayName}" : $"{app.DisplayName} enabled", false);
+                        LoadStartupApps();
+                    }
                     return;
                 }
 
@@ -890,8 +937,8 @@ namespace Tempo
 
                 string title = isAr ? "إيقاف برنامج بدء التشغيل" : "Disable Startup App";
                 string msg = isAr
-                    ? $"هل تريد إيقاف تشغيل {app.Name} تلقائياً عند فتح الجهاز؟" + securityNotice
-                    : $"Stop {app.Name} from starting automatically with Windows?" + securityNotice;
+                    ? $"هل تريد إيقاف تشغيل {app.DisplayName} تلقائياً عند فتح الجهاز؟" + securityNotice
+                    : $"Stop {app.DisplayName} from starting automatically with Windows?" + securityNotice;
 
                 var confirm = MessageBox.Show(
                     msg,
@@ -902,15 +949,15 @@ namespace Tempo
 
                 if (confirm != MessageBoxResult.Yes) return;
 
-                bool ok = _hardwareMonitor.DisableStartupApp(app);
+                bool ok = _hardwareMonitor.ToggleStartupApp(app);
                 if (ok)
                 {
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم تعطيل {app.Name}" : $"{app.Name} disabled", false);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم تعطيل {app.DisplayName}" : $"{app.DisplayName} disabled", false);
                     LoadStartupApps();
                 }
                 else
                 {
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر إزالة {app.Name}. يمكنك إدارته عبر إعدادات ويندوز." : $"Unable to disable {app.Name}. You can manage it via Windows Settings.", true);
+                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر تغيير حالة {app.DisplayName}. يمكنك إدارته عبر إعدادات ويندوز." : $"Unable to update {app.DisplayName}. You can manage it via Windows Settings.", true);
                 }
             }
         }
