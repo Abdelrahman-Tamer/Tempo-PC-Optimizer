@@ -1,0 +1,27 @@
+# Build results
+bin/
+obj/
+publish_tempo/
+publish_zenith/
+
+# Visual Studio & IDE files
+.vs/
+*.user
+*.suo
+.idea/
+
+# Debug and symbols
+*.pdb
+
+# Operating System files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary and scratch files
+scratch/
+test_*.png
+screen_*.png
+extracted_*.png
+VerifyStartupAndIcon.cs
+TempoVerifyStartup.csproj
