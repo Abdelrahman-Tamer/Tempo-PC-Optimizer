@@ -62,12 +62,13 @@
 
 ## 📥 Quick Download / التنزيل المباشر
 
-| Package | Version | Architecture | Size | Checksum / Status | Direct Link |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **Tempo-v2.2.0-win-x64.zip** | `2.2.0` | `x64` | **3.19 MB** | `Verified Safe / Clean` | [**Download ZIP**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.0/Tempo-v2.2.0-win-x64.zip) |
-| **Portable Source Code** | `2.2.0` | `Any` | — | `MIT License` | [**Source (ZIP)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/archive/refs/tags/v2.2.0.zip) |
+| Package | Type | Version | Arch | Size | Details / Status | Direct Link |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **Tempo-Setup-v2.2.0.exe** | 🚀 **Installer** *(Recommended)* | `2.2.0` | `x64` | **4.43 MB** | One-click setup with desktop & start menu shortcuts + clean uninstaller | [**Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.0/Tempo-Setup-v2.2.0.exe) |
+| **Tempo-v2.2.0-win-x64.zip** | 🪶 **Portable** | `2.2.0` | `x64` | **3.19 MB** | Standalone archive, no installation required | [**Download ZIP**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.0/Tempo-v2.2.0-win-x64.zip) |
+| **Source Code** | 📄 Open Source | `2.2.0` | `Any` | — | MIT License repository snapshot | [**Source (ZIP)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/archive/refs/tags/v2.2.0.zip) |
 
-*No installation required. Unzip anywhere and launch `Tempo.exe`.*
+*The installer sets up Tempo automatically into Windows Programs, adds shortcuts with custom high-DPI icons, checks prerequisites, and registers an uninstaller in Windows Settings.*
 
 ---
 

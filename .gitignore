@@ -25,3 +25,5 @@ scratch/
 extracted_*.png
 VerifyStartupAndIcon.cs
 TempoVerifyStartup.csproj
+dist/
+.playwright-mcp/

@@ -4,14 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tempo — Windows PC Optimizer & Diagnostic</title>
-  <meta name="description" content="Lightweight Windows diagnostic and optimization tool. Real hardware metrics, safe RAM boost, startup manager, SSD TRIM. Free & open source.">
+  <meta name="description" content="برنامج تثبيت خفيف وعالي الدقة لتشخيص وتحسين أداء ويندوز 10 و 11. تعزيز فوري للذاكرة، تنظيف كاش المطورين، ومنظم بدء التشغيل بأيقونات حقيقية.">
   <link rel="icon" type="image/x-icon" href="assets/app.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
-    /* ─── TOKENS ─── */
     :root {
       --bg:           #08090F;
       --bg-subtle:    #0D1017;
@@ -61,7 +60,6 @@
       overflow-x: hidden;
     }
 
-    /* ─── AMBIENT ─── */
     .hero-glow {
       position: absolute; top: 0; left: 50%;
       transform: translateX(-50%);
@@ -70,10 +68,8 @@
       pointer-events: none; z-index: 0;
     }
 
-    /* ─── LAYOUT ─── */
     .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
-    /* ─── BUTTONS ─── */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       font-weight: 600; text-decoration: none;
@@ -83,12 +79,10 @@
     }
     .btn:active { transform: scale(.98); }
 
-    /* Sizes */
     .btn-md  { padding: 10px 20px; font-size: .9rem;  border-radius: var(--r-sm); }
     .btn-lg  { padding: 14px 28px; font-size: 1rem;   border-radius: var(--r-md); }
     .btn-xl  { padding: 16px 36px; font-size: 1.05rem; border-radius: var(--r-md); }
 
-    /* Solid blue */
     .btn-primary {
       background: var(--blue);
       border-color: var(--blue);
@@ -96,7 +90,6 @@
     }
     .btn-primary:hover { background: var(--blue-dark); border-color: var(--blue-dark); box-shadow: 0 4px 20px rgba(59,130,246,.35); }
 
-    /* Ghost */
     .btn-ghost {
       background: var(--surface);
       border-color: var(--border);
@@ -104,7 +97,6 @@
     }
     .btn-ghost:hover { background: var(--surface-hi); border-color: var(--border-light); color: var(--text); }
 
-    /* Download special — stacked text */
     .btn-download {
       flex-direction: column;
       align-items: center;
@@ -118,7 +110,6 @@
       margin-top: 2px;
     }
 
-    /* ─── NAV ─── */
     nav {
       position: sticky; top: 0; z-index: 200;
       height: 64px; display: flex; align-items: center;
@@ -149,7 +140,6 @@
 
     .nav-end { display: flex; align-items: center; gap: 10px; }
 
-    /* ─── HERO ─── */
     .hero { padding: 88px 0 72px; text-align: center; }
 
     .pill {
@@ -185,6 +175,15 @@
       gap: 14px; flex-wrap: wrap; margin-top: 36px;
     }
 
+    .installer-info-sub {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; margin-top: 14px; font-size: .85rem; color: var(--text-2);
+    }
+    .installer-info-sub a {
+      color: var(--blue); text-decoration: none; font-weight: 500;
+    }
+    .installer-info-sub a:hover { text-decoration: underline; }
+
     .trust-row {
       display: flex; align-items: center; justify-content: center;
       gap: 24px; flex-wrap: wrap;
@@ -194,7 +193,6 @@
     .trust-row span { display: flex; align-items: center; gap: 6px; }
     .trust-row svg { flex-shrink: 0; }
 
-    /* ─── STATS ─── */
     .stats-bar {
       border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
       background: var(--bg-subtle);
@@ -215,7 +213,6 @@
     .stat-ar { font-size: .88rem; color: var(--text-2); margin-top: 2px; }
     .stat-en { font-size: .75rem; color: var(--text-3); font-family: var(--ff-en); }
 
-    /* ─── SECTION HEADINGS ─── */
     .sec-head { text-align: center; max-width: 580px; margin: 0 auto 48px; }
     .sec-head h2 {
       font-size: clamp(1.5rem, 3vw, 2rem);
@@ -225,7 +222,6 @@
     .sec-head p { color: var(--text-2); font-size: .95rem; }
     .sec-head .en { font-family: var(--ff-en); font-size: .82rem; color: var(--text-3); margin-top: 3px; }
 
-    /* ─── PRODUCT SHOWCASE ─── */
     .showcase { padding: 72px 0; }
 
     .window-card {
@@ -264,7 +260,6 @@
     .detail-text .ar { font-size: .85rem; color: var(--text-2); line-height: 1.55; }
     .detail-text .en { font-family: var(--ff-en); font-size: .76rem; color: var(--text-3); margin-top: 2px; }
 
-    /* ─── FEATURES GRID ─── */
     .features { padding: 72px 0; }
     .feat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
 
@@ -285,7 +280,6 @@
     .feat-card .en-title { font-family: var(--ff-en); font-size: .8rem; color: var(--text-3); margin-bottom: 10px; }
     .feat-card p { font-size: .87rem; color: var(--text-2); line-height: 1.62; }
 
-    /* ─── COMPANION BAR ─── */
     .companion { padding: 72px 0; }
     .companion-inner {
       background: var(--surface); border: 1px solid var(--border);
@@ -313,7 +307,6 @@
     }
     .companion-visual img { max-width: 100%; height: auto; border-radius: 12px; display: block; }
 
-    /* ─── SPECS ─── */
     .specs { padding: 72px 0; }
     .specs-card {
       max-width: 780px; margin: 0 auto;
@@ -339,7 +332,6 @@
     .spec-lbl .en { font-family: var(--ff-en); font-size: .74rem; color: var(--text-3); display: block; margin-top: 1px; }
     .spec-v { font-family: var(--ff-mono); font-size: .82rem; color: var(--text); font-weight: 500; text-align: left; }
 
-    /* ─── CTA ─── */
     .cta { padding: 40px 0 100px; }
     .cta-box {
       background: var(--surface); border: 1px solid var(--border);
@@ -348,10 +340,9 @@
     }
     .cta-box h2 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 700; margin-bottom: 6px; }
     .cta-box .en-head { font-family: var(--ff-en); font-size: .9rem; color: var(--text-3); margin-bottom: 14px; }
-    .cta-box p { color: var(--text-2); font-size: .95rem; margin-bottom: 32px; max-width: 480px; margin-inline: auto; margin-bottom: 32px; }
+    .cta-box p { color: var(--text-2); font-size: .95rem; max-width: 480px; margin-inline: auto; margin-bottom: 32px; }
     .cta-row { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
 
-    /* ─── FOOTER ─── */
     footer {
       border-top: 1px solid var(--border);
       padding: 36px 0;
@@ -361,7 +352,6 @@
     .foot-inner a { color: var(--text-2); text-decoration: none; transition: color .15s; }
     .foot-inner a:hover { color: var(--text); }
 
-    /* ─── RESPONSIVE ─── */
     @media (max-width: 880px) {
       .nav-links { display: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -412,11 +402,11 @@
         </svg>
         GitHub
       </a>
-      <a href="Tempo-v2.2.0-win-x64.zip" download class="btn btn-primary btn-md">
+      <a href="Tempo-Setup.exe" download class="btn btn-primary btn-md">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
           <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 11l5 5 5-5M12 4v12"/>
         </svg>
-        تحميل مجاني
+        تحميل البرنامج (.exe)
       </a>
     </div>
   </div>
@@ -427,42 +417,48 @@
   <div class="wrap">
     <div class="pill">
       <span class="pill-dot"></span>
-      <span>إصدار رسمي • v2.2.0 • 3.19 MB</span>
+      <span>برنامج تثبيت رسمي • Setup.exe • 4.43 MB</span>
     </div>
 
     <h1>تشخيص حقيقي وأداء أفضل لنظام ويندوز</h1>
-    <p class="hero-subtitle">أداة هندسية خفيفة لتشخيص وتحسين أداء ويندوز 10 و 11 بدون إعلانات أو بيانات مرسلة.</p>
-    <p class="hero-subtitle-en">A lightweight C# / .NET 10 WPF utility for Windows — real hardware metrics, safe RAM optimization, startup manager, and a compact desktop companion bar.</p>
+    <p class="hero-subtitle">أداة هندسية خفيفة لتشخيص وتحسين أداء ويندوز 10 و 11. الآن بملف تثبيت تنفيذي رسمي (Setup.exe) يثبت البرنامج ويُنشئ الاختصارات تلقائياً.</p>
+    <p class="hero-subtitle-en">A high-precision Windows diagnostic &amp; optimization engine. Now with an automated Setup installer (.exe) that handles shortcuts and uninstaller automatically.</p>
 
     <div class="hero-actions">
-      <a href="Tempo-v2.2.0-win-x64.zip" download class="btn btn-primary btn-lg btn-download">
-        <span>تحميل Tempo مجاناً — Windows 64-bit</span>
-        <span class="sub">Portable v2.2.0 • No installation required</span>
+      <a href="Tempo-Setup.exe" download class="btn btn-primary btn-lg btn-download">
+        <span>تحميل برنامج التثبيت (Tempo-Setup.exe)</span>
+        <span class="sub">Official Installer · Windows 10/11 x64 · 4.4 MB</span>
       </a>
       <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
         </svg>
-        View Source on GitHub
+        GitHub Repository
       </a>
+    </div>
+
+    <div class="installer-info-sub">
+      <span>تثبيت تلقائي بنقرة واحدة مع اختصارات سطح المكتب وقائمة ابدأ</span>
+      <span>•</span>
+      <a href="Tempo-v2.2.0-win-x64.zip" download>أو حمّل النسخة المحمولة (ZIP بدون تثبيت)</a>
     </div>
 
     <div class="trust-row">
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        3.19 MB · No install
+        One-click Setup (.exe)
       </span>
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Zero ads &amp; telemetry
+        Auto desktop shortcuts
       </span>
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        MIT Open Source
+        Full uninstaller included
       </span>
       <span>
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-        Windows 10 &amp; 11 x64
+        Zero ads &amp; MIT License
       </span>
     </div>
   </div>
@@ -473,9 +469,9 @@
   <div class="wrap">
     <div class="stats-grid">
       <div class="stat">
-        <span class="stat-val">3.19 MB</span>
-        <div class="stat-ar">حجم الحزمة</div>
-        <div class="stat-en">Package size</div>
+        <span class="stat-val">4.43 MB</span>
+        <div class="stat-ar">حجم ملف التثبيت</div>
+        <div class="stat-en">Installer file size</div>
       </div>
       <div class="stat">
         <span class="stat-val">0%</span>
@@ -666,9 +662,9 @@
 <section id="specs" class="specs">
   <div class="wrap">
     <div class="sec-head">
-      <h2>المواصفات الفنية</h2>
-      <p>متطلبات التشغيل والترخيص البرمجي.</p>
-      <div class="en">System requirements and license information.</div>
+      <h2>المواصفات الفنية وطرق التحميل</h2>
+      <p>متطلبات التشغيل، ونوع التثبيت، والترخيص البرمجي.</p>
+      <div class="en">System requirements, installation options, and license info.</div>
     </div>
 
     <div class="specs-card">
@@ -682,6 +678,10 @@
 
       <div class="spec-list">
         <div class="spec-item">
+          <span class="spec-lbl">نوع التثبيت<span class="en">Setup Type</span></span>
+          <span class="spec-v">Installer (.exe) &amp; Portable (.zip)</span>
+        </div>
+        <div class="spec-item">
           <span class="spec-lbl">نظام التشغيل<span class="en">Operating System</span></span>
           <span class="spec-v">Windows 10 / 11 (64-bit)</span>
         </div>
@@ -690,20 +690,16 @@
           <span class="spec-v">.NET 10.0 WPF</span>
         </div>
         <div class="spec-item">
-          <span class="spec-lbl">حجم الحزمة<span class="en">Package Size</span></span>
-          <span class="spec-v">3.19 MB (ZIP)</span>
+          <span class="spec-lbl">حجم ملف التثبيت<span class="en">Installer Size</span></span>
+          <span class="spec-v">4.43 MB (.exe)</span>
         </div>
         <div class="spec-item">
           <span class="spec-lbl">الصلاحيات<span class="en">Privilege Level</span></span>
           <span class="spec-v">asInvoker (Standard)</span>
         </div>
         <div class="spec-item">
-          <span class="spec-lbl">الأمان<span class="en">Security</span></span>
-          <span class="spec-v">No telemetry / Virus-free</span>
-        </div>
-        <div class="spec-item">
-          <span class="spec-lbl">الترخيص<span class="en">License</span></span>
-          <span class="spec-v">MIT Open Source</span>
+          <span class="spec-lbl">إلغاء التثبيت<span class="en">Uninstaller</span></span>
+          <span class="spec-v">Supported in Windows Settings</span>
         </div>
       </div>
     </div>
@@ -714,13 +710,13 @@
 <section class="cta">
   <div class="wrap">
     <div class="cta-box">
-      <h2>ابدأ الآن — مجاناً وبدون تثبيت</h2>
-      <div class="en-head">Free, portable, no installer needed.</div>
-      <p>حمّل النسخة المحمولة وشغّل Tempo مباشرة. لا تسجيل، لا إعلانات، لا بيانات ترسل.</p>
+      <h2>ابدأ الآن — تثبيت فوري بنقرة واحدة</h2>
+      <div class="en-head">One-click installation with automatic shortcuts.</div>
+      <p>حمّل ملف التثبيت الرسمي Tempo-Setup.exe وشغّله. سيتم تثبيت التطبيق وإنشاء اختصارات سطح المكتب وقائمة ابدأ تلقائياً.</p>
       <div class="cta-row">
-        <a href="Tempo-v2.2.0-win-x64.zip" download class="btn btn-primary btn-xl btn-download">
-          <span>تحميل Tempo v2.2.0 — Windows 64-bit</span>
-          <span class="sub">Portable · 3.19 MB · No install required</span>
+        <a href="Tempo-Setup.exe" download class="btn btn-primary btn-xl btn-download">
+          <span>تحميل برنامج التثبيت (Tempo-Setup.exe)</span>
+          <span class="sub">Official Setup · 4.43 MB · Auto shortcuts</span>
         </a>
         <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -728,6 +724,10 @@
           </svg>
           Source Code on GitHub
         </a>
+      </div>
+      <div style="margin-top: 18px; font-size: .84rem; color: var(--text-2);">
+        <span>تفضل النسخة المحمولة بدون تثبيت؟ </span>
+        <a href="Tempo-v2.2.0-win-x64.zip" download style="color: var(--blue); text-decoration: none;">تحميل حزمة Portable ZIP (3.19 MB)</a>
       </div>
     </div>
   </div>
