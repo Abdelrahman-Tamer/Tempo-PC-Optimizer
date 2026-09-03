@@ -478,7 +478,7 @@
                                     <Grid Width="56" Height="54">
                                         <Rectangle x:Name="IndOptimize" Width="3" Height="24" Fill="{StaticResource PrimaryCobalt}" HorizontalAlignment="Right" RadiusX="1.5" RadiusY="1.5" Visibility="Collapsed"/>
                                         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <Path FlowDirection="LeftToRight" x:Name="IconNavOptimize" Data="M11,21 L13,13 L19,13 L8,2 L9,10 L3,10 Z" Fill="{StaticResource TextSecondary}" Width="16" Height="18" Stretch="Uniform" HorizontalAlignment="Center"/>
+                                            <Path FlowDirection="LeftToRight" x:Name="IconNavOptimize" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="{StaticResource TextSecondary}" Width="16" Height="18" Stretch="Uniform" HorizontalAlignment="Center"/>
                                             <TextBlock x:Name="TxtNavOptimize" Text="{DynamicResource NavOptimize}" FontSize="10" FontWeight="Normal" Foreground="{StaticResource TextSecondary}" HorizontalAlignment="Center" Margin="0,3,0,0"/>
                                         </StackPanel>
                                     </Grid>
@@ -564,7 +564,7 @@
                                         <!-- Row 2: Unified Hero Optimize Button (Prominent, Height 44, Blue Glow) -->
                                         <Button x:Name="BtnHeroOptimize" Grid.Row="2" Style="{StaticResource PrimaryHeroBtn}" Height="44" Click="BtnHeroOptimize_Click">
                                             <StackPanel Orientation="Horizontal">
-                                                <Path FlowDirection="LeftToRight" Data="M11,21 L13,13 L19,13 L8,2 L9,10 L3,10 Z" Fill="#FFFFFF" Width="14" Height="15" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                                <Path FlowDirection="LeftToRight" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="#FFFFFF" Width="14" Height="15" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{DynamicResource BtnBoostNow}" FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
@@ -1157,7 +1157,7 @@
                     </Button>
 
                     <Button x:Name="BtnToolbarBoostH" Style="{StaticResource ToolbarBoostBtn}" Width="28" Height="28" Margin="0,0,5,0" Click="BtnToolbarBoost_Click" ToolTip="{DynamicResource ToolbarTooltipBoost}">
-                        <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconH" Data="M11,21 L13,13 L19,13 L8,2 L9,10 L3,10 Z" Fill="#FFFFFF" Width="11" Height="12" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                        <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconH" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="#FFFFFF" Width="11" Height="12" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                             <Path.RenderTransform>
                                 <RotateTransform Angle="0"/>
                             </Path.RenderTransform>
@@ -1315,7 +1315,7 @@
 
                 <!-- Turbo Boost Button -->
                 <Button x:Name="BtnToolbarBoostV" Style="{StaticResource ToolbarBoostBtn}" Width="22" Height="22" Margin="0,0,0,4" Click="BtnToolbarBoost_Click" ToolTip="{DynamicResource ToolbarTooltipBoost}">
-                    <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconV" Data="M11,21 L13,13 L19,13 L8,2 L9,10 L3,10 Z" Fill="#FFFFFF" Width="9" Height="10" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                    <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconV" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="#FFFFFF" Width="9" Height="10" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                         <Path.RenderTransform>
                             <RotateTransform Angle="0"/>
                         </Path.RenderTransform>
