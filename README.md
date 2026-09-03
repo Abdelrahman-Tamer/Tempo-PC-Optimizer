@@ -86,8 +86,8 @@ Get-FileHash .\Tempo-Setup-v2.2.3.exe -Algorithm SHA256
 
 | File | Expected SHA256 Checksum |
 | :--- | :--- |
-| `Tempo-Setup-v2.2.3.exe` | `afd0ccc78f6754dc23de2bbced16022ab205aacb1e5ec244deb0ed7e3bee5489` |
-| `Tempo-v2.2.3-win-x64.zip` | `13601c97e2fa68b18ee95f5139592e48e49b6ee0cf3c9992509096a5735ac479` |
+| `Tempo-Setup-v2.2.3.exe` | `773248ba838c8ad2c070423127e059f89463d96413917ecef17747d79d8200e6` |
+| `Tempo-v2.2.3-win-x64.zip` | `1565026605e6d87a73c255d52639b47b4ccea1e44254e6d133f106f8db631041` |
 
 ---
 

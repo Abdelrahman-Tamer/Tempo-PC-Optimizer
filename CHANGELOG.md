@@ -4,6 +4,18 @@ All notable changes to the **Tempo PC Optimizer** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2026-09-03
+
+### Added
+- **Desktop Toolbar SSD & Dual Network Pods**: Real-time storage percentage monitor with smart color thresholds and combined download/upload traffic telemetry (`↓ 18M  ↑ 4M`).
+- **Concise Bullet-Point Update Notes**: In-app updater now formats release notes as clean, digestible bullet points without markdown clutter or links.
+- **Accurate Windows Security Detection**: Parity-based Registry evaluation for `StartupApproved` system entries, correctly recognizing Windows Security as active & protected.
+- **High-DPI Showcase Assets**: Re-rendered 2x Ultra-HD application screenshots across all views and companion bars.
+
+### Fixed & Improved
+- **Least-Privilege Error Boundary**: Global unhandled exception handlers logging safely to `%APPDATA%\Tempo\error.log` with zero abrupt silent crashes.
+- **Companion Toolbar Dimensions**: Expanded horizontal capsule to 570px and vertical dock to 315px to accommodate all telemetry pods without clipping.
+
 ---
 
 ## [2.2.0] - 2026-09-03

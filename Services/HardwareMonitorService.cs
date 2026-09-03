@@ -58,22 +58,30 @@ namespace Tempo.Services
         public ImageSource? IconSource { get; set; }
         public bool IsUserScope => Location.Contains("المستخدم", StringComparison.OrdinalIgnoreCase) || Location.Contains("HKCU", StringComparison.OrdinalIgnoreCase);
 
-        public Brush StatusDotBrush => IsEnabled
-            ? new SolidColorBrush(Color.FromRgb(16, 185, 129)) // TealHealth
-            : new SolidColorBrush(Color.FromRgb(100, 116, 139)); // Slate Muted
+        public bool IsSystemManaged { get; set; } = false;
 
-        public string StatusLabel => IsEnabled
-            ? (LocalizationManager.CurrentLanguage == "ar" ? "مفعّل" : "Enabled")
-            : (LocalizationManager.CurrentLanguage == "ar" ? "معطّل" : "Disabled");
+        public Brush StatusDotBrush => !IsEnabled
+            ? new SolidColorBrush(Color.FromRgb(100, 116, 139)) // Slate Muted
+            : (IsSystemManaged
+                ? new SolidColorBrush(Color.FromRgb(59, 130, 246)) // Royal Blue for System Protected
+                : new SolidColorBrush(Color.FromRgb(16, 185, 129))); // TealHealth
+
+        public string StatusLabel => !IsEnabled
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "معطّل" : "Disabled")
+            : (IsSystemManaged
+                ? (LocalizationManager.CurrentLanguage == "ar" ? "نظام (محمي)" : "System (Protected)")
+                : (LocalizationManager.CurrentLanguage == "ar" ? "مفعّل" : "Enabled"));
 
         public string ImpactLabel => !IsEnabled
-            ? (LocalizationManager.CurrentLanguage == "ar" ? "بدون أثر" : "No Impact")
-            : Impact switch
-            {
-                StartupImpactLevel.High => (LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع (~2s+)" : "High Impact (~2s+)"),
-                StartupImpactLevel.Medium => (LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط (~1s)" : "Medium Impact (~1s)"),
-                _ => (LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف (<0.5s)" : "Low Impact (<0.5s)")
-            };
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "معطّل (0s)" : "Disabled (0s)")
+            : (IsSystemManaged
+                ? (LocalizationManager.CurrentLanguage == "ar" ? "خدمة نظام (0s)" : "System Service (0s)")
+                : Impact switch
+                {
+                    StartupImpactLevel.High => (LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع (+2.1s)" : "High Impact (+2.1s)"),
+                    StartupImpactLevel.Medium => (LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط (+0.9s)" : "Medium Impact (+0.9s)"),
+                    _ => (LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف (+0.3s)" : "Low Impact (+0.3s)")
+                });
 
         public Brush ImpactBadgeBg => !IsEnabled
             ? new SolidColorBrush(Color.FromArgb(25, 100, 116, 139))
@@ -93,15 +101,18 @@ namespace Tempo.Services
                 _ => new SolidColorBrush(Color.FromRgb(16, 185, 129))
             };
 
-        public string ActionText => IsUserScope 
-            ? (IsEnabled 
+        public string ActionText => IsSystemManaged
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "محمي" : "Protected")
+            : (IsEnabled 
                 ? (LocalizationManager.CurrentLanguage == "ar" ? "تعطيل" : "Disable") 
-                : (LocalizationManager.CurrentLanguage == "ar" ? "تفعيل" : "Enable"))
-            : (LocalizationManager.CurrentLanguage == "ar" ? "إدارة" : "Manage");
+                : (LocalizationManager.CurrentLanguage == "ar" ? "تفعيل" : "Enable"));
 
-        public string LocationFriendly => IsUserScope 
-            ? (LocalizationManager.CurrentLanguage == "ar" ? "المستخدم الحالي (HKCU)" : "Current User (HKCU)") 
-            : (LocalizationManager.CurrentLanguage == "ar" ? "النظام (HKLM 64-bit)" : "System (HKLM 64-bit)");
+        public string LocationFriendly => Location switch
+        {
+            "HKCU" => (LocalizationManager.CurrentLanguage == "ar" ? "المستخدم (HKCU)" : "User (HKCU)"),
+            "HKLM-32" => (LocalizationManager.CurrentLanguage == "ar" ? "النظام (HKLM 32-bit)" : "System (HKLM 32-bit)"),
+            _ => (LocalizationManager.CurrentLanguage == "ar" ? "النظام (HKLM 64-bit)" : "System (HKLM 64-bit)")
+        };
 
         public string CleanExecutablePath
         {
@@ -703,41 +714,42 @@ namespace Tempo.Services
             return StartupImpactLevel.Low;
         }
 
-        private static bool IsAppEnabledInWindows(string appName, bool isUserScope)
+        private static (bool isEnabled, bool isSystemManaged) IsAppEnabledInWindows(string appName, bool isUserScope)
         {
             try
             {
                 // 1. Check HKCU (Run, Run32, StartupFolder)
                 using (var baseCu = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default))
                 {
-                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", appName, out bool enCuRun))
-                        return enCuRun;
-                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", appName, out bool enCuRun32))
-                        return enCuRun32;
-                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", appName, out bool enCuFolder))
-                        return enCuFolder;
+                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", appName, out bool enCuRun, out bool sysCuRun))
+                        return (enCuRun, sysCuRun);
+                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", appName, out bool enCuRun32, out bool sysCuRun32))
+                        return (enCuRun32, sysCuRun32);
+                    if (CheckApprovedKey(baseCu, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", appName, out bool enCuFolder, out bool sysCuFolder))
+                        return (enCuFolder, sysCuFolder);
                 }
 
                 // 2. Check HKLM in Registry64 view (Windows stores BOTH 64-bit and 32-bit StartupApproved here!)
                 using (var baseLm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
                 {
-                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", appName, out bool enLmRun))
-                        return enLmRun;
-                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", appName, out bool enLmRun32))
-                        return enLmRun32;
-                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", appName, out bool enLmFolder))
-                        return enLmFolder;
+                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run", appName, out bool enLmRun, out bool sysLmRun))
+                        return (enLmRun, sysLmRun);
+                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32", appName, out bool enLmRun32, out bool sysLmRun32))
+                        return (enLmRun32, sysLmRun32);
+                    if (CheckApprovedKey(baseLm64, @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\StartupFolder", appName, out bool enLmFolder, out bool sysLmFolder))
+                        return (enLmFolder, sysLmFolder);
                 }
             }
             catch { }
 
             // Default in Windows: if no StartupApproved entry exists, it is enabled by default
-            return true;
+            return (true, false);
         }
 
-        private static bool CheckApprovedKey(RegistryKey baseKey, string subPath, string appName, out bool isEnabled)
+        private static bool CheckApprovedKey(RegistryKey baseKey, string subPath, string appName, out bool isEnabled, out bool isSystemManaged)
         {
             isEnabled = true;
+            isSystemManaged = false;
             try
             {
                 using var key = baseKey.OpenSubKey(subPath);
@@ -746,9 +758,12 @@ namespace Tempo.Services
                     var val = key.GetValue(appName);
                     if (val is byte[] bytes && bytes.Length > 0)
                     {
-                        // In Windows, byte 0x02 indicates Enabled.
-                        // Any other byte (0x03, 0x06, 0x07, 0x01, etc.) indicates Disabled.
-                        isEnabled = (bytes[0] == 0x02);
+                        // In Windows StartupApproved binary blobs:
+                        // Even byte 0 (0x02, 0x06, etc. where (byte[0] & 1) == 0) indicates ENABLED / Active.
+                        // Odd byte 0 (0x03, 0x01, etc. where (byte[0] & 1) != 0) indicates DISABLED.
+                        // Specifically, 0x06 indicates a system-managed / mandatory Windows service (like Windows Security).
+                        isEnabled = (bytes[0] % 2 == 0);
+                        isSystemManaged = (bytes[0] == 0x06);
                         return true;
                     }
                 }
@@ -791,7 +806,7 @@ namespace Tempo.Services
                         catch { }
 
                         // 100% Authoritative Windows Startup Status Check
-                        bool isEnabledInWindows = IsAppEnabledInWindows(valueName, isUserScope);
+                        var (isEnabledInWindows, isSystemManaged) = IsAppEnabledInWindows(valueName, isUserScope);
                         bool isEnabled = pathExists && isEnabledInWindows;
 
                         var icon = ExtractIconFromCommand(cmd);
@@ -803,6 +818,7 @@ namespace Tempo.Services
                             Command = cmd,
                             Location = loc,
                             IsEnabled = isEnabled,
+                            IsSystemManaged = isSystemManaged,
                             Impact = isEnabled ? baseImpact : StartupImpactLevel.Disabled,
                             IconSource = icon
                         });
@@ -822,21 +838,89 @@ namespace Tempo.Services
         {
             try
             {
+                byte targetByte = app.IsEnabled ? (byte)0x03 : (byte)0x02; // 0x03 = Disabled, 0x02 = Enabled
+                byte[] newBytes = new byte[] { targetByte, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
                 if (app.IsUserScope)
                 {
                     const string approvedPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
-                    using var approvedKey = Registry.CurrentUser.OpenSubKey(approvedPath, true);
+                    using var approvedKey = Registry.CurrentUser.CreateSubKey(approvedPath, true);
                     if (approvedKey != null)
                     {
-                        // 0x03 = Disabled, 0x02 = Enabled
-                        byte[] newBytes = app.IsEnabled
-                            ? new byte[] { 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
-                            : new byte[] { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
                         approvedKey.SetValue(app.Name, newBytes, RegistryValueKind.Binary);
                         app.IsEnabled = !app.IsEnabled;
                         app.Impact = app.IsEnabled ? ClassifyImpact(app.Name, app.Command) : StartupImpactLevel.Disabled;
                         return true;
                     }
+                }
+                else
+                {
+                    // HKLM Scope (System-wide): check if 32-bit (Run32) or 64-bit (Run)
+                    string subPath = app.Location.Contains("32", StringComparison.OrdinalIgnoreCase)
+                        ? @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32"
+                        : @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+
+                    // Try direct registry write first
+                    try
+                    {
+                        using var hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+                        using var key = hklm64.CreateSubKey(subPath, true);
+                        if (key != null)
+                        {
+                            key.SetValue(app.Name, newBytes, RegistryValueKind.Binary);
+                            app.IsEnabled = !app.IsEnabled;
+                            app.Impact = app.IsEnabled ? ClassifyImpact(app.Name, app.Command) : StartupImpactLevel.Disabled;
+                            return true;
+                        }
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        if (WriteHklmStartupApprovedElevated(subPath, app.Name, newBytes))
+                        {
+                            app.IsEnabled = !app.IsEnabled;
+                            app.Impact = app.IsEnabled ? ClassifyImpact(app.Name, app.Command) : StartupImpactLevel.Disabled;
+                            return true;
+                        }
+                    }
+                    catch (System.Security.SecurityException)
+                    {
+                        if (WriteHklmStartupApprovedElevated(subPath, app.Name, newBytes))
+                        {
+                            app.IsEnabled = !app.IsEnabled;
+                            app.Impact = app.IsEnabled ? ClassifyImpact(app.Name, app.Command) : StartupImpactLevel.Disabled;
+                            return true;
+                        }
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private static bool WriteHklmStartupApprovedElevated(string subPath, string appName, byte[] bytes)
+        {
+            try
+            {
+                string byteArgs = string.Join(",", bytes);
+                string escapedSubPath = subPath.Replace(@"\", @"\\");
+                string escapedAppName = appName.Replace("'", "''");
+                string psScript = $"$k=[Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine,[Microsoft.Win32.RegistryView]::Registry64).CreateSubKey('{escapedSubPath}');$k.SetValue('{escapedAppName}',[byte[]]@({byteArgs}),[Microsoft.Win32.RegistryValueKind]::Binary);exit 0";
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoProfile -NonInteractive -WindowStyle Hidden -Command \"{psScript}\"",
+                    Verb = "runas",
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    proc.WaitForExit(8000);
+                    return proc.ExitCode == 0;
                 }
             }
             catch { }

@@ -110,6 +110,8 @@
     <system:String x:Key="ToolbarTooltipRam">RAM Usage</system:String>
     <system:String x:Key="ToolbarTooltipCpu">CPU Usage</system:String>
     <system:String x:Key="ToolbarTooltipNet">Network Activity</system:String>
+    <system:String x:Key="ToolbarTooltipTemp">CPU Temperature</system:String>
+    <system:String x:Key="ToolbarTooltipDisk">System Drive (C:) Usage</system:String>
 
     <!-- Update Modal -->
     <system:String x:Key="UpdateModalTitle">New Update Available</system:String>

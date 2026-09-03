@@ -115,10 +115,10 @@ namespace Tempo
 
         private const double DashboardWidth = 440.0;
         private const double DashboardHeight = 700.0;
-        private const double BarWidthH = 520.0;
+        private const double BarWidthH = 570.0;
         private const double BarHeightH = 42.0;
         private const double BarWidthV = 34.0;
-        private const double BarHeightV = 255.0;
+        private const double BarHeightV = 315.0;
 
         public MainWindow()
         {
@@ -128,6 +128,8 @@ namespace Tempo
 
             _hardwareMonitor = new HardwareMonitorService();
             _cleanupService = new CleanupService();
+
+            this.Closed += (s, e) => { try { _hardwareMonitor?.Dispose(); } catch { } };
 
             LoadSettings();
             LocalizationManager.Initialize(_selectedLanguage);
@@ -417,6 +419,8 @@ namespace Tempo
             _telemetryTimer?.Stop();
             _autoHideTimer?.Stop();
 
+            try { _hardwareMonitor?.Dispose(); } catch { }
+
             // Instant clean process exit
             Environment.Exit(0);
         }
@@ -463,6 +467,9 @@ namespace Tempo
             this.BeginAnimation(LeftProperty, null);
             this.BeginAnimation(TopProperty, null);
             this.BeginAnimation(OpacityProperty, null);
+
+            _toastTimer?.Stop();
+            if (ToastBanner != null) ToastBanner.Visibility = Visibility.Collapsed;
 
             _currentView = AppViewMode.Toolbar;
             MainDashboardView.Visibility = Visibility.Collapsed;
@@ -694,13 +701,61 @@ namespace Tempo
             if (BarRamIconH != null) BarRamIconH.Fill = ramBrush;
             if (BarCpuTextH != null) { BarCpuTextH.Text = $"{cpuPercent:F0}%"; BarCpuTextH.Foreground = cpuBrush; }
             if (BarCpuIconH != null) BarCpuIconH.Fill = cpuBrush;
-            if (BarNetSpeedH != null) BarNetSpeedH.Text = $"↓ {downStr.Replace(" ", "")}";
+            
+            string netDownShort = downStr.Contains("MB") ? $"{downStr.Split(' ')[0]}M" : $"{downStr.Split(' ')[0]}K";
+            string netUpShort = upStr.Contains("MB") ? $"{upStr.Split(' ')[0]}M" : $"{upStr.Split(' ')[0]}K";
+
+            if (BarNetDownH != null) BarNetDownH.Text = netDownShort;
+            if (BarNetUpH != null) BarNetUpH.Text = netUpShort;
 
             if (BarRamTextV != null) { BarRamTextV.Text = $"{ramPercent:F0}%"; BarRamTextV.Foreground = ramBrush; }
             if (BarRamIconV != null) BarRamIconV.Fill = ramBrush;
             if (BarCpuTextV != null) { BarCpuTextV.Text = $"{cpuPercent:F0}%"; BarCpuTextV.Foreground = cpuBrush; }
             if (BarCpuIconV != null) BarCpuIconV.Fill = cpuBrush;
-            if (BarNetSpeedV != null) BarNetSpeedV.Text = downStr.Contains("MB") ? $"{downStr.Split(' ')[0]}M" : $"{downStr.Split(' ')[0]}K";
+            if (BarNetSpeedV != null) BarNetSpeedV.Text = netDownShort;
+
+            // Temperature Pods in Toolbar (Horizontal & Vertical)
+            if (ToolbarTempBorderH != null)
+            {
+                if (cpuTemp.HasValue && cpuTemp.Value > 0)
+                {
+                    ToolbarTempBorderH.Visibility = Visibility.Visible;
+                    var tempBrush = cpuTemp.Value >= 85 ? (SolidColorBrush)FindResource("RedAlert") :
+                                    cpuTemp.Value >= 70 ? (SolidColorBrush)FindResource("AmberWarn") :
+                                    (SolidColorBrush)FindResource("TealHealth");
+                    if (BarTempTextH != null)
+                    {
+                        BarTempTextH.Text = $"{cpuTemp.Value:F0}°C";
+                        BarTempTextH.Foreground = tempBrush;
+                    }
+                    if (BarTempIconH != null) BarTempIconH.Fill = tempBrush;
+                }
+                else
+                {
+                    ToolbarTempBorderH.Visibility = Visibility.Collapsed;
+                }
+            }
+
+            if (ToolbarTempBorderV != null)
+            {
+                if (cpuTemp.HasValue && cpuTemp.Value > 0)
+                {
+                    ToolbarTempBorderV.Visibility = Visibility.Visible;
+                    var tempBrush = cpuTemp.Value >= 85 ? (SolidColorBrush)FindResource("RedAlert") :
+                                    cpuTemp.Value >= 70 ? (SolidColorBrush)FindResource("AmberWarn") :
+                                    (SolidColorBrush)FindResource("TealHealth");
+                    if (BarTempTextV != null)
+                    {
+                        BarTempTextV.Text = $"{cpuTemp.Value:F0}°";
+                        BarTempTextV.Foreground = tempBrush;
+                    }
+                    if (BarTempIconV != null) BarTempIconV.Fill = tempBrush;
+                }
+                else
+                {
+                    ToolbarTempBorderV.Visibility = Visibility.Collapsed;
+                }
+            }
 
             // Real Resource Status calculation
             int loadPercent = (int)(ramPercent * 0.5 + cpuPercent * 0.5);
@@ -758,8 +813,17 @@ namespace Tempo
 
                 Dispatcher.InvokeAsync(() =>
                 {
-                    var securityApps = apps.Where(a => a.IsSecurityApp).ToList();
-                    var regularApps = apps.Where(a => !a.IsSecurityApp).ToList();
+                    var securityApps = apps.Where(a => a.IsSecurityApp)
+                        .OrderByDescending(a => a.IsEnabled)
+                        .ThenByDescending(a => a.Impact)
+                        .ThenBy(a => a.DisplayName)
+                        .ToList();
+
+                    var regularApps = apps.Where(a => !a.IsSecurityApp)
+                        .OrderByDescending(a => a.IsEnabled)
+                        .ThenByDescending(a => a.Impact)
+                        .ThenBy(a => a.DisplayName)
+                        .ToList();
 
                     if (ListStartupSecurityApps != null) ListStartupSecurityApps.ItemsSource = securityApps;
                     if (ListStartupRegularApps != null) ListStartupRegularApps.ItemsSource = regularApps;
@@ -812,6 +876,23 @@ namespace Tempo
                             ? $"\u200E{cDrive.FreeGb:F1} GB\u200E متاح"
                             : $"\u200E{cDrive.FreeGb:F1} GB\u200E Free";
                         ProgStorageUsed.Value = cDrive.UsedPercent;
+
+                        // Companion Bar Storage Pod
+                        var diskBrush = cDrive.UsedPercent >= 90 ? (SolidColorBrush)FindResource("RedAlert") :
+                                        cDrive.UsedPercent >= 80 ? (SolidColorBrush)FindResource("AmberWarn") :
+                                        (SolidColorBrush)FindResource("TealHealth");
+                        if (BarDiskTextH != null)
+                        {
+                            BarDiskTextH.Text = $"{cDrive.UsedPercent:F0}%";
+                            BarDiskTextH.Foreground = diskBrush;
+                        }
+                        if (BarDiskIconH != null) BarDiskIconH.Fill = diskBrush;
+                        if (BarDiskTextV != null)
+                        {
+                            BarDiskTextV.Text = $"{cDrive.UsedPercent:F0}%";
+                            BarDiskTextV.Foreground = diskBrush;
+                        }
+                        if (BarDiskIconV != null) BarDiskIconV.Fill = diskBrush;
                     }
                 });
             });
@@ -890,46 +971,42 @@ namespace Tempo
             }
         }
 
-        private void BtnDisableStartupApp_Click(object sender, RoutedEventArgs e)
+        private async void BtnDisableStartupApp_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.DataContext is StartupAppItem app)
             {
-                if (!app.IsUserScope)
+                bool isAr = (LocalizationManager.CurrentLanguage == "ar");
+
+                if (app.IsSystemManaged)
                 {
-                    try
-                    {
-                        Process.Start(new ProcessStartInfo("ms-settings:startupapps") { UseShellExecute = true });
-                        ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تطبيقات النظام (HKLM) تتطلب إدارتها عبر نافذة ويندوز." : "System apps (HKLM) must be managed via Windows Settings.", false);
-                    }
-                    catch { ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "يتطلب تعديل هذا التطبيق صلاحيات مسؤول." : "Modifying this app requires Administrator privileges.", true); }
+                    ShowToast(isAr
+                        ? "خدمة أمان محمية: يديرها نظام ويندوز مباشرة ولا يمكن إيقافها."
+                        : "Protected system service: Managed directly by Windows OS and cannot be stopped.", false);
                     return;
                 }
 
-                // If currently disabled, re-enable it immediately without warning
+                // If currently disabled, re-enable it directly
                 if (!app.IsEnabled)
                 {
-                    bool okEnable = _hardwareMonitor.ToggleStartupApp(app);
+                    btn.IsEnabled = false;
+                    bool okEnable = await Task.Run(() => _hardwareMonitor.ToggleStartupApp(app));
+                    btn.IsEnabled = true;
+
                     if (okEnable)
                     {
-                        ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم تفعيل {app.DisplayName}" : $"{app.DisplayName} enabled", false);
+                        ShowToast(isAr ? $"تم تفعيل {app.DisplayName}" : $"{app.DisplayName} enabled", false);
                         LoadStartupApps();
+                    }
+                    else
+                    {
+                        ShowToast(isAr ? $"تعذر تفعيل {app.DisplayName}. قد يتطلب صلاحيات مسؤول." : $"Unable to enable {app.DisplayName}. Administrator privileges may be required.", true);
                     }
                     return;
                 }
 
                 // Check for Security / System sensitive applications
-                bool isSecurityApp = app.Name.IndexOf("Security", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Defender", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Antivirus", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Avast", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Kaspersky", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Bitdefender", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Malware", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("ESET", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Norton", StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                     app.Name.IndexOf("Firewall", StringComparison.OrdinalIgnoreCase) >= 0;
+                bool isSecurityApp = app.IsSecurityApp;
 
-                bool isAr = (LocalizationManager.CurrentLanguage == "ar");
                 string securityNotice = isSecurityApp
                     ? (isAr ? "\n\n⚠️ تحذير أمني شديد: هذا البرنامج يبدو مرتبطاً بالحماية أو مكافحة الفيروسات! تعطيله قد يؤثر على أمان النظام."
                             : "\n\n⚠️ High Security Warning: This application appears to be security/antivirus related! Disabling it may compromise system safety.")
@@ -949,15 +1026,18 @@ namespace Tempo
 
                 if (confirm != MessageBoxResult.Yes) return;
 
-                bool ok = _hardwareMonitor.ToggleStartupApp(app);
+                btn.IsEnabled = false;
+                bool ok = await Task.Run(() => _hardwareMonitor.ToggleStartupApp(app));
+                btn.IsEnabled = true;
+
                 if (ok)
                 {
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم تعطيل {app.DisplayName}" : $"{app.DisplayName} disabled", false);
+                    ShowToast(isAr ? $"تم تعطيل {app.DisplayName}" : $"{app.DisplayName} disabled", false);
                     LoadStartupApps();
                 }
                 else
                 {
-                    ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر تغيير حالة {app.DisplayName}. يمكنك إدارته عبر إعدادات ويندوز." : $"Unable to update {app.DisplayName}. You can manage it via Windows Settings.", true);
+                    ShowToast(isAr ? $"تعذر تغيير حالة {app.DisplayName}. قد يتطلب صلاحيات مسؤول." : $"Unable to update {app.DisplayName}. Administrator privileges may be required.", true);
                 }
             }
         }
@@ -1144,8 +1224,6 @@ namespace Tempo
                     : "M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M10,17 L5,12 L6.41,10.59 L10,14.17 L17.59,6.58 L19,8 L10,17 Z";
 
                 _toastTimer?.Stop();
-                    if (ToolbarToastH != null) ToolbarToastH.Visibility = Visibility.Collapsed;
-                    if (ToolbarMetricsContainerH != null) ToolbarMetricsContainerH.Visibility = Visibility.Visible;
 
                     ToastText.Text = message;
                     ToastText.Foreground = brush;
@@ -1408,12 +1486,10 @@ namespace Tempo
             {
                 _autoHideTimer.Stop();
                 RevealFromPeek();
-                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تثبيت الشريط على الشاشة" : "Mini Bar pinned", false);
             }
             else
             {
                 _autoHideTimer.Start();
-                ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "تم تفعيل الإخفاء التلقائي" : "Auto-hide enabled", false);
             }
         }
 
@@ -1729,15 +1805,78 @@ namespace Tempo
             if (_availableUpdate == null) return;
 
             TxtModalVersionDiff.Text = $"v{_availableUpdate.CurrentVersion}  ➔  v{_availableUpdate.LatestVersion}";
-            TxtModalReleaseNotes.Text = string.IsNullOrWhiteSpace(_availableUpdate.ReleaseNotes)
-                ? ((LocalizationManager.CurrentLanguage == "ar") ? "تحديث جديد يتضمن تحسينات في الأداء وسرعة الاستجابة واستقرار النظام." : "New update featuring performance improvements, responsiveness and system stability.")
-                : _availableUpdate.ReleaseNotes;
+            TxtModalReleaseNotes.Text = FormatReleaseHighlights(_availableUpdate.ReleaseNotes);
 
             PanelUpdateProgress.Visibility = Visibility.Collapsed;
             BorderUpdateError.Visibility = Visibility.Collapsed;
             PanelUpdateActions.IsEnabled = true;
 
             UpdateModalOverlay.Visibility = Visibility.Visible;
+        }
+
+        private static string FormatReleaseHighlights(string? rawNotes)
+        {
+            bool isAr = LocalizationManager.CurrentLanguage == "ar";
+            if (string.IsNullOrWhiteSpace(rawNotes))
+            {
+                return isAr
+                    ? "• تحسين سرعة استجابة واستقرار التطبيق.\n\n• إضافة كبسولات لمراقبة القرص والشبكة المزدوجة في شريط المهام.\n\n• زيادة دقة فحص برامج بدء التشغيل ومستوى الحماية."
+                    : "• Enhanced application responsiveness and system stability.\n\n• Added real-time SSD storage and dual-speed network pods to toolbar.\n\n• Improved startup apps accuracy and Windows security detection.";
+            }
+
+            var lines = rawNotes.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(l => l.Trim())
+                                .Where(l => !string.IsNullOrWhiteSpace(l))
+                                .ToList();
+
+            var bulletPoints = new List<string>();
+
+            foreach (var line in lines)
+            {
+                // Skip markdown headers (#, ##, ###) or divider lines (---, ===)
+                if (line.StartsWith("#") || line.StartsWith("---") || line.StartsWith("===") || line.StartsWith("```"))
+                    continue;
+
+                // Skip technical hash / URL lines
+                if (line.Contains("SHA256", StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                    line.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                string cleaned = line;
+                // Strip existing bullet marks
+                if (cleaned.StartsWith("* ") || cleaned.StartsWith("- ") || cleaned.StartsWith("• "))
+                    cleaned = cleaned.Substring(2).Trim();
+                else if (cleaned.Length > 2 && char.IsDigit(cleaned[0]) && cleaned[1] == '.')
+                    cleaned = cleaned.Substring(2).Trim();
+                else if (cleaned.Length > 3 && char.IsDigit(cleaned[0]) && char.IsDigit(cleaned[1]) && cleaned[2] == '.')
+                    cleaned = cleaned.Substring(3).Trim();
+
+                // Strip markdown formatting
+                cleaned = cleaned.Replace("**", "").Replace("__", "");
+
+                // Strip markdown links [Title](URL) -> Title
+                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\[([^\]]+)\]\([^\)]+\)", "$1");
+
+                // Strip GitHub PR/commit references like (#12) or by @user
+                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*\(#[0-9]+\)", "");
+                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*by\s+@[a-zA-Z0-9_-]+", "");
+
+                if (!string.IsNullOrWhiteSpace(cleaned) && cleaned.Length >= 4)
+                {
+                    bulletPoints.Add($"• {cleaned}");
+                    if (bulletPoints.Count >= 5) break; // Keep concise (up to 5 points)
+                }
+            }
+
+            if (bulletPoints.Count == 0)
+            {
+                return isAr
+                    ? "• تحسين سرعة استجابة واستقرار التطبيق.\n\n• إضافة كبسولات لمراقبة القرص والشبكة المزدوجة في شريط المهام.\n\n• زيادة دقة فحص برامج بدء التشغيل ومستوى الحماية."
+                    : "• Enhanced application responsiveness and system stability.\n\n• Added real-time SSD storage and dual-speed network pods to toolbar.\n\n• Improved startup apps accuracy and Windows security detection.";
+            }
+
+            return string.Join("\n\n", bulletPoints);
         }
 
         private void BtnCloseUpdateModal_Click(object sender, RoutedEventArgs e)

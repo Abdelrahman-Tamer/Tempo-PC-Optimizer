@@ -1149,6 +1149,28 @@
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
+
+                <!-- TOAST NOTIFICATION BANNER (Exclusively inside MainDashboardView, spanning full dashboard width) -->
+                <Border x:Name="ToastBanner"
+                        Grid.Row="1"
+                        Visibility="Collapsed"
+                        VerticalAlignment="Bottom"
+                        HorizontalAlignment="Center"
+                        Margin="16,0,16,24"
+                        Background="#F5141722"
+                        BorderBrush="{StaticResource TealHealth}"
+                        BorderThickness="1.2"
+                        CornerRadius="8"
+                        Padding="16,9"
+                        Panel.ZIndex="999">
+                    <Border.Effect>
+                        <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.6"/>
+                    </Border.Effect>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Path FlowDirection="LeftToRight" x:Name="ToastIcon" Data="M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M10,17 L5,12 L6.41,10.59 L10,14.17 L17.59,6.58 L19,8 L10,17 Z" Fill="{StaticResource TealHealth}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="ToastText" Text="{DynamicResource TxtActionCompleted}" Foreground="{StaticResource TealHealth}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="NoWrap"/>
+                    </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
@@ -1211,38 +1233,39 @@
                     <!-- CPU Pod -->
                     <Border Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" ToolTip="{DynamicResource ToolbarTooltipCpu}">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarCpuIconH" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z" Fill="{StaticResource TealHealth}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <Path FlowDirection="LeftToRight" x:Name="BarCpuIconH" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z M13,17 L11,17 L11,7 L13,7 L13,17 Z M17,17 L15,17 L15,13 L17,13 L17,17 Z" Fill="{StaticResource TealHealth}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
                             <TextBlock Text="CPU " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
                             <TextBlock x:Name="BarCpuTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
-                    <!-- NET Speed Pod -->
+                    <!-- CPU TEMP Pod -->
+                    <Border x:Name="ToolbarTempBorderH" Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" Visibility="Collapsed" ToolTip="{DynamicResource ToolbarTooltipTemp}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path FlowDirection="LeftToRight" x:Name="BarTempIconH" Data="M12,2 C10.9,2 10,2.9 10,4 L10,13.2 C8.8,14.1 8,15.5 8,17 C8,19.2 9.8,21 12,21 C14.2,21 16,19.2 16,17 C16,15.5 15.2,14.1 14,13.2 L14,4 C14,2.9 13.1,2 12,2 Z" Fill="{StaticResource TealHealth}" Width="9" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="BarTempTextH" Text="--°C" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- SSD / Disk Pod (Always 100% available without admin) -->
+                    <Border x:Name="ToolbarDiskBorderH" Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" ToolTip="{DynamicResource ToolbarTooltipDisk}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Path FlowDirection="LeftToRight" x:Name="BarDiskIconH" Data="M4,4 L20,4 C21.1,4 22,4.9 22,6 L22,18 C22,19.1 21.1,20 20,20 L4,20 C2.9,20 2,19.1 2,18 L2,6 C2,4.9 2.9,4 4,4 Z M5,14 A1.5,1.5 0 1,0 8,14 A1.5,1.5 0 0,0 5,14 Z M18,15 L11,15 L11,13 L18,13 Z" Fill="{StaticResource TealHealth}" Width="10" Height="9" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="SSD " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="BarDiskTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- NET Speed Pod (Dual: Down ↓ & Up ↑) -->
                     <Border Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" ToolTip="{DynamicResource ToolbarTooltipNet}">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="↓ " Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="BarNetSpeedH" Text="0.0 KB/s" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                            <TextBlock Text="↓" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <TextBlock x:Name="BarNetDownH" Text="0K" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="↑" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,2,0"/>
+                            <TextBlock x:Name="BarNetUpH" Text="0K" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
-
-                <!-- Inline Toolbar Toast Alert (يظهر داخل التول بار بنص عربي مقروء بدون قص أو تشويه) -->
-                <Border x:Name="ToolbarToastH"
-                        Grid.Column="1"
-                        Visibility="Collapsed"
-                        Background="#191D29"
-                        BorderBrush="{StaticResource TealHealth}"
-                        BorderThickness="1"
-                        CornerRadius="13"
-                        Padding="10,2"
-                        Height="26"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Path FlowDirection="LeftToRight" x:Name="ToolbarToastIconH" Data="M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M10,17 L5,12 L6.41,10.59 L10,14.17 L17.59,6.58 L19,8 L10,17 Z" Fill="{StaticResource TealHealth}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="ToolbarToastTextH" Text="{DynamicResource TxtActionCompleted}" Foreground="{StaticResource TealHealth}" FontSize="9.5" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Border>
 
                 <!-- Actions -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
@@ -1359,7 +1382,7 @@
                 CornerRadius="17"
                 Padding="2,6"
                 Width="34"
-                Height="255"
+                Height="315"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
             <Border.Effect>
@@ -1404,8 +1427,24 @@
                     <!-- CPU Vertical Pod -->
                     <Border Style="{StaticResource ToolbarPodStyle}" Width="28" Height="30" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipCpu}">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarCpuIconV" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8.5" Stretch="Uniform" Margin="0,0,0,1"/>
+                            <Path FlowDirection="LeftToRight" x:Name="BarCpuIconV" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z M13,17 L11,17 L11,7 L13,7 L13,17 Z M17,17 L15,17 L15,13 L17,13 L17,17 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8.5" Stretch="Uniform" Margin="0,0,0,1"/>
                             <TextBlock x:Name="BarCpuTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- DISK Vertical Pod -->
+                    <Border x:Name="ToolbarDiskBorderV" Style="{StaticResource ToolbarPodStyle}" Width="28" Height="28" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipDisk}">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path FlowDirection="LeftToRight" x:Name="BarDiskIconV" Data="M4,4 L20,4 C21.1,4 22,4.9 22,6 L22,18 C22,19.1 21.1,20 20,20 L4,20 C2.9,20 2,19.1 2,18 L2,6 C2,4.9 2.9,4 4,4 Z M5,14 A1.5,1.5 0 1,0 8,14 A1.5,1.5 0 0,0 5,14 Z M18,15 L11,15 L11,13 L18,13 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8" Stretch="Uniform" Margin="0,0,0,1"/>
+                            <TextBlock x:Name="BarDiskTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- TEMP Vertical Pod -->
+                    <Border x:Name="ToolbarTempBorderV" Style="{StaticResource ToolbarPodStyle}" Width="28" Height="28" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" Visibility="Collapsed" ToolTip="{DynamicResource ToolbarTooltipTemp}">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path FlowDirection="LeftToRight" x:Name="BarTempIconV" Data="M12,2 C10.9,2 10,2.9 10,4 L10,13.2 C8.8,14.1 8,15.5 8,17 C8,19.2 9.8,21 12,21 C14.2,21 16,19.2 16,17 C16,15.5 15.2,14.1 14,13.2 L14,4 C14,2.9 13.1,2 12,2 Z" Fill="{StaticResource TealHealth}" Width="8" Height="8.5" Stretch="Uniform" Margin="0,0,0,1"/>
+                            <TextBlock x:Name="BarTempTextV" Text="--°" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -1449,26 +1488,6 @@
                 <Button Style="{StaticResource ToolbarIconBtn}" Width="20" Height="20" Click="BtnToolbarClose_Click" ToolTip="{DynamicResource ToolbarTooltipHide}">
                     <Path FlowDirection="LeftToRight" Data="M0,0 L8,8 M8,0 L0,8" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" SnapsToDevicePixels="True" Width="7" Height="7" Stretch="Uniform"/>
                 </Button>
-            </StackPanel>
-        </Border>
-
-        <!-- 3. TOAST NOTIFICATION BANNER (Dark Theme Glass Obsidian with Shadow) -->
-        <Border x:Name="ToastBanner"
-                Visibility="Collapsed"
-                VerticalAlignment="Bottom"
-                HorizontalAlignment="Center"
-                Margin="0,0,0,24"
-                Background="#F5141722"
-                BorderBrush="{StaticResource TealHealth}"
-                BorderThickness="1.2"
-                CornerRadius="8"
-                Padding="16,9">
-            <Border.Effect>
-                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.6"/>
-            </Border.Effect>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Path FlowDirection="LeftToRight" x:Name="ToastIcon" Data="M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M10,17 L5,12 L6.41,10.59 L10,14.17 L17.59,6.58 L19,8 L10,17 Z" Fill="{StaticResource TealHealth}" Width="13" Height="13" Stretch="Uniform" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                <TextBlock x:Name="ToastText" Text="{DynamicResource TxtActionCompleted}" Foreground="{StaticResource TealHealth}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
             </StackPanel>
         </Border>
     </Grid>

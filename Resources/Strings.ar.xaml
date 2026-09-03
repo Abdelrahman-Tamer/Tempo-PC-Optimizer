@@ -110,6 +110,8 @@
     <system:String x:Key="ToolbarTooltipRam">استهلاك الذاكرة</system:String>
     <system:String x:Key="ToolbarTooltipCpu">استهلاك المعالج</system:String>
     <system:String x:Key="ToolbarTooltipNet">حركة الشبكة</system:String>
+    <system:String x:Key="ToolbarTooltipTemp">درجة حرارة المعالج</system:String>
+    <system:String x:Key="ToolbarTooltipDisk">استهلاك قرص النظام (C:)</system:String>
 
     <!-- Update Modal -->
     <system:String x:Key="UpdateModalTitle">تحديث جديد متوفر</system:String>
