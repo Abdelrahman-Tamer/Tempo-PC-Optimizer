@@ -464,7 +464,7 @@
   <div class="wrap">
     <div class="pill">
       <span class="pill-dot"></span>
-      <span>برنامج تثبيت رسمي • Setup.exe • 4.43 MB</span>
+      <span>برنامج تثبيت رسمي • Setup.exe • 4.65 MB</span>
     </div>
 
     <h1>تشخيص حقيقي وأداء أفضل لنظام ويندوز</h1>
@@ -481,7 +481,7 @@
           </svg>
         </span>
         <span>تحميل برنامج التثبيت (Setup.exe)</span>
-        <span class="btn-badge" dir="ltr">4.43 MB</span>
+        <span class="btn-badge" dir="ltr">4.65 MB</span>
       </a>
       <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
         <span class="btn-icon">
@@ -748,7 +748,7 @@
         </div>
         <div class="spec-item">
           <span class="spec-lbl">حجم ملف التثبيت<span class="en">Installer Size</span></span>
-          <span class="spec-v">4.43 MB (.exe)</span>
+          <span class="spec-v">4.65 MB (.exe)</span>
         </div>
         <div class="spec-item">
           <span class="spec-lbl">الصلاحيات<span class="en">Privilege Level</span></span>
@@ -757,6 +757,10 @@
         <div class="spec-item">
           <span class="spec-lbl">التحديثات التلقائية<span class="en">Auto-Updates</span></span>
           <span class="spec-v">In-App + SHA256 Verified</span>
+        </div>
+        <div class="spec-item">
+          <span class="spec-lbl">بصمة التجزئة<span class="en">SHA256 Checksum</span></span>
+          <span class="spec-v" style="font-family: var(--ff-mono); font-size: 0.72rem; word-break: break-all;" dir="ltr">4eeab813acff363e6515b35f66155e998374a7bf02033a32dc73e77e6231b2e3</span>
         </div>
         <div class="spec-item">
           <span class="spec-lbl">إلغاء التثبيت<span class="en">Uninstaller</span></span>
@@ -784,7 +788,7 @@
             </svg>
           </span>
           <span>تحميل برنامج التثبيت (Setup.exe)</span>
-          <span class="btn-badge" dir="ltr">4.43 MB</span>
+          <span class="btn-badge" dir="ltr">4.65 MB</span>
         </a>
         <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer" target="_blank" class="btn btn-ghost btn-lg">
           <span class="btn-icon">
@@ -796,6 +800,21 @@
           <span class="btn-badge-subtle" dir="ltr">MIT</span>
         </a>
       </div>
+
+      <!-- Verification & SmartScreen Note -->
+      <div style="margin-top: 24px; padding: 14px 18px; background: rgba(17, 20, 32, 0.95); border: 1px solid var(--border-light); border-radius: var(--r-md); text-align: start;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <span style="font-size: 0.84rem; font-weight: 600; color: var(--text);">🔐 التحقق من البصمة الرقمية (PowerShell Verification):</span>
+          <span class="btn-badge" dir="ltr" style="font-size: 0.7rem;">SHA-256</span>
+        </div>
+        <div style="font-family: var(--ff-mono); font-size: 0.78rem; background: #07090E; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); color: #60A5FA; overflow-x: auto; direction: ltr; unicode-bidi: isolate;">
+          Get-FileHash .\Tempo-Setup-v2.2.0.exe -Algorithm SHA256
+        </div>
+        <div style="margin-top: 10px; font-size: 0.78rem; color: var(--text-2); line-height: 1.6;">
+          💡 <b>ملاحظة لمستخدمي Windows SmartScreen:</b> نظراً لأن البرنامج أداة مجانية ومفتوحة المصدر ومستقلة بدون شهادة رقمية تجارية مدفوعة (EV Code Signing)، قد تظهر نافذة الفحص الذكي SmartScreen عند أول تشغيل. اضغط على <b>"More info" (مزيد من المعلومات)</b> ثم <b>"Run anyway" (تشغيل على أي حال)</b> للمتابعة بأمان بعد التحقق من مطابقة بصمة SHA256 أعلاه.
+        </div>
+      </div>
+
       <div style="margin-top: 18px; font-size: .84rem; color: var(--text-2);">
         <span>تفضل النسخة المحمولة بدون تثبيت؟ </span>
         <a href="Tempo-v2.2.0-win-x64.zip" download style="color: var(--blue); text-decoration: none;">تحميل حزمة Portable ZIP (3.19 MB)</a>
