@@ -416,10 +416,8 @@
                             <Border Width="28" Height="28" CornerRadius="6" Background="#1D2027" BorderBrush="#2D343F" BorderThickness="1" Margin="0,0,8,0">
                                 <Image FlowDirection="LeftToRight" x:Name="ImgHeaderLogo" RenderOptions.BitmapScalingMode="HighQuality" Margin="2"/>
                             </Border>
-                            <TextBlock Text="Tempo Diagnostic" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                            <Border Background="#1D2027" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="4" Margin="8,0,0,0" Padding="5,2" VerticalAlignment="Center">
-                                <TextBlock Text="PRO" Foreground="{StaticResource PrimaryAccent}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace"/>
-                            </Border>
+                            <TextBlock Text="Tempo PC Optimizer" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"/>
+
                         </StackPanel>
 
                         <!-- Window Controls (Left side in RTL) -->
@@ -541,8 +539,8 @@
                                             </StackPanel>
                                             <Border Grid.Column="1" Background="#1500382F" BorderBrush="#3044DDC1" BorderThickness="1" CornerRadius="4" Padding="7,2">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <TextBlock Text="HEALTH " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="TxtHealthPercent" Text="98%" Foreground="{StaticResource TealHealth}" FontSize="13" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="LOAD " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="TxtHealthPercent" Text="--" Foreground="{StaticResource TealHealth}" FontSize="13" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
                                         </Grid>
@@ -589,10 +587,10 @@
                                                 <Path FlowDirection="LeftToRight" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z" Fill="{StaticResource TextMuted}" Width="12" Height="12" Stretch="Uniform" HorizontalAlignment="Right"/>
                                             </Grid>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,6">
-                                                <TextBlock x:Name="TxtCpuPercent" Text="12%" Foreground="{StaticResource TealHealth}" FontSize="22" FontWeight="Bold" FontFamily="Consolas, monospace"/>
+                                                <TextBlock x:Name="TxtCpuPercent" Text="--" Foreground="{StaticResource TealHealth}" FontSize="22" FontWeight="Bold" FontFamily="Consolas, monospace"/>
                                             </StackPanel>
-                                            <ProgressBar x:Name="ProgCpuPercent" Height="6" Minimum="0" Maximum="100" Value="12" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
-                                            <TextBlock x:Name="TxtCpuClockTemp" Text="2.60 GHz" Foreground="{StaticResource TextSecondary}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
+                                            <ProgressBar x:Name="ProgCpuPercent" Height="6" Minimum="0" Maximum="100" Value="0" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
+                                            <TextBlock x:Name="TxtCpuClockTemp" Text="--" Foreground="{StaticResource TextSecondary}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
 
@@ -604,10 +602,10 @@
                                                 <Path FlowDirection="LeftToRight" Data="M4,4 L20,4 L20,20 L4,20 Z" Fill="{StaticResource TextMuted}" Width="12" Height="12" Stretch="Uniform" HorizontalAlignment="Right"/>
                                             </Grid>
                                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,4,0,6">
-                                                <TextBlock x:Name="TxtRamPercentValue" Text="46%" Foreground="{StaticResource TealHealth}" FontSize="22" FontWeight="Bold" FontFamily="Consolas, monospace"/>
+                                                <TextBlock x:Name="TxtRamPercentValue" Text="--" Foreground="{StaticResource TealHealth}" FontSize="22" FontWeight="Bold" FontFamily="Consolas, monospace"/>
                                             </StackPanel>
-                                            <ProgressBar x:Name="ProgRamPercent" Height="6" Minimum="0" Maximum="100" Value="46" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
-                                            <TextBlock x:Name="TxtRamUsageFormatted" Text="{DynamicResource CardRamUsagePlaceholder}" Foreground="{StaticResource TextSecondary}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
+                                            <ProgressBar x:Name="ProgRamPercent" Height="6" Minimum="0" Maximum="100" Value="0" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0" Margin="0,0,0,6"/>
+                                            <TextBlock x:Name="TxtRamUsageFormatted" Text="--" Foreground="{StaticResource TextSecondary}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>
@@ -621,9 +619,9 @@
                                         </Grid>
                                         <Grid Margin="0,2,0,6">
                                             <TextBlock Text="{DynamicResource TxtFreeDiskSpace}" Foreground="{StaticResource TextSecondary}" FontSize="11" HorizontalAlignment="Left"/>
-                                            <TextBlock x:Name="TxtStorageFree" Text="36.9 GB Free" Foreground="{StaticResource TextPrimary}" FontSize="11" FontFamily="Consolas, monospace" HorizontalAlignment="Right"/>
+                                            <TextBlock x:Name="TxtStorageFree" Text="--" Foreground="{StaticResource TextPrimary}" FontSize="11" FontFamily="Consolas, monospace" HorizontalAlignment="Right"/>
                                         </Grid>
-                                        <ProgressBar x:Name="ProgStorageUsed" Height="5" Minimum="0" Maximum="100" Value="90" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0"/>
+                                        <ProgressBar x:Name="ProgStorageUsed" Height="5" Minimum="0" Maximum="100" Value="0" FlowDirection="RightToLeft" Background="#202430" Foreground="{StaticResource TealHealth}" BorderThickness="0"/>
                                     </StackPanel>
                                 </Border>
 
@@ -1054,7 +1052,7 @@
                                             <Image FlowDirection="LeftToRight" x:Name="ImgAboutLogo" RenderOptions.BitmapScalingMode="HighQuality" Margin="4"/>
                                         </Border>
                                         <TextBlock Text="Tempo Diagnostic &amp; PC Optimizer" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Version 2.2.0 (Windows Native x64)" Foreground="{StaticResource TextMuted}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center" Margin="0,2,0,6"/>
+                                        <TextBlock x:Name="TxtAboutVersion" Text="Version 2.2.0 (Windows Native x64)" Foreground="{StaticResource TextMuted}" FontSize="10" FontFamily="Consolas, monospace" HorizontalAlignment="Center" Margin="0,2,0,6"/>
                                         <TextBlock Text="Designed &amp; Engineered by Eng. Abdelrahman Emam" Foreground="{StaticResource PrimaryAccent}" FontSize="10" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
@@ -1109,7 +1107,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Path FlowDirection="LeftToRight" x:Name="BarRamIconH" Data="M12,2 A10,10 0 1,0 22,12 A10,10 0 0,0 12,2 Z M12,4 A8,8 0 1,1 4,12 A8,8 0 0,1 12,4 Z" Fill="{StaticResource TealHealth}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
                             <TextBlock Text="RAM " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="BarRamTextH" Text="42%" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="BarRamTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -1118,7 +1116,7 @@
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <Path FlowDirection="LeftToRight" x:Name="BarCpuIconH" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z" Fill="{StaticResource TealHealth}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
                             <TextBlock Text="CPU " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="BarCpuTextH" Text="12%" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="BarCpuTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -1198,7 +1196,7 @@
                             </Border>
                             <StackPanel VerticalAlignment="Center">
                                 <TextBlock Text="{DynamicResource UpdateModalTitle}" Foreground="#FFFFFF" FontSize="13" FontWeight="Bold"/>
-                                <TextBlock x:Name="TxtModalVersionDiff" Text="v2.2.0  ➔  v2.3.0" Foreground="{StaticResource PrimaryAccent}" FontSize="10" FontFamily="Consolas, monospace"/>
+                                <TextBlock x:Name="TxtModalVersionDiff" Text="" Foreground="{StaticResource PrimaryAccent}" FontSize="10" FontFamily="Consolas, monospace"/>
                             </StackPanel>
                         </StackPanel>
                         <Button Style="{StaticResource WindowControlBtn}" Width="24" Height="24" HorizontalAlignment="Left" Click="BtnCloseUpdateModal_Click">
@@ -1292,7 +1290,7 @@
                     <Border Style="{StaticResource ToolbarPodStyle}" Width="28" Height="30" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipRam}">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Path FlowDirection="LeftToRight" x:Name="BarRamIconV" Data="M12,2 A10,10 0 1,0 22,12 A10,10 0 0,0 12,2 Z M12,4 A8,8 0 1,1 4,12 A8,8 0 0,1 12,4 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8.5" Stretch="Uniform" Margin="0,0,0,1"/>
-                            <TextBlock x:Name="BarRamTextV" Text="42%" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="BarRamTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 
@@ -1300,7 +1298,7 @@
                     <Border Style="{StaticResource ToolbarPodStyle}" Width="28" Height="30" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipCpu}">
                         <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Path FlowDirection="LeftToRight" x:Name="BarCpuIconV" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8.5" Stretch="Uniform" Margin="0,0,0,1"/>
-                            <TextBlock x:Name="BarCpuTextV" Text="12%" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="BarCpuTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
                         </StackPanel>
                     </Border>
 

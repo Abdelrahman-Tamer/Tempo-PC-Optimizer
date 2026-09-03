@@ -133,3 +133,17 @@ begin
     end;
   end;
 end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+var
+  AppDataDir: String;
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    AppDataDir := ExpandConstant('{userappdata}\Tempo');
+    if DirExists(AppDataDir) then
+    begin
+      DelTree(AppDataDir, True, True, True);
+    end;
+  end;
+end;

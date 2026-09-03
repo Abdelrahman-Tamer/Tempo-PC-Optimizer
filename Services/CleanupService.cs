@@ -239,14 +239,14 @@ namespace Tempo.Services
 
         public CleanupResult QuickCleanTemp()
         {
-            var result = new CleanupResult { ActionName = "Quick Clean (Temp & Prefetch)" };
-            Log("Starting Quick Clean (Temp & Prefetch)...");
+            var result = new CleanupResult { ActionName = "Quick Clean (Temp)" };
+            Log("Starting Quick Clean (Temp)...");
 
             var directoriesToClean = new List<(string path, bool checkDate)>
             {
                 (Path.GetTempPath(), false),
                 (Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp"), false),
-                (Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Prefetch"), true)
+                // Prefetch removed to protect Windows startup cache
             };
 
             long totalFreedBytes = 0;
@@ -274,12 +274,6 @@ namespace Tempo.Services
                 {
                     try
                     {
-                        if (checkDate && file.LastWriteTime > prefetchCutoff)
-                        {
-                            skippedFiles++;
-                            continue;
-                        }
-
                         if (!IsSafePath(file.FullName))
                         {
                             skippedFiles++;
@@ -426,18 +420,71 @@ namespace Tempo.Services
             return result;
         }
 
+        public static List<string> GetBrowserCacheDirectories()
+        {
+            var dirs = new List<string>();
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
+            // Chrome Profiles (Default, Profile 1, Profile 2, etc.)
+            AddChromiumProfiles(Path.Combine(localAppData, "Google", "Chrome", "User Data"), dirs);
+
+            // Edge Profiles
+            AddChromiumProfiles(Path.Combine(localAppData, "Microsoft", "Edge", "User Data"), dirs);
+
+            // Brave Profiles
+            AddChromiumProfiles(Path.Combine(localAppData, "BraveSoftware", "Brave-Browser", "User Data"), dirs);
+
+            // Firefox Profiles
+            string firefoxProfiles = Path.Combine(appData, "Mozilla", "Firefox", "Profiles");
+            if (Directory.Exists(firefoxProfiles))
+            {
+                try
+                {
+                    foreach (var pDir in Directory.GetDirectories(firefoxProfiles))
+                    {
+                        string c2 = Path.Combine(pDir, "cache2", "entries");
+                        if (Directory.Exists(c2)) dirs.Add(c2);
+                        string sc = Path.Combine(pDir, "startupCache");
+                        if (Directory.Exists(sc)) dirs.Add(sc);
+                    }
+                }
+                catch { }
+            }
+
+            return dirs;
+        }
+
+        private static void AddChromiumProfiles(string userDataDir, List<string> dirs)
+        {
+            if (!Directory.Exists(userDataDir)) return;
+            try
+            {
+                foreach (var sub in Directory.GetDirectories(userDataDir))
+                {
+                    string name = Path.GetFileName(sub);
+                    if (name.Equals("Default", StringComparison.OrdinalIgnoreCase) ||
+                        name.StartsWith("Profile", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string c = Path.Combine(sub, "Cache");
+                        if (Directory.Exists(c)) dirs.Add(c);
+                        string cc = Path.Combine(sub, "Code Cache");
+                        if (Directory.Exists(cc)) dirs.Add(cc);
+                    }
+                }
+            }
+            catch { }
+        }
+
         public CleanupResult BrowserCacheFlush()
         {
             var result = new CleanupResult { ActionName = "Browser Cache Flush" };
-            Process[] chromeProcs = Process.GetProcessesByName("chrome");
-            Process[] edgeProcs = Process.GetProcessesByName("msedge");
 
             var runningBrowsers = new List<string>();
-            if (chromeProcs.Length > 0) runningBrowsers.Add("Google Chrome");
-            if (edgeProcs.Length > 0) runningBrowsers.Add("Microsoft Edge");
-
-            foreach (var p in chromeProcs) p.Dispose();
-            foreach (var p in edgeProcs) p.Dispose();
+            CheckRunningBrowser("chrome", "Google Chrome", runningBrowsers);
+            CheckRunningBrowser("msedge", "Microsoft Edge", runningBrowsers);
+            CheckRunningBrowser("brave", "Brave", runningBrowsers);
+            CheckRunningBrowser("firefox", "Mozilla Firefox", runningBrowsers);
 
             if (runningBrowsers.Count > 0)
             {
@@ -452,15 +499,7 @@ namespace Tempo.Services
                 return result;
             }
 
-            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var cacheDirs = new List<string>
-            {
-                Path.Combine(localAppData, @"Google\Chrome\User Data\Default\Cache"),
-                Path.Combine(localAppData, @"Google\Chrome\User Data\Default\Code Cache"),
-                Path.Combine(localAppData, @"Microsoft\Edge\User Data\Default\Cache"),
-                Path.Combine(localAppData, @"Microsoft\Edge\User Data\Default\Code Cache")
-            };
-
+            var cacheDirs = GetBrowserCacheDirectories();
             long freedBytes = 0;
             int deletedFiles = 0;
 
@@ -487,13 +526,27 @@ namespace Tempo.Services
                 catch { }
             }
 
-            result.Success = true;
             result.ReclaimedBytes = freedBytes;
             result.DeletedFilesCount = deletedFiles;
+            result.Success = true;
             result.Message = (LocalizationManager.CurrentLanguage == "ar")
                 ? $"تم تنظيف كاش المتصفح (\u200E{result.ReclaimedMb:F1} MB\u200E)"
                 : $"Browser cache cleaned (\u200E{result.ReclaimedMb:F1} MB\u200E)";
             return result;
+        }
+
+        private static void CheckRunningBrowser(string procName, string friendlyName, List<string> running)
+        {
+            try
+            {
+                var procs = Process.GetProcessesByName(procName);
+                if (procs.Length > 0)
+                {
+                    running.Add(friendlyName);
+                    foreach (var p in procs) p.Dispose();
+                }
+            }
+            catch { }
         }
 
         public CleanupResult DevCachesFlush()
@@ -577,6 +630,32 @@ namespace Tempo.Services
         {
             var result = new CleanupResult { ActionName = "SSD Re-Trim" };
             driveLetter = (string.IsNullOrWhiteSpace(driveLetter) ? "C" : driveLetter).Trim().TrimEnd(':', '\\', '/').ToUpperInvariant();
+
+            if (driveLetter.Length != 1 || driveLetter[0] < 'A' || driveLetter[0] > 'Z')
+            {
+                result.Success = false;
+                result.Message = (LocalizationManager.CurrentLanguage == "ar") ? "حرف القرص غير صالح." : "Invalid drive letter.";
+                return result;
+            }
+
+            try
+            {
+                var dInfo = new DriveInfo(driveLetter);
+                if (dInfo.DriveType != DriveType.Fixed)
+                {
+                    result.Success = false;
+                    result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                        ? $"القرص {driveLetter}: ليس قرصاً ثابتاً."
+                        : $"Drive {driveLetter}: is not a fixed drive.";
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Message = ex.Message;
+                return result;
+            }
 
             try
             {
@@ -719,14 +798,7 @@ namespace Tempo.Services
             // 3. Browser Cache Scan
             try
             {
-                string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                var browserDirs = new[]
-                {
-                    Path.Combine(localApp, @"Google\Chrome\User Data\Default\Cache"),
-                    Path.Combine(localApp, @"Google\Chrome\User Data\Default\Code Cache"),
-                    Path.Combine(localApp, @"Microsoft\Edge\User Data\Default\Cache"),
-                    Path.Combine(localApp, @"Microsoft\Edge\User Data\Default\Code Cache")
-                };
+                var browserDirs = GetBrowserCacheDirectories();
 
                 foreach (var bd in browserDirs)
                 {

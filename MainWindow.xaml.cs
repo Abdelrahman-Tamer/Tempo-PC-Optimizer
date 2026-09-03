@@ -111,6 +111,7 @@ namespace Tempo
         private bool _isPeeked = false;
         private bool _isFetching = false;
         private bool _isPinned = false;
+        private int _telemetryTickCount = 0;
 
         private const double DashboardWidth = 440.0;
         private const double DashboardHeight = 700.0;
@@ -157,23 +158,7 @@ namespace Tempo
                 }
             };
 
-            // Post-startup settle: trim JIT heap after 4 seconds
-            var settleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
-            settleTimer.Tick += (s, e) =>
-            {
-                settleTimer.Stop();
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        GC.Collect(2, GCCollectionMode.Aggressive, true, true);
-                        GC.WaitForPendingFinalizers();
-                        CleanupService.EmptyWorkingSet(Process.GetCurrentProcess().Handle);
-                    }
-                    catch { }
-                });
-            };
-            settleTimer.Start();
+// Post-startup settleTimer removed to eliminate page-fault degradation
 
             // 2. Auto-Hide Timer for Companion Toolbar (2.5s idle)
             _autoHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
@@ -229,6 +214,11 @@ namespace Tempo
 
         private void LoadAppIconAndLogos()
         {
+            if (TxtAboutVersion != null)
+            {
+                TxtAboutVersion.Text = $"Version {UpdateService.GetCurrentVersion()} (Windows Native x64)";
+            }
+
             try
             {
                 string baseDir = AppDomain.CurrentDomain.BaseDirectory;
@@ -577,9 +567,9 @@ namespace Tempo
                 {
                     var (cpuPercent, cpuTemp, cpuClock) = _hardwareMonitor.GetCpuMetrics();
                     var (totalRam, usedRam, freeRam, ramPercent) = _hardwareMonitor.GetRamMetrics();
-                    var (gpuName, gpuTemp, gpuLoad, vramUsed, vramTotal) = _hardwareMonitor.GetNvidiaGpuMetrics();
+                    var (gpuName, gpuTemp, gpuLoad, vramUsed, vramTotal) = _hardwareMonitor.GetGpuMetrics();
                     var (downKb, upKb, downStr, upStr) = _hardwareMonitor.GetNetworkMetrics();
-                    var topProcs = _hardwareMonitor.GetTop5RamProcesses();
+                    var topProcs = (_telemetryTickCount++ % 3 == 0) ? _hardwareMonitor.GetTop5RamProcesses() : Array.Empty<(string, double)>();
 
                     Dispatcher.InvokeAsync(() =>
                     {
@@ -685,7 +675,10 @@ namespace Tempo
             PerfNetDown.Text = $"↓ {downStr.Replace(" ", "")}";
             PerfNetUp.Text = $"↑ {upStr.Replace(" ", "")}";
 
-            ListTopProcesses.ItemsSource = topProcs.Select(p => new ProcessViewModel { ProcessName = p.processName, RamMb = p.ramMb }).ToList();
+            if (topProcs.Length > 0 && ListTopProcesses != null)
+            {
+                ListTopProcesses.ItemsSource = topProcs.Select(p => new ProcessViewModel { ProcessName = p.processName, RamMb = p.ramMb }).ToList();
+            }
 
             // Companion Bar Telemetry (Horizontal & Vertical)
             if (BarRamTextH != null) { BarRamTextH.Text = $"{ramPercent:F0}%"; BarRamTextH.Foreground = ramBrush; }
@@ -700,32 +693,32 @@ namespace Tempo
             if (BarCpuIconV != null) BarCpuIconV.Fill = cpuBrush;
             if (BarNetSpeedV != null) BarNetSpeedV.Text = downStr.Contains("MB") ? $"{downStr.Split(' ')[0]}M" : $"{downStr.Split(' ')[0]}K";
 
-            // Dynamic Health Assessment
-            int healthScore = 100 - (int)(ramPercent * 0.45 + cpuPercent * 0.45);
-            if (healthScore < 20) healthScore = 20;
-            if (healthScore > 99) healthScore = 99;
+            // Real Resource Status calculation
+            int loadPercent = (int)(ramPercent * 0.5 + cpuPercent * 0.5);
+            if (loadPercent < 0) loadPercent = 0;
+            if (loadPercent > 100) loadPercent = 100;
 
-            TxtHealthPercent.Text = $"{healthScore}%";
+            TxtHealthPercent.Text = $"{loadPercent}%";
 
-            if (healthScore >= 80)
+            if (loadPercent <= 50)
             {
                 TxtHealthStatus.Text = (LocalizationManager.CurrentLanguage == "ar")
-                    ? "حالة النظام: ممتازة"
-                    : "System Status: Optimal";
+                    ? "استهلاك الموارد: منخفض ومستقر"
+                    : "Resource Usage: Low & Optimal";
                 DotHealthGlow.Fill = (SolidColorBrush)FindResource("TealHealth");
             }
-            else if (healthScore >= 50)
+            else if (loadPercent <= 80)
             {
                 TxtHealthStatus.Text = (LocalizationManager.CurrentLanguage == "ar")
-                    ? "حالة النظام: مقبولة - يوصى بالتحسين"
-                    : "System Status: Good - Boost Recommended";
+                    ? "استهلاك الموارد: متوسط"
+                    : "Resource Usage: Moderate";
                 DotHealthGlow.Fill = (SolidColorBrush)FindResource("AmberWarn");
             }
             else
             {
                 TxtHealthStatus.Text = (LocalizationManager.CurrentLanguage == "ar")
-                    ? "حالة النظام: استهلاك مرتفع"
-                    : "System Status: Heavy Load";
+                    ? "استهلاك الموارد: مرتفع"
+                    : "Resource Usage: High Load";
                 DotHealthGlow.Fill = (SolidColorBrush)FindResource("RedAlert");
             }
         }
@@ -929,7 +922,9 @@ namespace Tempo
                     if (btn != null) btn.IsEnabled = true;
                     ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تم التسريع: تحرير \u200E{ramRes.ReclaimedMb:F1} MB\u200E رام و \u200E{tempRes.ReclaimedMb:F1} MB\u200E مؤقت" : $"Boosted: \u200E{ramRes.ReclaimedMb:F1} MB\u200E RAM & \u200E{tempRes.ReclaimedMb:F1} MB\u200E temp freed", false);
                     FetchTelemetryAsync();
-                    TxtTargetFilesSize.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم التحسين" : "Optimized";
+                    // Re-query actual storage and recycle bin state instead of false hardcoded 0 MB
+            LoadStorageDrivesFast();
+            LoadRecycleBinInfo();
                     TxtRecTempSize.Text = "0 MB";
                 });
             });
@@ -1538,7 +1533,7 @@ namespace Tempo
                 {
                     TxtSettingsUpdateBadge.Text = (LocalizationManager.CurrentLanguage == "ar") ? "أنت تستخدم أحدث إصدار" : "Up to date";
                     TxtSettingsUpdateBadge.Foreground = (Brush)FindResource("TealHealth");
-                    MessageBox.Show("أنت تستخدم أحدث إصدار بالفعل من Tempo PC Optimizer (v2.2.0).\nلا توجد تحديثات جديدة متاحة حالياً.",
+                    MessageBox.Show("أنت تستخدم أحدث إصدار بالفعل من Tempo PC Optimizer (v" + UpdateService.GetCurrentVersion() + ").\nلا توجد تحديثات جديدة متاحة حالياً.",
                                     "التحقق من التحديثات", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }

@@ -253,43 +253,87 @@ namespace Tempo.Services
             return (0, 0, 0, 0);
         }
 
-        public (string name, float? temp, float? utilization, float vramUsedMb, float vramTotalMb) GetNvidiaGpuMetrics()
+        public (string name, float? temp, float? utilization, float vramUsedMb, float vramTotalMb) GetGpuMetrics()
         {
-            if (!_isComputerOpen)
+            if (_isComputerOpen)
             {
-                return ("NVIDIA GPU", null, null, 0, 0);
+                try
+                {
+                    IHardware? dedicatedGpu = null;
+                    IHardware? integratedGpu = null;
+
+                    foreach (var hw in _computer.Hardware)
+                    {
+                        if (hw.HardwareType == HardwareType.GpuNvidia)
+                        {
+                            dedicatedGpu = hw;
+                            break;
+                        }
+                        else if (hw.HardwareType == HardwareType.GpuAmd && dedicatedGpu == null)
+                        {
+                            dedicatedGpu = hw;
+                        }
+                        else if (hw.HardwareType == HardwareType.GpuIntel)
+                        {
+                            if (hw.Name.Contains("Arc", StringComparison.OrdinalIgnoreCase))
+                                dedicatedGpu = hw;
+                            else if (integratedGpu == null)
+                                integratedGpu = hw;
+                        }
+                    }
+
+                    var targetGpu = dedicatedGpu ?? integratedGpu;
+                    if (targetGpu != null)
+                    {
+                        targetGpu.Update();
+                        float? temp = null;
+                        float? load = null;
+                        float vramUsed = 0f;
+                        float vramTotal = 0f;
+
+                        foreach (var sensor in targetGpu.Sensors)
+                        {
+                            if (sensor.SensorType == SensorType.Temperature &&
+                                (sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase) || sensor.Name.Contains("GPU", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                temp ??= sensor.Value;
+                            }
+                            else if (sensor.SensorType == SensorType.Load &&
+                                (sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase) || sensor.Name.Contains("GPU", StringComparison.OrdinalIgnoreCase) || sensor.Name.Contains("D3D", StringComparison.OrdinalIgnoreCase)))
+                            {
+                                load ??= sensor.Value;
+                            }
+                            else if (sensor.SensorType == SensorType.SmallData && sensor.Name.Contains("Memory Used", StringComparison.OrdinalIgnoreCase))
+                            {
+                                vramUsed = sensor.Value ?? 0f;
+                            }
+                            else if (sensor.SensorType == SensorType.SmallData && sensor.Name.Contains("Memory Total", StringComparison.OrdinalIgnoreCase))
+                            {
+                                vramTotal = sensor.Value ?? 0f;
+                            }
+                        }
+                        return (targetGpu.Name, temp, load, vramUsed, vramTotal);
+                    }
+                }
+                catch { }
             }
 
             try
             {
-                foreach (var hardware in _computer.Hardware)
+                using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController");
+                foreach (ManagementObject mo in searcher.Get())
                 {
-                    if (hardware.HardwareType == HardwareType.GpuNvidia)
+                    string? name = mo["Name"]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(name))
                     {
-                        hardware.Update();
-                        float? temp = null;
-                        float? load = null;
-                        float vramUsed = 0f;
-                        float vramTotal = 4096f;
-
-                        foreach (var sensor in hardware.Sensors)
-                        {
-                            if (sensor.SensorType == SensorType.Temperature && sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
-                                temp = sensor.Value;
-                            else if (sensor.SensorType == SensorType.Load && sensor.Name.Contains("Core", StringComparison.OrdinalIgnoreCase))
-                                load = sensor.Value;
-                            else if (sensor.SensorType == SensorType.SmallData && sensor.Name.Contains("Memory Used", StringComparison.OrdinalIgnoreCase))
-                                vramUsed = sensor.Value ?? 0f;
-                            else if (sensor.SensorType == SensorType.SmallData && sensor.Name.Contains("Memory Total", StringComparison.OrdinalIgnoreCase))
-                                vramTotal = sensor.Value ?? 4096f;
-                        }
-                        return (hardware.Name, temp, load, vramUsed, vramTotal);
+                        return (name, null, null, 0, 0);
                     }
                 }
             }
             catch { }
 
-            return (LocalizationManager.CurrentLanguage == "ar" ? "لا يوجد كارت منفصل" : "Integrated / No dedicated GPU", null, null, 0, 0);
+            string unavailable = (LocalizationManager.CurrentLanguage == "ar") ? "غير متاح" : "Unavailable";
+            return (unavailable, null, null, 0, 0);
         }
 
         public (double downKbSec, double upKbSec, string downFormatted, string upFormatted) GetNetworkMetrics()

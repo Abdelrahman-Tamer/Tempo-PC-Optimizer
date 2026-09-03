@@ -162,54 +162,75 @@ namespace Tempo.Services
             IProgress<int>? progress = null,
             CancellationToken cancellationToken = default)
         {
+            // Security Gate 1: Strict HTTPS enforcement
+            if (!Uri.TryCreate(downloadUrl, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            {
+                throw new InvalidOperationException("Insecure download URL rejected. Updates require HTTPS.");
+            }
+
+            // Security Gate 2: Validate payload extension (.exe only)
+            if (!uri.AbsolutePath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Invalid update payload type. Only installer .exe packages are permitted.");
+            }
+
+            // Security Gate 3: Mandatory cryptographic SHA256 verification (no bypass allowed)
+            if (string.IsNullOrWhiteSpace(expectedSha256) || expectedSha256.Trim().Length != 64)
+            {
+                throw new InvalidDataException("Update rejected: Missing or invalid cryptographic SHA256 checksum in release metadata.");
+            }
+
             string tempDir = Path.Combine(Path.GetTempPath(), "Tempo-Update");
             if (!Directory.Exists(tempDir))
             {
                 Directory.CreateDirectory(tempDir);
             }
 
-            string targetFile = Path.Combine(tempDir, "Tempo-Setup-Latest.exe");
-            if (File.Exists(targetFile))
+            // Security Gate 4: Unpredictable random filename to prevent symlink/race-condition hijacking
+            string randomFilename = $"Tempo-Setup-{Guid.NewGuid():N}.exe";
+            string targetFile = Path.Combine(tempDir, randomFilename);
+
+            try
             {
-                try { File.Delete(targetFile); } catch { }
-            }
+                using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+                response.EnsureSuccessStatusCode();
 
-            using var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+                long totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+                using var fileStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 
-            long totalBytes = response.Content.Headers.ContentLength ?? -1L;
-            using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            using var fileStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+                var buffer = new byte[8192];
+                long totalRead = 0;
+                int bytesRead;
 
-            var buffer = new byte[8192];
-            long totalRead = 0;
-            int bytesRead;
-
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) > 0)
-            {
-                await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
-                totalRead += bytesRead;
-
-                if (totalBytes > 0 && progress != null)
+                while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) > 0)
                 {
-                    int percentage = (int)((totalRead * 100) / totalBytes);
-                    progress.Report(percentage);
+                    await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
+                    totalRead += bytesRead;
+
+                    if (totalBytes > 0 && progress != null)
+                    {
+                        int percentage = (int)((totalRead * 100) / totalBytes);
+                        progress.Report(percentage);
+                    }
                 }
-            }
 
-            fileStream.Close();
+                fileStream.Close();
 
-            // SHA256 integrity verification if hash is supplied
-            if (!string.IsNullOrEmpty(expectedSha256))
-            {
+                // Security Gate 5: Strict SHA256 verification
                 if (!VerifySha256(targetFile, expectedSha256))
                 {
-                    try { File.Delete(targetFile); } catch { }
+                    try { if (File.Exists(targetFile)) File.Delete(targetFile); } catch { }
                     throw new InvalidDataException("SHA256 checksum verification failed. The downloaded file might be corrupted or tampered with.");
                 }
-            }
 
-            return targetFile;
+                return targetFile;
+            }
+            catch
+            {
+                try { if (File.Exists(targetFile)) File.Delete(targetFile); } catch { }
+                throw;
+            }
         }
 
         public static bool VerifySha256(string filePath, string expectedHash)
