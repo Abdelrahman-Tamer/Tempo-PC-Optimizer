@@ -285,11 +285,28 @@ namespace Tempo.Services
         private static string ExtractSha256FromBody(string body)
         {
             if (string.IsNullOrEmpty(body)) return "";
-            var match = Regex.Match(body, @"SHA256[:\s=]+([a-fA-F0-9]{64})", RegexOptions.IgnoreCase);
+
+            // 1. Direct tag: SHA256: <hash> or SHA-256: <hash>
+            var match = Regex.Match(body, @"SHA-?256[:\s=]+([a-fA-F0-9]{64})", RegexOptions.IgnoreCase);
             if (match.Success)
             {
                 return match.Groups[1].Value.Trim();
             }
+
+            // 2. Setup file line: Tempo-Setup...exe: <hash> or `hash`
+            var matchFile = Regex.Match(body, @"Tempo-Setup[^\r\n]*?[:\s`|]+([a-fA-F0-9]{64})", RegexOptions.IgnoreCase);
+            if (matchFile.Success)
+            {
+                return matchFile.Groups[1].Value.Trim();
+            }
+
+            // 3. Fallback: Any standalone 64-char hex hash
+            var anyMatch = Regex.Match(body, @"\b([a-fA-F0-9]{64})\b");
+            if (anyMatch.Success)
+            {
+                return anyMatch.Groups[1].Value.Trim();
+            }
+
             return "";
         }
     }
