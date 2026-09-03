@@ -20,8 +20,8 @@ Desktop.ini
 
 # Temporary and scratch files
 scratch/
-test_*.png
-screen_*.png
+/test_*.png
+/screen_*.png
 extracted_*.png
 VerifyStartupAndIcon.cs
 TempoVerifyStartup.csproj
