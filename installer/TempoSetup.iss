@@ -1,6 +1,6 @@
 ; Tempo PC Optimizer - Official Inno Setup 6 Script
 #define MyAppName "Tempo PC Optimizer"
-#define MyAppVersion "2.2.0"
+#define MyAppVersion "2.2.1"
 #define MyAppPublisher "Eng. Abdelrahman Emam"
 #define MyAppURL "https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/"
 #define MyAppExeName "Tempo.exe"
@@ -18,7 +18,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=..\LICENSE
 OutputDir=..\dist
-OutputBaseFilename=Tempo-Setup-v2.2.0
+OutputBaseFilename=Tempo-Setup-v{#MyAppVersion}
 SetupIconFile=..\publish_tempo\tempo_v2.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
