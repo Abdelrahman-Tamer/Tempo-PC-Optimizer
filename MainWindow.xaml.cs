@@ -876,17 +876,18 @@ namespace Tempo
                     if (ListStartupRegularApps != null) ListStartupRegularApps.ItemsSource = regularApps;
 
                     int enabledCount = apps.Count(a => a.IsEnabled);
-                    TxtRecStartupCount.Text = (LocalizationManager.CurrentLanguage == "ar")
-                        ? $"{enabledCount} مفعّل ({boot.ActiveAppsDelaySeconds:F1}s)"
-                        : $"{enabledCount} Active ({boot.ActiveAppsDelaySeconds:F1}s)";
+                    string countFormat = LocalizationManager.GetString(
+                        "StartupActiveCountFormat",
+                        LocalizationManager.CurrentLanguage == "ar" ? "{0} مفعّل (~{1:F1}s تقديري)" : "{0} Active (~{1:F1}s est.)");
+                    TxtRecStartupCount.Text = string.Format(countFormat, enabledCount, boot.ActiveAppsDelaySeconds);
 
                     if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count(a => a.IsEnabled)}/{securityApps.Count}";
                     if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count(a => a.IsEnabled)}/{regularApps.Count}";
 
                     // Populate Boot Diagnostics Pod
                     if (TxtBiosTimeVal != null) TxtBiosTimeVal.Text = $"{boot.BiosTimeSeconds:F1}s";
-                    if (TxtTotalBootVal != null) TxtTotalBootVal.Text = $"{boot.EstimatedTotalBootSeconds:F1}s";
-                    if (TxtAppsDelayVal != null) TxtAppsDelayVal.Text = $"+{boot.ActiveAppsDelaySeconds:F1}s";
+                    if (TxtTotalBootVal != null) TxtTotalBootVal.Text = $"~{boot.EstimatedTotalBootSeconds:F1}s";
+                    if (TxtAppsDelayVal != null) TxtAppsDelayVal.Text = $"+~{boot.ActiveAppsDelaySeconds:F1}s";
                     if (TxtBootRating != null) TxtBootRating.Text = boot.RatingText;
                     if (TxtBootTip != null) TxtBootTip.Text = boot.Recommendation;
 

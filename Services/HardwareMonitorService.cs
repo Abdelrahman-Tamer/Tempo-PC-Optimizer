@@ -102,7 +102,7 @@ namespace Tempo.Services
         public bool IsEnabled { get; set; } = true;
         public StartupImpactLevel Impact { get; set; } = StartupImpactLevel.Low;
         public ImageSource? IconSource { get; set; }
-        public bool IsUserScope => Location.Contains("المستخدم", StringComparison.OrdinalIgnoreCase) || Location.Contains("HKCU", StringComparison.OrdinalIgnoreCase);
+        public bool IsUserScope => Location.Contains("HKCU", StringComparison.OrdinalIgnoreCase);
 
         public bool IsSystemManaged { get; set; } = false;
 
@@ -119,14 +119,14 @@ namespace Tempo.Services
                 : (LocalizationManager.CurrentLanguage == "ar" ? "مفعّل" : "Enabled"));
 
         public string ImpactLabel => !IsEnabled
-            ? (LocalizationManager.CurrentLanguage == "ar" ? "معطّل (0s)" : "Disabled (0s)")
+            ? LocalizationManager.GetString("StartupImpactDisabled", LocalizationManager.CurrentLanguage == "ar" ? "معطّل (0s)" : "Disabled (0s)")
             : (IsSystemManaged
-                ? (LocalizationManager.CurrentLanguage == "ar" ? "خدمة نظام (0s)" : "System Service (0s)")
+                ? LocalizationManager.GetString("StartupImpactSystem", LocalizationManager.CurrentLanguage == "ar" ? "خدمة نظام (0s)" : "System Service (0s)")
                 : Impact switch
                 {
-                    StartupImpactLevel.High => (LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع (+2.1s)" : "High Impact (+2.1s)"),
-                    StartupImpactLevel.Medium => (LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط (+0.9s)" : "Medium Impact (+0.9s)"),
-                    _ => (LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف (+0.3s)" : "Low Impact (+0.3s)")
+                    StartupImpactLevel.High => LocalizationManager.GetString("StartupImpactHigh", LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع (+2.1s تقديري)" : "High Impact (+2.1s est.)"),
+                    StartupImpactLevel.Medium => LocalizationManager.GetString("StartupImpactMedium", LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط (+0.9s تقديري)" : "Medium Impact (+0.9s est.)"),
+                    _ => LocalizationManager.GetString("StartupImpactLow", LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف (+0.3s تقديري)" : "Low Impact (+0.3s est.)")
                 });
 
         public Brush ImpactBadgeBg => !IsEnabled
@@ -573,7 +573,7 @@ namespace Tempo.Services
                             {
                                 string devId = disk["DeviceId"]?.ToString() ?? "";
                                 ushort mType = disk["MediaType"] != null ? Convert.ToUInt16(disk["MediaType"]) : (ushort)0;
-                                string typeStr = (mType == 4 || mType == 5) ? "SSD" : (mType == 3 ? "HDD" : "SSD");
+                                string typeStr = (mType == 4 || mType == 5) ? "SSD" : (mType == 3 ? "HDD" : "Unknown");
                                 diskTypes[devId] = typeStr;
                             }
                         }
@@ -976,8 +976,11 @@ namespace Tempo.Services
                     {
                         try
                         {
-                            freedMb += p.WorkingSet64 / (1024.0 * 1024.0);
+                            long memBefore = 0;
+                            try { memBefore = p.WorkingSet64; } catch { }
                             p.Kill();
+                            p.WaitForExit(1000);
+                            freedMb += memBefore / (1024.0 * 1024.0);
                             killedCount++;
                         }
                         catch { }
@@ -1464,9 +1467,12 @@ namespace Tempo.Services
             try { _cpuCounter?.Dispose(); } catch { }
             if (_isComputerOpen && _computer != null)
             {
-                Task.Run(() => {
-                    try { _computer?.Close(); } catch { }
-                });
+                try
+                {
+                    _computer.Close();
+                    _isComputerOpen = false;
+                }
+                catch { }
             }
         }
     }
