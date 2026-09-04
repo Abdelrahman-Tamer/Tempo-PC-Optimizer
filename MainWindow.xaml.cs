@@ -47,8 +47,14 @@ namespace Tempo
         public double TotalGb { get; set; }
         public double FreeGb { get; set; }
         public double UsedPercent { get; set; }
-        public string MediaType { get; set; } = "SSD";
+        public string MediaType { get; set; } = "Unknown";
         public string SpaceSummary => LocalizationManager.FormatStorageSummary(FreeGb, TotalGb, UsedPercent);
+
+        public bool IsUnknown => MediaType.Equals("Unknown", StringComparison.OrdinalIgnoreCase);
+        public bool IsTrimEnabled => !IsUnknown;
+        public string ActionButtonTooltip => IsUnknown
+            ? (LocalizationManager.CurrentLanguage == "ar" ? "نوع القرص غير معروف — تم تعطيل TRIM" : "Unknown drive type — TRIM disabled")
+            : "";
 
         public Visibility TrimVisibility => Visibility.Visible;
         public string ActionButtonText => MediaType.Equals("HDD", StringComparison.OrdinalIgnoreCase)
@@ -59,19 +65,19 @@ namespace Tempo
         {
             "SSD" => new SolidColorBrush(Color.FromArgb(40, 0, 102, 255)),
             "HDD" => new SolidColorBrush(Color.FromArgb(40, 68, 221, 193)),
-            _ => new SolidColorBrush(Color.FromArgb(40, 0, 102, 255))
+            _ => new SolidColorBrush(Color.FromArgb(40, 140, 150, 165))
         };
         public Brush BadgeBorder => MediaType switch
         {
             "SSD" => new SolidColorBrush(Color.FromArgb(80, 0, 102, 255)),
             "HDD" => new SolidColorBrush(Color.FromArgb(80, 68, 221, 193)),
-            _ => new SolidColorBrush(Color.FromArgb(80, 0, 102, 255))
+            _ => new SolidColorBrush(Color.FromArgb(80, 140, 150, 165))
         };
         public Brush BadgeFg => MediaType switch
         {
             "SSD" => new SolidColorBrush(Color.FromArgb(255, 179, 197, 255)),
             "HDD" => new SolidColorBrush(Color.FromArgb(255, 68, 221, 193)),
-            _ => new SolidColorBrush(Color.FromArgb(255, 179, 197, 255))
+            _ => new SolidColorBrush(Color.FromArgb(255, 160, 170, 185))
         };
 
         public Brush ProgressBrush => UsedPercent switch
@@ -1332,13 +1338,20 @@ namespace Tempo
         {
             if (sender is Button btn && btn.DataContext is StorageDriveViewModel vm)
             {
+                if (vm.IsUnknown)
+                {
+                    bool isAr = (LocalizationManager.CurrentLanguage == "ar");
+                    ShowToast(isAr ? "نوع القرص غير معروف — تم تعطيل TRIM" : "Unknown drive type — TRIM disabled", true);
+                    return;
+                }
+
                 string letter = vm.DriveLetter.TrimEnd(':', '\\', '/');
                 bool isSsd = vm.MediaType.Equals("SSD", StringComparison.OrdinalIgnoreCase);
 
-                bool isAr = (LocalizationManager.CurrentLanguage == "ar");
+                bool isArMsg = (LocalizationManager.CurrentLanguage == "ar");
                 string actionMsg = isSsd
-                    ? (isAr ? $"جاري تنشيط خلايا SSD عبر TRIM للقرص {letter}:... يرجى الانتظار." : $"Optimizing SSD via TRIM on drive {letter}:... please wait.")
-                    : (isAr ? $"جاري تحسين وإلغاء تجزئة القرص {letter}:... يرجى الانتظار." : $"Optimizing and defragmenting drive {letter}:... please wait.");
+                    ? (isArMsg ? $"جاري تنشيط خلايا SSD عبر TRIM للقرص {letter}:... يرجى الانتظار." : $"Optimizing SSD via TRIM on drive {letter}:... please wait.")
+                    : (isArMsg ? $"جاري تحسين وإلغاء تجزئة القرص {letter}:... يرجى الانتظار." : $"Optimizing and defragmenting drive {letter}:... please wait.");
 
                 ShowToast(actionMsg, false);
                 btn.IsEnabled = false;
@@ -1348,7 +1361,7 @@ namespace Tempo
                     var res = _cleanupService.SsdReTrim(letter);
                     Dispatcher.InvokeAsync(() =>
                     {
-                        btn.IsEnabled = true;
+                        btn.IsEnabled = vm.IsTrimEnabled;
                         ShowToast(res.Message, !res.Success);
                     });
                 });
