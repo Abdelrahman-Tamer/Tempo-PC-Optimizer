@@ -140,6 +140,12 @@
     <system:String x:Key="TxtBiosTimeLabel">وقت إقلاع BIOS</system:String>
     <system:String x:Key="TxtEstBootTimeLabel">الوقت المقدر للإقلاع</system:String>
     <system:String x:Key="TxtActiveImpactLabel">تأخير البرامج النشطة</system:String>
+    <system:String x:Key="StartupImpactDisabled">معطّل (0s)</system:String>
+    <system:String x:Key="StartupImpactSystem">خدمة نظام (0s)</system:String>
+    <system:String x:Key="StartupImpactHigh">أثر مرتفع (+2.1s تقديري)</system:String>
+    <system:String x:Key="StartupImpactMedium">أثر متوسط (+0.9s تقديري)</system:String>
+    <system:String x:Key="StartupImpactLow">أثر خفيف (+0.3s تقديري)</system:String>
+    <system:String x:Key="StartupActiveCountFormat">{0} مفعّل (~{1:F1}s تقديري)</system:String>
     <system:String x:Key="SettingsStartWithWindowsTitle">تشغيل Tempo تلقائياً مع بدء ويندوز</system:String>
     <system:String x:Key="SettingsStartWithWindowsDesc">بدء التشغيل بهدوء في شريط الأدوات المصغر دون التأثير على سرعة الإقلاع</system:String>
 

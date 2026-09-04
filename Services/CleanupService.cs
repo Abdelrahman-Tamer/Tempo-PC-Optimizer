@@ -302,12 +302,25 @@ namespace Tempo.Services
             _logFilePath = Path.Combine(logDir, "app.log");
         }
 
+        private static readonly object _logLock = new();
+        private const long MaxLogSizeBytes = 5 * 1024 * 1024; // 5 MB rotation threshold
+
         public void Log(string message, string level = "INFO")
         {
             try
             {
-                string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] {message}";
-                File.AppendAllText(_logFilePath, line + Environment.NewLine);
+                lock (_logLock)
+                {
+                    var fi = new FileInfo(_logFilePath);
+                    if (fi.Exists && fi.Length > MaxLogSizeBytes)
+                    {
+                        string oldLog = _logFilePath + ".old";
+                        File.Move(_logFilePath, oldLog, overwrite: true);
+                    }
+
+                    string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] {message}";
+                    File.AppendAllText(_logFilePath, line + Environment.NewLine);
+                }
             }
             catch { }
         }
@@ -392,8 +405,6 @@ namespace Tempo.Services
                     try { p.Dispose(); } catch { }
                 }
             }
-
-            System.Threading.Thread.Sleep(100);
 
             var memAfter = new MEMORYSTATUSEX();
             GlobalMemoryStatusEx(memAfter);
@@ -751,7 +762,13 @@ namespace Tempo.Services
                     CreateNoWindow = true
                 };
                 using var proc = Process.Start(psi);
-                proc?.WaitForExit(3000);
+                if (proc != null)
+                {
+                    if (!proc.WaitForExit(5000))
+                    {
+                        try { proc.Kill(entireProcessTree: true); } catch { }
+                    }
+                }
             }
             catch { }
 
@@ -815,11 +832,17 @@ namespace Tempo.Services
                     {
                         if (proc != null)
                         {
-                            string defragOut = proc.StandardOutput.ReadToEnd();
-                            string defragErr = proc.StandardError.ReadToEnd();
-                            proc.WaitForExit();
+                            var outTask = proc.StandardOutput.ReadToEndAsync();
+                            var errTask = proc.StandardError.ReadToEndAsync();
+                            bool exited = proc.WaitForExit(30000);
+                            if (!exited)
+                            {
+                                try { proc.Kill(entireProcessTree: true); } catch { }
+                            }
+                            string defragOut = outTask.GetAwaiter().GetResult();
+                            string defragErr = errTask.GetAwaiter().GetResult();
 
-                            if (proc.ExitCode == 0)
+                            if (exited && proc.ExitCode == 0)
                             {
                                 result.Success = true;
                                 result.Message = (LocalizationManager.CurrentLanguage == "ar")
@@ -846,11 +869,17 @@ namespace Tempo.Services
                 {
                     if (psProc != null)
                     {
-                        string psOut = psProc.StandardOutput.ReadToEnd();
-                        string psErr = psProc.StandardError.ReadToEnd();
-                        psProc.WaitForExit();
+                        var psOutTask = psProc.StandardOutput.ReadToEndAsync();
+                        var psErrTask = psProc.StandardError.ReadToEndAsync();
+                        bool psExited = psProc.WaitForExit(30000);
+                        if (!psExited)
+                        {
+                            try { psProc.Kill(entireProcessTree: true); } catch { }
+                        }
+                        string psOut = psOutTask.GetAwaiter().GetResult();
+                        string psErr = psErrTask.GetAwaiter().GetResult();
 
-                        if (psProc.ExitCode == 0)
+                        if (psExited && psProc.ExitCode == 0)
                         {
                             result.Success = true;
                             result.Message = (LocalizationManager.CurrentLanguage == "ar")
