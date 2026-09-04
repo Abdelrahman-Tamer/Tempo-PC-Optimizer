@@ -15,6 +15,8 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Security;
+using System.ComponentModel;
 using Tempo.Services;
 using Tempo.Models;
 
@@ -97,6 +99,22 @@ namespace Tempo
 
     public partial class MainWindow : Window
     {
+        private static readonly object _errorLogLock = new();
+        private static void LogError(string context, Exception ex)
+        {
+            try
+            {
+                lock (_errorLogLock)
+                {
+                    string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
+                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                    string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [ERROR] [{context}] ({ex.GetType().Name}): {ex.Message}";
+                    File.AppendAllText(Path.Combine(dir, "error.log"), line + Environment.NewLine);
+                }
+            }
+            catch (Exception logEx) when (logEx is IOException or UnauthorizedAccessException or SecurityException) { }
+        }
+
         public readonly HardwareMonitorService _hardwareMonitor;
         public readonly CleanupService _cleanupService;
         private readonly DispatcherTimer _telemetryTimer;
@@ -206,7 +224,7 @@ namespace Tempo
                 }
                 else if (e.ChangedButton == MouseButton.Left)
                 {
-                    try { this.DragMove(); } catch { }
+                    try { this.DragMove(); } catch (InvalidOperationException) { }
                     SaveWindowPosition();
                 }
             };
@@ -275,7 +293,10 @@ namespace Tempo
                     if (ImgAboutLogo != null) ImgAboutLogo.Source = bmp;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogError("LoadAppIconAndLogos", ex);
+            }
         }
 
         #region Multi-Monitor Win32 P/Invoke & Work Area
@@ -335,7 +356,10 @@ namespace Tempo
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogError("GetCurrentMonitorWorkArea", ex);
+            }
 
             return (
                 SystemParameters.WorkArea.Left,
@@ -368,7 +392,10 @@ namespace Tempo
                 string json = JsonSerializer.Serialize(pos, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(GetPositionFilePath(), json);
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException or JsonException)
+            {
+                LogError("SaveWindowPosition", ex);
+            }
         }
 
         public void RestoreSavedDashboardPosition()
@@ -392,7 +419,10 @@ namespace Tempo
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException or JsonException)
+            {
+                LogError("RestoreSavedDashboardPosition", ex);
+            }
 
             PositionAtBottomRight();
         }
@@ -441,7 +471,7 @@ namespace Tempo
                 _trayIcon = null;
             }
 
-            try { _hardwareMonitor?.Dispose(); } catch { }
+            try { _hardwareMonitor?.Dispose(); } catch (Exception ex) when (ex is not OutOfMemoryException) { LogError("DisposeHardwareMonitor", ex); }
         }
 
         public void ExitApp()
@@ -651,8 +681,9 @@ namespace Tempo
                         _isFetching = false;
                     }, DispatcherPriority.Render);
                 }
-                catch
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
+                    LogError("TelemetryFetch", ex);
                     _isFetching = false;
                 }
             });
@@ -1005,10 +1036,11 @@ namespace Tempo
             {
                 Process.Start(new ProcessStartInfo("ms-settings:startupapps") { UseShellExecute = true });
             }
-            catch
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
             {
+                LogError("OpenStartupSettingsFallback", ex);
                 try { Process.Start(new ProcessStartInfo("taskmgr.exe") { UseShellExecute = true }); }
-                catch (Exception ex) { ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر فتح إعدادات بدء التشغيل: {ex.Message}" : $"Unable to open Startup Settings: {ex.Message}", true); }
+                catch (Exception ex2) when (ex2 is Win32Exception or InvalidOperationException) { ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر فتح إعدادات بدء التشغيل: {ex2.Message}" : $"Unable to open Startup Settings: {ex2.Message}", true); }
             }
         }
 
@@ -1357,7 +1389,10 @@ namespace Tempo
                     }
                     _toastTimer.Start();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogError("ShowToast", ex);
+            }
         }
 
         #endregion
@@ -1533,7 +1568,10 @@ namespace Tempo
                     ToolbarPulseScaleH.BeginAnimation(ScaleTransform.ScaleYProperty, dotAnim);
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogError("TriggerToolbarBoostMotions", ex);
+            }
         }
 
         private void TriggerToolbarCompletionMotions()
@@ -1550,7 +1588,10 @@ namespace Tempo
                 if (BarCpuTextH != null) BarCpuTextH.BeginAnimation(OpacityProperty, completionFade);
                 if (BarCpuTextV != null) BarCpuTextV.BeginAnimation(OpacityProperty, completionFade);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                LogError("TriggerToolbarCompletionMotions", ex);
+            }
         }
 
         public void BtnToolbarBoost_Click(object sender, RoutedEventArgs e)
@@ -1708,7 +1749,7 @@ namespace Tempo
                 RevealFromPeek();
                 this.Cursor = Cursors.SizeAll;
 
-                try { this.DragMove(); } catch { }
+                try { this.DragMove(); } catch (InvalidOperationException) { }
 
                 this.Cursor = Cursors.Arrow;
 
@@ -1824,7 +1865,10 @@ namespace Tempo
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException or JsonException)
+            {
+                LogError("LoadSettings", ex);
+            }
 
             _isToolbarEnabled = true;
             _toolbarDock = DockPosition.TopToolbar;
@@ -1842,7 +1886,10 @@ namespace Tempo
                 };
                 File.WriteAllText(GetSettingsFilePath(), JsonSerializer.Serialize(s));
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException or JsonException)
+            {
+                LogError("SaveSettings", ex);
+            }
         }
 
         #endregion
@@ -1859,9 +1906,9 @@ namespace Tempo
                     UpdateSettingsUiState(update, force);
                 });
             }
-            catch
+            catch (Exception ex)
             {
-                // Non-blocking update failure
+                LogError("CheckForUpdatesBackground", ex);
             }
         }
 
@@ -2220,8 +2267,9 @@ namespace Tempo
                         _isLoadingProcesses = false;
                     });
                 }
-                catch
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
+                    LogError("LoadProcessesAsync", ex);
                     _isLoadingProcesses = false;
                 }
             });
@@ -2360,7 +2408,10 @@ namespace Tempo
                     var (cpuPct, _, _) = _hardwareMonitor.GetCpuMetrics();
                     hardwareInfo = $"App: v{UpdateService.GetCurrentVersion()} | OS: {Environment.OSVersion.VersionString} ({(Environment.Is64BitOperatingSystem ? "64-bit" : "32-bit")}) | RAM: {usedGb:F1}GB/{totalGb:F1}GB ({pct:F0}%) | CPU: {cpuPct:F0}%";
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    LogError("FeedbackHardwareSpecs", ex);
+                }
             }
 
             if (BtnSubmitFeedback != null)
@@ -2408,7 +2459,10 @@ namespace Tempo
                             };
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is JsonException)
+                    {
+                        LogError("FeedbackResponseJson", ex);
+                    }
                 }
 
                 if (isSuccess)

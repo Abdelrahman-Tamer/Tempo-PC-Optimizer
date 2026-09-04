@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security;
 using Tempo.Models;
 
 namespace Tempo.Services
@@ -118,7 +120,7 @@ namespace Tempo.Services
 
                 return true;
             }
-            catch
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException or ArgumentException)
             {
                 return false;
             }
@@ -133,7 +135,10 @@ namespace Tempo.Services
                 if ((rootDir.Attributes & FileAttributes.ReparsePoint) != 0)
                     yield break;
             }
-            catch { yield break; }
+            catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+            {
+                yield break;
+            }
 
             var cutoff = DateTime.Now.AddHours(-24);
             var stack = new Stack<DirectoryInfo>();
@@ -147,14 +152,20 @@ namespace Tempo.Services
                     if ((currentDir.Attributes & FileAttributes.ReparsePoint) != 0)
                         continue;
                 }
-                catch { continue; }
+                catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                {
+                    continue;
+                }
 
                 FileInfo[] files;
                 try
                 {
                     files = currentDir.GetFiles();
                 }
-                catch { continue; }
+                catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                {
+                    continue;
+                }
 
                 foreach (var file in files)
                 {
@@ -169,7 +180,10 @@ namespace Tempo.Services
                                 continue;
                         }
                     }
-                    catch { continue; }
+                    catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                    {
+                        continue;
+                    }
 
                     yield return file;
                 }
@@ -179,7 +193,10 @@ namespace Tempo.Services
                 {
                     subDirs = currentDir.GetDirectories();
                 }
-                catch { continue; }
+                catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                {
+                    continue;
+                }
 
                 foreach (var sub in subDirs)
                 {
@@ -190,7 +207,9 @@ namespace Tempo.Services
                             stack.Push(sub);
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                    {
+                    }
                 }
             }
         }
@@ -211,10 +230,14 @@ namespace Tempo.Services
                             sub.Delete();
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                    {
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+            {
+            }
         }
 
         private static bool GlobalMemoryStatusEx(MEMORYSTATUSEX lpBuffer) => NativeMethods.GlobalMemoryStatusEx(lpBuffer);
@@ -322,7 +345,9 @@ namespace Tempo.Services
                     File.AppendAllText(_logFilePath, line + Environment.NewLine);
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
+            {
+            }
         }
 
         public CleanupResult OptimizeRamWorkingSets() => TurboRamBoost();
@@ -349,7 +374,10 @@ namespace Tempo.Services
                     GetWindowThreadProcessId(fgWnd, out foregroundPid);
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"[Warning] Failed to identify foreground window: {ex.Message}");
+            }
 
             Process[] processes = Array.Empty<Process>();
             try
@@ -372,7 +400,7 @@ namespace Tempo.Services
                         // Smart threshold: Only trim non-system processes using significant memory (> 40 MB)
                         // Capping at top 10 processes avoids hard page-fault storms and guarantees lightning fast completion (<150ms)
                         long workingSet = 0;
-                        try { workingSet = process.WorkingSet64; } catch { }
+                        try { workingSet = process.WorkingSet64; } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
                         if (workingSet < 40L * 1024 * 1024)
                         {
                             skippedCount++;
@@ -392,7 +420,7 @@ namespace Tempo.Services
                             skippedCount++;
                         }
                     }
-                    catch
+                    catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
                     {
                         skippedCount++;
                     }
@@ -402,7 +430,7 @@ namespace Tempo.Services
             {
                 foreach (var p in processes)
                 {
-                    try { p.Dispose(); } catch { }
+                    try { p.Dispose(); } catch (Exception ex) when (ex is not OutOfMemoryException) { }
                 }
             }
 
@@ -466,7 +494,7 @@ namespace Tempo.Services
                         totalFreedBytes += size;
                         deletedFiles++;
                     }
-                    catch
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
                     {
                         skippedFiles++;
                     }
@@ -506,7 +534,10 @@ namespace Tempo.Services
                     info.TotalSizeBytes = rb.i64Size;
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"[Warning] QueryRecycleBin failed: {ex.Message}");
+            }
             return info;
         }
 
@@ -612,7 +643,9 @@ namespace Tempo.Services
                         if (Directory.Exists(sc)) dirs.Add(sc);
                     }
                 }
-                catch { }
+                catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                {
+                }
             }
 
             return dirs;
@@ -636,7 +669,9 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+            {
+            }
         }
 
         public CleanupResult BrowserCacheFlush()
@@ -683,11 +718,15 @@ namespace Tempo.Services
                             freedBytes += size;
                             deletedFiles++;
                         }
-                        catch { }
+                        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                        {
+                        }
                     }
                     SafeDeleteEmptySubdirectories(dir);
                 }
-                catch { }
+                catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                {
+                }
             }
 
             result.ReclaimedBytes = freedBytes;
@@ -710,7 +749,9 @@ namespace Tempo.Services
                     foreach (var p in procs) p.Dispose();
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+            {
+            }
         }
 
         public CleanupResult DevCachesFlush()
@@ -743,11 +784,15 @@ namespace Tempo.Services
                             freedBytes += s;
                             deletedFiles++;
                         }
-                        catch { }
+                        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                        {
+                        }
                     }
                     SafeDeleteEmptySubdirectories(dir);
                 }
-                catch { }
+                catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                {
+                }
             }
 
             try
@@ -766,11 +811,13 @@ namespace Tempo.Services
                 {
                     if (!proc.WaitForExit(5000))
                     {
-                        try { proc.Kill(entireProcessTree: true); } catch { }
+                        try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+            {
+            }
 
             result.Success = true;
             result.ReclaimedBytes = freedBytes;
@@ -837,7 +884,7 @@ namespace Tempo.Services
                             bool exited = proc.WaitForExit(30000);
                             if (!exited)
                             {
-                                try { proc.Kill(entireProcessTree: true); } catch { }
+                                try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
                             }
                             string defragOut = outTask.GetAwaiter().GetResult();
                             string defragErr = errTask.GetAwaiter().GetResult();
@@ -874,7 +921,7 @@ namespace Tempo.Services
                         bool psExited = psProc.WaitForExit(30000);
                         if (!psExited)
                         {
-                            try { psProc.Kill(entireProcessTree: true); } catch { }
+                            try { psProc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
                         }
                         string psOut = psOutTask.GetAwaiter().GetResult();
                         string psErr = psErrTask.GetAwaiter().GetResult();
@@ -946,13 +993,19 @@ namespace Tempo.Services
                                 summary.TempBytes += fi.Length;
                                 summary.TempFiles++;
                             }
-                            catch { }
+                            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                            {
+                            }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                    {
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+            {
+            }
 
             // 2. Recycle Bin Scan
             try
@@ -961,7 +1014,10 @@ namespace Tempo.Services
                 summary.RecycleBinBytes = rb.TotalSizeBytes;
                 summary.RecycleBinItems = rb.ItemCount;
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"[Warning] Failed to scan Recycle Bin: {ex.Message}");
+            }
 
             // 3. Browser Cache Scan (using SafeEnumerateFiles without symlink traversal)
             try
@@ -982,13 +1038,19 @@ namespace Tempo.Services
                                 summary.BrowserCacheBytes += fi.Length;
                                 summary.BrowserCacheFiles++;
                             }
-                            catch { }
+                            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                            {
+                            }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                    {
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+            {
+            }
 
             // 4. Dev Cache Scan (using SafeEnumerateFiles without symlink traversal)
             try
@@ -1015,13 +1077,19 @@ namespace Tempo.Services
                                 summary.DevCacheBytes += fi.Length;
                                 summary.DevCacheFiles++;
                             }
-                            catch { }
+                            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                            {
+                            }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+                    {
+                    }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is DirectoryNotFoundException or PathTooLongException or IOException or UnauthorizedAccessException or SecurityException)
+            {
+            }
 
             return summary;
         }

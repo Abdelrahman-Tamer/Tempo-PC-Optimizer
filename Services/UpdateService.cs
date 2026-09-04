@@ -45,7 +45,7 @@ namespace Tempo.Services
                     return new Version(ver.Major, ver.Minor, Math.Max(0, ver.Build));
                 }
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
             }
             return new Version(2, 2, 4);
@@ -150,7 +150,7 @@ namespace Tempo.Services
                     PublishedAt = publishedAt
                 };
             }
-            catch
+            catch (Exception ex) when (ex is HttpRequestException or JsonException or TaskCanceledException or IOException)
             {
                 return null;
             }
@@ -231,15 +231,15 @@ namespace Tempo.Services
                 // Security Gate 5: Strict SHA256 verification
                 if (!VerifySha256(targetFile, expectedSha256))
                 {
-                    try { if (File.Exists(targetFile)) File.Delete(targetFile); } catch { }
+                    try { if (File.Exists(targetFile)) File.Delete(targetFile); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
                     throw new InvalidDataException("SHA256 checksum verification failed. The downloaded file might be corrupted or tampered with.");
                 }
 
                 return targetFile;
             }
-            catch
+            catch (Exception)
             {
-                try { if (File.Exists(targetFile)) File.Delete(targetFile); } catch { }
+                try { if (File.Exists(targetFile)) File.Delete(targetFile); } catch (Exception delEx) when (delEx is IOException or UnauthorizedAccessException) { }
                 throw;
             }
         }
@@ -259,7 +259,7 @@ namespace Tempo.Services
 
                 return CryptographicOperations.FixedTimeEquals(hashBytes, expectedBytes);
             }
-            catch
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException)
             {
                 return false;
             }
@@ -290,7 +290,7 @@ namespace Tempo.Services
                 // Error 1223: The operation was canceled by the user (UAC prompt denied)
                 return UpdateInstallStatus.UserCancelledUac;
             }
-            catch
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
             {
                 return UpdateInstallStatus.Failed;
             }
