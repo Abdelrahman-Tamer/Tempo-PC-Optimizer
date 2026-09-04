@@ -24,7 +24,6 @@ using Tempo.Models;
 using TrayNotifyIcon = System.Windows.Forms.NotifyIcon;
 using TrayContextMenuStrip = System.Windows.Forms.ContextMenuStrip;
 using TrayToolStripSeparator = System.Windows.Forms.ToolStripSeparator;
-using TrayToolTipIcon = System.Windows.Forms.ToolTipIcon;
 using TrayMouseButtons = System.Windows.Forms.MouseButtons;
 
 namespace Tempo
@@ -100,6 +99,7 @@ namespace Tempo
     public partial class MainWindow : Window
     {
         private static readonly object _errorLogLock = new();
+        private const long MaxLogSizeBytes = 5 * 1024 * 1024; // 5 MB rotation threshold
         private static void LogError(string context, Exception ex)
         {
             try
@@ -108,8 +108,17 @@ namespace Tempo
                 {
                     string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
                     if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                    string logFile = Path.Combine(dir, "error.log");
+
+                    var fi = new FileInfo(logFile);
+                    if (fi.Exists && fi.Length > MaxLogSizeBytes)
+                    {
+                        string oldLog = logFile + ".old";
+                        File.Move(logFile, oldLog, overwrite: true);
+                    }
+
                     string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [ERROR] [{context}] ({ex.GetType().Name}): {ex.Message}";
-                    File.AppendAllText(Path.Combine(dir, "error.log"), line + Environment.NewLine);
+                    File.AppendAllText(logFile, line + Environment.NewLine);
                 }
             }
             catch (Exception logEx) when (logEx is IOException or UnauthorizedAccessException or SecurityException) { }
@@ -197,8 +206,6 @@ namespace Tempo
                     FetchTelemetryAsync();
                 }
             };
-
-// Post-startup settleTimer removed to eliminate page-fault degradation
 
             // 2. Auto-Hide Timer for Companion Toolbar (2.5s idle)
             _autoHideTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
@@ -1145,7 +1152,7 @@ namespace Tempo
 
             Task.Run(async () =>
             {
-                var ramRes = _cleanupService.OptimizeRamWorkingSets();
+                var ramRes = _cleanupService.TurboRamBoost();
                 var tempRes = _cleanupService.QuickCleanTemp();
 
                 // Allow 350ms for Windows Memory Manager and filesystem to stabilize
@@ -1604,7 +1611,7 @@ namespace Tempo
 
             Task.Run(async () =>
             {
-                var ramRes = _cleanupService.OptimizeRamWorkingSets();
+                var ramRes = _cleanupService.TurboRamBoost();
                 var tempRes = _cleanupService.QuickCleanTemp();
 
                 // Allow 350ms for Windows Memory Manager and filesystem to stabilize
@@ -1798,7 +1805,7 @@ namespace Tempo
             });
             menu.Items.Add(new TrayToolStripSeparator());
             menu.Items.Add(isAr ? "تحسين الذاكرة الخاملة (Optimize RAM)" : "Optimize RAM Now", null, (s, e) => {
-                var res = _cleanupService.OptimizeRamWorkingSets();
+                var res = _cleanupService.TurboRamBoost();
                 _cleanupService.QuickCleanTemp();
                 ShowToast(res.Message, false);
             });
@@ -2139,6 +2146,8 @@ namespace Tempo
             }
         }
 
+        #endregion
+
         #region Localization & Dynamic Language Switching
 
         private void BtnLangEnglish_Click(object sender, RoutedEventArgs e)
@@ -2233,6 +2242,8 @@ namespace Tempo
                 LoadRunningProcessesFast();
             }
         }
+
+        #endregion
 
         #region Running Processes & RAM Manager
 
@@ -2483,9 +2494,9 @@ namespace Tempo
                     ShowToast(fail, true);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                Debug.WriteLine($"Feedback submission error: {ex.Message}");
+                LogError("SubmitFeedback", ex);
                 string fail = LocalizationManager.GetString(
                     "FeedbackSentError",
                     isAr ? "تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت." : "Could not send feedback directly. Please check your internet connection.");
@@ -2500,10 +2511,6 @@ namespace Tempo
                 }
             }
         }
-
-        #endregion
-
-        #endregion
 
         #endregion
     }

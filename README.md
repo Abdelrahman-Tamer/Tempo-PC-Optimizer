@@ -10,7 +10,7 @@
   <br />
 
   [![Release](https://img.shields.io/badge/Release-v2.2.4%20(Stable)-2563EB.svg?style=for-the-badge&logo=windows)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest)
-  [![Tests](https://img.shields.io/badge/Tests-70%2F70%20Passed-10B981.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
+  [![Tests](https://img.shields.io/badge/Tests-23%2F23%20Passed-10B981.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
   [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20x64-6366F1.svg?style=for-the-badge)](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer)
   [![Framework](https://img.shields.io/badge/Framework-.NET%2010.0%20WPF-9333EA.svg?style=for-the-badge)](https://dotnet.microsoft.com/)
   [![License](https://img.shields.io/badge/License-MIT-gray.svg?style=for-the-badge)](LICENSE)
@@ -128,6 +128,18 @@ dotnet build -c Release
 # Publish lean win-x64 binary
 dotnet publish Tempo.csproj -c Release -r win-x64 --self-contained false -o publish_tempo
 ```
+
+---
+
+## 📝 Diagnostic Logs & Troubleshooting / سجلات التشخيص
+
+Tempo maintains structured, rotated diagnostic logs under `%AppData%\Tempo\` (capped at 5 MB each with automatic `.old` rotation):
+
+| Log File | Component | Description |
+| :--- | :--- | :--- |
+| `%AppData%\Tempo\error.log` | **App & UI Lifecycle** | Captures unhandled UI exceptions, domain errors, window positioning and feedback submission errors. |
+| `%AppData%\Tempo\hardware.log` | **Hardware & Telemetry** | Logs LibreHardwareMonitor sensor states, CPU/GPU query notices, WMI lookups, and startup registry events. |
+| `%AppData%\Tempo\logs\app.log` | **Cleanup & Optimization** | Detailed audit of temp cleaning runs, process working-set trims, and filesystem operation metrics. |
 
 ---
 
