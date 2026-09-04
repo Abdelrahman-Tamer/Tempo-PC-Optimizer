@@ -1030,7 +1030,7 @@
                                                                     </StackPanel>
                                                                     <TextBlock Text="{Binding SpaceSummary}" Foreground="{StaticResource TextSecondary}" FontSize="10" Margin="0,3,0,0"/>
                                                                 </StackPanel>
-                                                                <Button Grid.Column="1" Style="{StaticResource ActionBtnStencil}" Content="{Binding ActionButtonText}" Visibility="{Binding TrimVisibility}" Click="BtnSsdTrim_Click" VerticalAlignment="Center"/>
+                                                                <Button Grid.Column="1" Style="{StaticResource ActionBtnStencil}" Content="{Binding ActionButtonText}" Visibility="{Binding TrimVisibility}" IsEnabled="{Binding IsTrimEnabled}" ToolTip="{Binding ActionButtonTooltip}" Click="BtnSsdTrim_Click" VerticalAlignment="Center"/>
                                                             </Grid>
                                                             <!-- Storage Usage Progress Bar -->
                                                             <ProgressBar Grid.Row="1" Height="4" Minimum="0" Maximum="100" Value="{Binding UsedPercent}" FlowDirection="LeftToRight" Background="#1C2433" Foreground="{Binding ProgressBrush}" BorderThickness="0" Margin="0,6,0,0"/>

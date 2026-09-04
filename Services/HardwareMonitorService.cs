@@ -27,8 +27,9 @@ namespace Tempo.Services
         public double FreeGb { get; set; }
         public double UsedGb { get; set; }
         public double UsedPercent { get; set; }
-        public string MediaType { get; set; } = "SSD"; // SSD, HDD, or Storage
+        public string MediaType { get; set; } = "Unknown"; // SSD, HDD, or Unknown
         public bool IsSsd => MediaType.Equals("SSD", StringComparison.OrdinalIgnoreCase);
+        public bool IsUnknown => MediaType.Equals("Unknown", StringComparison.OrdinalIgnoreCase);
     }
 
     public enum StartupImpactLevel
@@ -668,7 +669,7 @@ namespace Tempo.Services
                     double percent = total > 0 ? Math.Round((used / total) * 100, 1) : 0;
 
                     string driveLetter = drive.Name.TrimEnd('\\').TrimEnd(':').ToUpperInvariant();
-                    string mediaType = "SSD";
+                    string mediaType = "Unknown";
                     if (_cachedDiskMediaMap.TryGetValue(driveLetter, out string? mt) && !string.IsNullOrEmpty(mt))
                     {
                         mediaType = mt;
