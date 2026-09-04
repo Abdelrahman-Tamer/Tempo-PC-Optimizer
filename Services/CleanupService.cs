@@ -600,7 +600,7 @@ namespace Tempo.Services
                     Log($"Recycle bin empty failed. HRESULT=0x{hr:X8}", "ERROR");
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 result.Success = false;
                 result.Message = (LocalizationManager.CurrentLanguage == "ar")
@@ -849,7 +849,7 @@ namespace Tempo.Services
                     return result;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 result.Success = false;
                 result.Message = ex.Message;
@@ -952,7 +952,7 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 result.Success = false;
                 result.Message = (LocalizationManager.CurrentLanguage == "ar")

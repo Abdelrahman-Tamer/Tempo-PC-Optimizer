@@ -1945,7 +1945,10 @@
       sender: sender || "Anonymous Visitor",
       message: msg,
       diagnostics: specsInfo,
-      _captcha: "false",
+      /* Web form enables captcha to prevent automated spam.
+         Desktop app (MainWindow.xaml.cs) keeps _captcha: "false"
+         because submissions require the installed app — no bot risk. */
+      _captcha: "true",
       _template: "table"
     };
 
