@@ -131,6 +131,40 @@ dotnet publish Tempo.csproj -c Release -r win-x64 --self-contained false -o publ
 
 ---
 
+## 🛡️ Security & Anti-Virus Compatibility
+
+> Tempo is open-source, runs as standard user (`asInvoker`), collects **no telemetry or PII**, and never phones home. Some anti-virus engines may flag certain Windows APIs used for legitimate system optimisation. This section documents each sensitive API and the safeguards applied.
+>
+> Tempo مفتوح المصدر ويعمل بصلاحيات المستخدم العادي. لا يجمع بيانات شخصية ولا يرسل أي معلومات تلقائياً. بعض محركات مكافحة الفيروسات قد تنبه على واجهات Windows المستخدمة في التحسين المشروع — التفاصيل أدناه.
+
+### APIs & Safeguards
+
+| API / Behaviour | Purpose | Safeguards |
+| :--- | :--- | :--- |
+| `EmptyWorkingSet` (psapi.dll) | Flushes inactive process working sets to free physical RAM | 31+ Windows system processes excluded (svchost, csrss, lsass, dwm …), foreground window skipped, >40 MB threshold, max 10 processes per cycle |
+| `-EncodedCommand` (PowerShell) | Passes scripts to PowerShell as Base64 UTF-16LE | **Injection hardening, not evasion** — all dynamic inputs (registry paths, app names, byte arrays) are individually Base64-encoded before interpolation to prevent shell injection |
+| `HKCU\…\Run` write | "Start with Windows" checkbox | User-initiated only, HKCU scope (no admin), deleted on uncheck |
+| `HKLM\StartupApproved` toggle | Enable/disable existing startup apps | Task Manager feature parity — toggles existing entries only, never creates new ones; system-managed entries (0x06) rejected; HKLM write requires UAC consent |
+| `Process.Kill()` | Timeout watchdogs + user-initiated end-task | Child-process-only for cleanup timeouts (5–30 s); user end-task guarded by 31+ protected process names |
+| Update installer launch (`runas`) | Applies downloaded update | 5-gate chain: HTTPS-only → `.exe`-only → mandatory SHA256 from GitHub release → random temp filename → post-download `CryptographicOperations.FixedTimeEquals` verify |
+| `AllowUnsafeBlocks` | `GlobalMemoryStatusEx` interop (kernel32.dll) | Single 31-line struct file (`Models/NativeInterop.cs`); no manual buffer manipulation |
+
+### Code Signing Status
+
+> **⚠️ Current builds are unsigned.** Windows SmartScreen may display a "Windows protected your PC" warning on first run. This is expected for open-source software without an Extended Validation (EV) code-signing certificate. See [`docs/SIGNING.md`](docs/SIGNING.md) for the signing roadmap.
+
+### VirusTotal
+
+After each release, a VirusTotal scan link will be published in the [GitHub Release notes](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest).
+
+### Privacy
+
+- **No telemetry, no analytics, no tracking.**
+- **No automatic data collection** — the optional feedback form is the only outbound request and requires explicit user action.
+- Hardware diagnostic data (CPU %, RAM %) is attached to feedback **only** when the user opts in via a visible checkbox.
+
+---
+
 ## 📝 Diagnostic Logs & Troubleshooting / سجلات التشخيص
 
 Tempo maintains structured, rotated diagnostic logs under `%AppData%\Tempo\` (capped at 5 MB each with automatic `.old` rotation):
