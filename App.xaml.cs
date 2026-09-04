@@ -1,4 +1,6 @@
 using System;
+using System.ComponentModel;
+using System.Security;
 using System.Security.Principal;
 using System.Windows;
 
@@ -24,7 +26,10 @@ namespace Tempo
                     if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
                     System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "error.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UI Exception ({ex.GetType().Name}): {ex.Message}\n{ex.StackTrace}\n\n");
                 }
-                catch { }
+                catch (Exception logEx) when (logEx is System.IO.IOException or UnauthorizedAccessException or SecurityException)
+                {
+                    // Defensive fallback: error logging itself failed, swallow silently to avoid crash loop
+                }
                 args.Handled = true;
             };
 
@@ -36,7 +41,10 @@ namespace Tempo
                     if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
                     System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "error.log"), $"[{DateTime.Now}] Domain Exception: {args.ExceptionObject}\n");
                 }
-                catch { }
+                catch (Exception logEx) when (logEx is System.IO.IOException or UnauthorizedAccessException or SecurityException)
+                {
+                    // Defensive fallback: logging failure swallowed silently
+                }
             };
 
             base.OnStartup(e);
@@ -52,7 +60,7 @@ namespace Tempo
                 var principal = new WindowsPrincipal(identity);
                 return principal.IsInRole(WindowsBuiltInRole.Administrator);
             }
-            catch
+            catch (Exception ex) when (ex is SecurityException or Win32Exception or UnauthorizedAccessException)
             {
                 return false;
             }

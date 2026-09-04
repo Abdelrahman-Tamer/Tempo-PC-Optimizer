@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Security;
 using System.Threading.Tasks;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
@@ -249,6 +251,37 @@ namespace Tempo.Services
         private long _lastNetSentBytes = -1;
         private DateTime _lastNetTime = DateTime.MinValue;
         private readonly object _netLock = new();
+        private static readonly object _logLock = new();
+        private const long MaxLogSizeBytes = 5 * 1024 * 1024; // 5 MB rotation threshold
+        private static readonly string _logFilePath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Tempo",
+            "hardware.log");
+
+        public static void Log(string message, string level = "INFO")
+        {
+            try
+            {
+                lock (_logLock)
+                {
+                    string dir = Path.GetDirectoryName(_logFilePath)!;
+                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+
+                    var fi = new FileInfo(_logFilePath);
+                    if (fi.Exists && fi.Length > MaxLogSizeBytes)
+                    {
+                        string oldLog = _logFilePath + ".old";
+                        File.Move(_logFilePath, oldLog, overwrite: true);
+                    }
+
+                    string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] {message}";
+                    File.AppendAllText(_logFilePath, line + Environment.NewLine);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException)
+            {
+            }
+        }
 
         private static bool GlobalMemoryStatusEx(MEMORYSTATUSEX lpBuffer) => NativeMethods.GlobalMemoryStatusEx(lpBuffer);
 
@@ -317,7 +350,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"GetBaseCpuClockMhz failed: {ex.Message}", "DEBUG");
+            }
 
             _detectedCpuBaseClockMhz = 2600f;
             return _detectedCpuBaseClockMhz;
@@ -344,7 +380,10 @@ namespace Tempo.Services
                             _lastCpuSampleTime = now;
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        Log($"GetCpuMetrics counter sample failed: {ex.Message}", "DEBUG");
+                    }
                 }
             }
 
@@ -388,7 +427,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"GetCpuMetrics hardware sensor traversal failed: {ex.Message}", "DEBUG");
+            }
 
             return (cpuPercent, cpuTemp, cpuClockMhz / 1000f);
         }
@@ -469,7 +511,10 @@ namespace Tempo.Services
                         return (targetGpu.Name, temp, load, vramUsed, vramTotal);
                     }
                 }
-                catch { }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Log($"GetGpuMetrics sensor update failed: {ex.Message}", "DEBUG");
+                }
             }
 
             try
@@ -484,7 +529,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"GetGpuMetrics WMI query failed: {ex.Message}", "DEBUG");
+            }
 
             string unavailable = (LocalizationManager.CurrentLanguage == "ar") ? "غير متاح" : "Unavailable";
             return (unavailable, null, null, 0, 0);
@@ -510,7 +558,10 @@ namespace Tempo.Services
                             currentRecv += stats.BytesReceived;
                             currentSent += stats.BytesSent;
                         }
-                        catch { }
+                        catch (Exception ex) when (ex is not OutOfMemoryException)
+                        {
+                            Log($"Network interface stats query failed: {ex.Message}", "DEBUG");
+                        }
                     }
                 }
 
@@ -542,8 +593,9 @@ namespace Tempo.Services
 
                 return (downKb, upKb, downStr, upStr);
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
+                Log($"GetNetworkMetrics failed: {ex.Message}", "DEBUG");
                 return (0, 0, "0.0 KB/s", "0.0 KB/s");
             }
         }
@@ -595,7 +647,10 @@ namespace Tempo.Services
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        Log($"Disk media mapping failed: {ex.Message}", "DEBUG");
+                    }
                     finally
                     {
                         _diskMediaMapInitialized = true;
@@ -633,7 +688,10 @@ namespace Tempo.Services
                         MediaType = mediaType
                     });
                 }
-                catch { }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Log($"DriveInfo query skipped for drive: {ex.Message}", "DEBUG");
+                }
             }
 
             return list;
@@ -652,7 +710,7 @@ namespace Tempo.Services
                         {
                             return new { Name = p.ProcessName, WorkingSetMb = p.WorkingSet64 / (1024.0 * 1024.0) };
                         }
-                        catch
+                        catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
                         {
                             return new { Name = "", WorkingSetMb = 0.0 };
                         }
@@ -664,15 +722,16 @@ namespace Tempo.Services
                     .Take(5)
                     .ToArray();
             }
-            catch
+            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
             {
+                Log($"GetTop5RamProcesses query failed: {ex.Message}", "DEBUG");
                 return Array.Empty<(string, double)>();
             }
             finally
             {
                 foreach (var p in processes)
                 {
-                    try { p.Dispose(); } catch { }
+                    try { p.Dispose(); } catch (Exception ex) when (ex is not OutOfMemoryException) { }
                 }
             }
         }
@@ -761,7 +820,10 @@ namespace Tempo.Services
                         if (!string.IsNullOrWhiteSpace(vi.FileDescription))
                             appName = vi.FileDescription;
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        Log($"IdentifyApplication version info read failed for {path}: {ex.Message}", "DEBUG");
+                    }
                 }
                 return (pName, appName);
             }
@@ -787,7 +849,10 @@ namespace Tempo.Services
                         if (!string.IsNullOrWhiteSpace(vi.FileDescription))
                             appName = vi.FileDescription;
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        Log($"IdentifyApplication program files version info read failed for {path}: {ex.Message}", "DEBUG");
+                    }
                     return (pName, appName);
                 }
             }
@@ -804,7 +869,7 @@ namespace Tempo.Services
             {
                 return p.MainModule?.FileName;
             }
-            catch
+            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
             {
                 return null;
             }
@@ -832,7 +897,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"GetCachedProcessMetadata failed for {processName}: {ex.Message}", "DEBUG");
+            }
 
             var meta = (icon, displayName);
             ProcessMetaCache[processName] = meta;
@@ -853,7 +921,10 @@ namespace Tempo.Services
                 using var currentProc = Process.GetCurrentProcess();
                 currentSessionId = currentProc.SessionId;
             }
-            catch { }
+            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+            {
+                Log($"Failed to retrieve current session ID: {ex.Message}", "DEBUG");
+            }
 
             Process[] processes = Array.Empty<Process>();
             try
@@ -901,7 +972,7 @@ namespace Tempo.Services
 
                         appMap[appKey] = appData;
                     }
-                    catch { }
+                    catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
                 }
 
                 var result = new List<RunningProcessItem>();
@@ -937,15 +1008,16 @@ namespace Tempo.Services
 
                 return result.OrderByDescending(x => x.RamMb).ToList();
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
+                Log($"GetAllRunningProcesses failed: {ex.Message}", "DEBUG");
                 return new List<RunningProcessItem>();
             }
             finally
             {
                 foreach (var p in processes)
                 {
-                    try { p.Dispose(); } catch { }
+                    try { p.Dispose(); } catch (Exception ex) when (ex is not OutOfMemoryException) { }
                 }
             }
         }
@@ -977,21 +1049,27 @@ namespace Tempo.Services
                         try
                         {
                             long memBefore = 0;
-                            try { memBefore = p.WorkingSet64; } catch { }
+                            try { memBefore = p.WorkingSet64; } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
                             p.Kill();
                             p.WaitForExit(1000);
                             freedMb += memBefore / (1024.0 * 1024.0);
                             killedCount++;
                         }
-                        catch { }
+                        catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+                        {
+                            Log($"Failed to kill process {processName}: {ex.Message}", "WARN");
+                        }
                     }
                 }
-                catch { }
+                catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+                {
+                    Log($"Failed to get processes for {processName}: {ex.Message}", "WARN");
+                }
                 finally
                 {
                     foreach (var p in procs)
                     {
-                        try { p.Dispose(); } catch { }
+                        try { p.Dispose(); } catch (Exception ex) when (ex is not OutOfMemoryException) { }
                     }
                 }
             }
@@ -1038,7 +1116,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"ExtractIconFromCommand failed for '{command}': {ex.Message}", "DEBUG");
+            }
             return null;
         }
 
@@ -1098,7 +1179,10 @@ namespace Tempo.Services
                         return (enLmFolder, sysLmFolder);
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+            {
+                Log($"IsAppEnabledInWindows registry check failed for {appName}: {ex.Message}", "WARN");
+            }
 
             // Default in Windows: if no StartupApproved entry exists, it is enabled by default
             return (true, false);
@@ -1126,7 +1210,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+            {
+                Log($"CheckApprovedKey failed for {appName} at {subPath}: {ex.Message}", "DEBUG");
+            }
             return false;
         }
 
@@ -1161,7 +1248,10 @@ namespace Tempo.Services
                             exePath = Environment.ExpandEnvironmentVariables(exePath);
                             pathExists = !string.IsNullOrEmpty(exePath) && File.Exists(exePath);
                         }
-                        catch { }
+                        catch (Exception ex) when (ex is not OutOfMemoryException)
+                        {
+                            Log($"GetStartupApps path parse failed for '{cmd}': {ex.Message}", "DEBUG");
+                        }
 
                         // 100% Authoritative Windows Startup Status Check
                         var (isEnabledInWindows, isSystemManaged) = IsAppEnabledInWindows(valueName, isUserScope);
@@ -1182,7 +1272,10 @@ namespace Tempo.Services
                         });
                     }
                 }
-                catch { }
+                catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+                {
+                    Log($"GetStartupApps ReadKey failed for {loc}: {ex.Message}", "WARN");
+                }
             }
 
             ReadKey(RegistryHive.CurrentUser, RegistryView.Default, "HKCU", true);
@@ -1251,7 +1344,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+            {
+                Log($"ToggleStartupApp failed for {app.Name}: {ex.Message}", "ERROR");
+            }
             return false;
         }
 
@@ -1301,7 +1397,10 @@ namespace Tempo.Services
                     return proc.ExitCode == 0;
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
+            {
+                Log($"WriteHklmStartupApprovedElevated failed for {appName}: {ex.Message}", "ERROR");
+            }
             return false;
         }
 
@@ -1329,7 +1428,10 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch { }
+            catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+            {
+                Log($"GetBootPerformanceInfo registry read failed: {ex.Message}", "DEBUG");
+            }
 
             if (info.BiosTimeSeconds <= 0)
             {
@@ -1395,7 +1497,11 @@ namespace Tempo.Services
                 using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", false);
                 return key?.GetValue("Tempo") != null;
             }
-            catch { return false; }
+            catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+            {
+                Log($"IsRunAtStartupEnabled failed: {ex.Message}", "WARN");
+                return false;
+            }
         }
 
         public static bool SetRunAtStartup(bool enable)
@@ -1420,7 +1526,11 @@ namespace Tempo.Services
                 }
                 return true;
             }
-            catch { return false; }
+            catch (Exception ex) when (ex is SecurityException or UnauthorizedAccessException or IOException)
+            {
+                Log($"SetRunAtStartup({enable}) failed: {ex.Message}", "WARN");
+                return false;
+            }
         }
 
         public (string displayName, bool isActive) GetWindowsSecurityStatus()
@@ -1451,20 +1561,22 @@ namespace Tempo.Services
 
                 return (items[0].name, false);
             }
-            catch (ManagementException)
+            catch (ManagementException mex)
             {
+                Log($"GetWindowsSecurityStatus ManagementException: {mex.Message}", "DEBUG");
                 // SecurityCenter2 unavailable (e.g. Server OS, permission denied)
                 return (LocalizationManager.CurrentLanguage == "ar" ? "Security Center غير متاح" : "Security Center Unavailable", false);
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
+                Log($"GetWindowsSecurityStatus query failed: {ex.Message}", "WARN");
                 return (LocalizationManager.CurrentLanguage == "ar" ? "حالة الحماية: غير معروفة" : "Protection Status: Unknown", false);
             }
         }
 
         public void Dispose()
         {
-            try { _cpuCounter?.Dispose(); } catch { }
+            try { _cpuCounter?.Dispose(); } catch (Exception ex) when (ex is not OutOfMemoryException) { }
             if (_isComputerOpen && _computer != null)
             {
                 try
@@ -1472,7 +1584,10 @@ namespace Tempo.Services
                     _computer.Close();
                     _isComputerOpen = false;
                 }
-                catch { }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Log($"_computer.Close() during Dispose failed: {ex.Message}", "DEBUG");
+                }
             }
         }
     }

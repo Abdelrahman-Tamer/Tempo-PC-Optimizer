@@ -45,7 +45,7 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 // Fallback gracefully
             }
@@ -66,7 +66,7 @@ namespace Tempo.Services
                     return s;
                 }
             }
-            catch
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
             }
             return fallback;

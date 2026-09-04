@@ -36,7 +36,7 @@ namespace Tempo.Models
                     return JsonSerializer.Deserialize<UpdateSettings>(json) ?? new UpdateSettings();
                 }
             }
-            catch
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
             {
                 // Fallback to defaults on corrupt settings
             }
@@ -54,7 +54,7 @@ namespace Tempo.Models
                 string json = JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(SettingsFilePath, json);
             }
-            catch
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 // Non-critical write failure
             }
