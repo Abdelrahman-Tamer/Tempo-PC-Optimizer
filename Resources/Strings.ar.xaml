@@ -179,4 +179,9 @@
     <system:String x:Key="BtnSendFeedback">إرسال الملاحظة</system:String>
     <system:String x:Key="FeedbackEmptyWarning">يرجى كتابة نص الملاحظة أولاً قبل الإرسال.</system:String>
     <system:String x:Key="FeedbackSuccessToast">شكراً لمشاركتك! جاري فتح برنامج البريد الإلكتروني لإرسال الملاحظة...</system:String>
+    <system:String x:Key="FeedbackSentSuccess">شكراً لك! تم إرسال ملاحظتك بنجاح وبشكل فوري.</system:String>
+    <system:String x:Key="FeedbackSentError">تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت.</system:String>
+    <system:String x:Key="TxtTempDetailsCleaned">تم تنظيف الملفات المؤقتة</system:String>
+    <system:String x:Key="TxtBrowserDetailsCleaned">تم تنظيف كاش المتصفح</system:String>
+    <system:String x:Key="TxtDevDetailsCleaned">تم تنظيف كاش المطورين</system:String>
 </ResourceDictionary>

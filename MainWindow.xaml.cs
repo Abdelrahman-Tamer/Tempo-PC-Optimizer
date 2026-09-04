@@ -131,11 +131,11 @@ namespace Tempo
             _hardwareMonitor = new HardwareMonitorService();
             _cleanupService = new CleanupService();
 
-            this.Closed += (s, e) => { try { _hardwareMonitor?.Dispose(); } catch { } };
+            this.Closed += Window_Closed;
 
             LoadSettings();
             LocalizationManager.Initialize(_selectedLanguage);
-            LocalizationManager.LanguageChanged += lang => ApplyLanguageUi(lang);
+            LocalizationManager.LanguageChanged += OnLanguageChanged;
             InitSystemTray();
 
             // 1. Hardware Telemetry Polling (1.5s interval, fully paused when minimized)
@@ -424,10 +424,15 @@ namespace Tempo
             ExitApp();
         }
 
-        public void ExitApp()
+        private void OnLanguageChanged(string lang) => ApplyLanguageUi(lang);
+
+        private void Window_Closed(object? sender, EventArgs e)
         {
-            // Immediate visual vanishing (<1ms)
-            this.Hide();
+            LocalizationManager.LanguageChanged -= OnLanguageChanged;
+            _telemetryTimer?.Stop();
+            _processesRefreshTimer?.Stop();
+            _autoHideTimer?.Stop();
+            _toastTimer?.Stop();
 
             if (_trayIcon != null)
             {
@@ -436,14 +441,18 @@ namespace Tempo
                 _trayIcon = null;
             }
 
-            _telemetryTimer?.Stop();
-            _autoHideTimer?.Stop();
-            _processesRefreshTimer?.Stop();
-
             try { _hardwareMonitor?.Dispose(); } catch { }
+        }
 
-            // Instant clean process exit
-            Environment.Exit(0);
+        public void ExitApp()
+        {
+            // Immediate visual vanishing (<1ms)
+            this.Hide();
+
+            Window_Closed(this, EventArgs.Empty);
+
+            // Graceful WPF Application Shutdown (DEF-17)
+            System.Windows.Application.Current.Shutdown();
         }
 
         #endregion
@@ -463,6 +472,7 @@ namespace Tempo
             CompanionBarVertical.Visibility = Visibility.Collapsed;
             MainDashboardView.Visibility = Visibility.Visible;
             this.ShowInTaskbar = true;
+            this.Topmost = false;
             this.Opacity = 1.0;
             this.Width = DashboardWidth;
             this.Height = DashboardHeight;
@@ -495,6 +505,7 @@ namespace Tempo
             _currentView = AppViewMode.Toolbar;
             MainDashboardView.Visibility = Visibility.Collapsed;
             this.ShowInTaskbar = false;
+            this.Topmost = true;
             this.Opacity = 1.0;
 
             var wa = GetCurrentMonitorWorkArea();
@@ -1162,18 +1173,32 @@ namespace Tempo
             });
         }
 
-        private void BtnQuickClean_Click(object sender, RoutedEventArgs e)
+        private async void BtnQuickClean_Click(object sender, RoutedEventArgs e)
         {
-            var res = _cleanupService.QuickCleanTemp();
-            ShowToast(res.Message, false);
-            LoadRecycleBinInfo();
-            TxtRecTempSize.Text = "0 MB";
-            TxtTempDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف الملفات المؤقتة" : "Temporary files cleaned";
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+            try
+            {
+                var res = await Task.Run(() => _cleanupService.QuickCleanTemp());
+                ShowToast(res.Message, false);
+                LoadRecycleBinInfo();
+                if (TxtRecTempSize != null) TxtRecTempSize.Text = "0 MB";
+                if (TxtTempDetails != null)
+                {
+                    TxtTempDetails.Text = LocalizationManager.GetString(
+                        "TxtTempDetailsCleaned",
+                        LocalizationManager.CurrentLanguage == "ar" ? "تم تنظيف الملفات المؤقتة" : "Temporary files cleaned");
+                }
+            }
+            finally
+            {
+                if (btn != null) btn.IsEnabled = true;
+            }
         }
 
-        private void BtnEmptyRecycleBin_Click(object sender, RoutedEventArgs e)
+        private async void BtnEmptyRecycleBin_Click(object sender, RoutedEventArgs e)
         {
-            var before = _cleanupService.QueryRecycleBin();
+            var before = await Task.Run(() => _cleanupService.QueryRecycleBin());
             if (before.ItemCount == 0)
             {
                 ShowToast((LocalizationManager.CurrentLanguage == "ar") ? "سلة المحذوفات فارغة بالفعل (0 عنصر)." : "Recycle Bin is already empty (0 items).", false);
@@ -1194,19 +1219,42 @@ namespace Tempo
 
             if (confirm != MessageBoxResult.OK) return;
 
-            var res = _cleanupService.EmptyRecycleBin();
-            ShowToast(res.Message, !res.Success);
-            LoadRecycleBinInfo();
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+            try
+            {
+                var res = await Task.Run(() => _cleanupService.EmptyRecycleBin());
+                ShowToast(res.Message, !res.Success);
+                LoadRecycleBinInfo();
+            }
+            finally
+            {
+                if (btn != null) btn.IsEnabled = true;
+            }
         }
 
-        private void BtnBrowserClean_Click(object sender, RoutedEventArgs e)
+        private async void BtnBrowserClean_Click(object sender, RoutedEventArgs e)
         {
-            var res = _cleanupService.BrowserCacheFlush();
-            ShowToast(res.Message, !res.Success);
-            TxtBrowserDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش المتصفح" : "Browser cache cleaned";
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+            try
+            {
+                var res = await Task.Run(() => _cleanupService.BrowserCacheFlush());
+                ShowToast(res.Message, !res.Success);
+                if (TxtBrowserDetails != null)
+                {
+                    TxtBrowserDetails.Text = LocalizationManager.GetString(
+                        "TxtBrowserDetailsCleaned",
+                        LocalizationManager.CurrentLanguage == "ar" ? "تم تنظيف كاش المتصفح" : "Browser cache cleaned");
+                }
+            }
+            finally
+            {
+                if (btn != null) btn.IsEnabled = true;
+            }
         }
 
-        private void BtnDevClean_Click(object sender, RoutedEventArgs e)
+        private async void BtnDevClean_Click(object sender, RoutedEventArgs e)
         {
             string title = (LocalizationManager.CurrentLanguage == "ar") ? "تنظيف كاش المطورين" : "Clean Dev Cache";
             string msg = (LocalizationManager.CurrentLanguage == "ar")
@@ -1221,9 +1269,23 @@ namespace Tempo
 
             if (confirm == MessageBoxResult.Yes)
             {
-                var res = _cleanupService.DevCachesFlush();
-                ShowToast(res.Message, false);
-                TxtDevDetails.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تنظيف كاش المطورين" : "Developer cache cleaned";
+                var btn = sender as Button;
+                if (btn != null) btn.IsEnabled = false;
+                try
+                {
+                    var res = await Task.Run(() => _cleanupService.DevCachesFlush());
+                    ShowToast(res.Message, false);
+                    if (TxtDevDetails != null)
+                    {
+                        TxtDevDetails.Text = LocalizationManager.GetString(
+                            "TxtDevDetailsCleaned",
+                            LocalizationManager.CurrentLanguage == "ar" ? "تم تنظيف كاش المطورين" : "Developer cache cleaned");
+                    }
+                }
+                finally
+                {
+                    if (btn != null) btn.IsEnabled = true;
+                }
             }
         }
 
@@ -1284,12 +1346,15 @@ namespace Tempo
                     }
                     ToastBanner.Visibility = Visibility.Visible;
 
-                    _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3.5) };
-                    _toastTimer.Tick += (s, e) =>
+                    if (_toastTimer == null)
                     {
-                        _toastTimer.Stop();
-                        ToastBanner.Visibility = Visibility.Collapsed;
-                    };
+                        _toastTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3.5) };
+                        _toastTimer.Tick += (s, e) =>
+                        {
+                            _toastTimer.Stop();
+                            if (ToastBanner != null) ToastBanner.Visibility = Visibility.Collapsed;
+                        };
+                    }
                     _toastTimer.Start();
             }
             catch { }
@@ -2327,11 +2392,30 @@ namespace Tempo
                 var response = await _feedbackHttpClient.SendAsync(request);
                 string responseBody = await response.Content.ReadAsStringAsync();
 
-                if (response.IsSuccessStatusCode || responseBody.Contains("Activation") || responseBody.Contains("true"))
+                bool isSuccess = response.IsSuccessStatusCode;
+                if (!isSuccess && !string.IsNullOrWhiteSpace(responseBody))
                 {
-                    string success = isAr 
-                        ? "شكراً لك! تم إرسال ملاحظتك بنجاح وبشكل فوري." 
-                        : "Thank you! Your feedback has been sent directly.";
+                    try
+                    {
+                        using var doc = JsonDocument.Parse(responseBody);
+                        if (doc.RootElement.TryGetProperty("success", out var successProp))
+                        {
+                            isSuccess = successProp.ValueKind switch
+                            {
+                                JsonValueKind.True => true,
+                                JsonValueKind.String => string.Equals(successProp.GetString(), "true", StringComparison.OrdinalIgnoreCase),
+                                _ => false
+                            };
+                        }
+                    }
+                    catch { }
+                }
+
+                if (isSuccess)
+                {
+                    string success = LocalizationManager.GetString(
+                        "FeedbackSentSuccess",
+                        isAr ? "شكراً لك! تم إرسال ملاحظتك بنجاح وبشكل فوري." : "Thank you! Your feedback has been sent directly.");
                     ShowToast(success, false);
 
                     if (TxtFeedbackMessage != null) TxtFeedbackMessage.Text = "";
@@ -2339,18 +2423,18 @@ namespace Tempo
                 }
                 else
                 {
-                    string fail = isAr
-                        ? "تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت."
-                        : "Could not send feedback directly. Please check your internet connection.";
+                    string fail = LocalizationManager.GetString(
+                        "FeedbackSentError",
+                        isAr ? "تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت." : "Could not send feedback directly. Please check your internet connection.");
                     ShowToast(fail, true);
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Feedback submission error: {ex.Message}");
-                string fail = isAr
-                    ? "تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت."
-                    : "Could not send feedback directly. Please check your internet connection.";
+                string fail = LocalizationManager.GetString(
+                    "FeedbackSentError",
+                    isAr ? "تعذر إرسال الملاحظة مباشرة، يرجى التأكد من اتصال الإنترنت." : "Could not send feedback directly. Please check your internet connection.");
                 ShowToast(fail, true);
             }
             finally

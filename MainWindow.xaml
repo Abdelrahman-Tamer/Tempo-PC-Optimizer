@@ -11,7 +11,7 @@
         Background="Transparent"
         ResizeMode="NoResize"
         ShowInTaskbar="True"
-        Topmost="True"
+        Topmost="False"
         FontFamily="Segoe UI Variable Display, IBM Plex Sans, Segoe UI, sans-serif">
 
     <Window.Resources>

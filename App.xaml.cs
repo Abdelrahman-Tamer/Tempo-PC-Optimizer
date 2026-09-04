@@ -12,11 +12,17 @@ namespace Tempo
         {
             this.DispatcherUnhandledException += (s, args) =>
             {
+                var ex = args.Exception;
+                if (ex is OutOfMemoryException or StackOverflowException or AccessViolationException)
+                {
+                    return; // Fatal: let runtime terminate cleanly
+                }
+
                 try
                 {
                     string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
                     if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
-                    System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "error.log"), $"[{DateTime.Now}] UI Exception: {args.Exception}\n");
+                    System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "error.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UI Exception ({ex.GetType().Name}): {ex.Message}\n{ex.StackTrace}\n\n");
                 }
                 catch { }
                 args.Handled = true;
