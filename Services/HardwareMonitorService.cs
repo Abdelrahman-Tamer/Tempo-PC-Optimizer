@@ -2,12 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.IO;
 using System.Linq;
 using System.Management;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.AccessControl;
+using System.Security.Principal;
+using System.Text.Json;
 using System.Threading.Tasks;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
@@ -42,14 +46,39 @@ namespace Tempo.Services
 
     public class BootPerformanceInfo
     {
-        public double BiosTimeSeconds { get; set; }
-        public double EstimatedTotalBootSeconds { get; set; }
+        public double? BiosTimeSeconds { get; set; }
+        public DateTime? LastBootUpTime { get; set; }
+        public TimeSpan? Uptime { get; set; }
+        public double? MainPathBootSeconds { get; set; }
+        public double? ActiveAppsDelaySeconds { get; set; }
+        public double? EstimatedTotalBootSeconds => MainPathBootSeconds;
         public int ActiveStartupAppsCount { get; set; }
         public int DisabledStartupAppsCount { get; set; }
-        public double ActiveAppsDelaySeconds { get; set; }
-        public string Rating { get; set; } = "Fast";
+        public bool IsMeasured { get; set; }
+        public string Rating { get; set; } = "";
         public string RatingText { get; set; } = "";
         public string Recommendation { get; set; } = "";
+    }
+
+    public class BootMeasureCache
+    {
+        public DateTime Timestamp { get; set; }
+        public long MainPathBootMs { get; set; }
+        public List<BootMeasureAppItem> Apps { get; set; } = new();
+    }
+
+    public class BootMeasureAppItem
+    {
+        public string ProcessName { get; set; } = "";
+        public long CpuMs { get; set; }
+        public long DiskBytes { get; set; }
+    }
+
+    public enum BootMeasureResult
+    {
+        Success,
+        UserCancelledUac,
+        Failed
     }
 
     public class RunningProcessItem
@@ -108,6 +137,9 @@ namespace Tempo.Services
         public bool IsUserScope => Location.Contains("HKCU", StringComparison.OrdinalIgnoreCase);
 
         public bool IsSystemManaged { get; set; } = false;
+        public long? MeasuredCpuMs { get; set; }
+        public long? MeasuredDiskBytes { get; set; }
+        public bool HasRealMeasurement { get; set; }
 
         public Brush StatusDotBrush => !IsEnabled
             ? new SolidColorBrush(Color.FromRgb(100, 116, 139)) // Slate Muted
@@ -121,18 +153,39 @@ namespace Tempo.Services
                 ? (LocalizationManager.CurrentLanguage == "ar" ? "نظام (محمي)" : "System (Protected)")
                 : (LocalizationManager.CurrentLanguage == "ar" ? "مفعّل" : "Enabled"));
 
-        public string ImpactLabel => !IsEnabled
-            ? LocalizationManager.GetString("StartupImpactDisabled", LocalizationManager.CurrentLanguage == "ar" ? "معطّل (0s)" : "Disabled (0s)")
-            : (IsSystemManaged
-                ? LocalizationManager.GetString("StartupImpactSystem", LocalizationManager.CurrentLanguage == "ar" ? "خدمة نظام (0s)" : "System Service (0s)")
-                : Impact switch
-                {
-                    StartupImpactLevel.High => LocalizationManager.GetString("StartupImpactHigh", LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع (+2.1s تقديري)" : "High Impact (+2.1s est.)"),
-                    StartupImpactLevel.Medium => LocalizationManager.GetString("StartupImpactMedium", LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط (+0.9s تقديري)" : "Medium Impact (+0.9s est.)"),
-                    _ => LocalizationManager.GetString("StartupImpactLow", LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف (+0.3s تقديري)" : "Low Impact (+0.3s est.)")
-                });
+        public string ImpactLabel
+        {
+            get
+            {
+                if (!IsEnabled)
+                    return LocalizationManager.GetString("StartupImpactDisabled", LocalizationManager.CurrentLanguage == "ar" ? "معطّل" : "Disabled");
+                if (IsSystemManaged)
+                    return LocalizationManager.GetString("StartupImpactSystem", LocalizationManager.CurrentLanguage == "ar" ? "خدمة نظام" : "System Service");
 
-        public Brush ImpactBadgeBg => !IsEnabled
+                if (HasRealMeasurement)
+                {
+                    if (!MeasuredCpuMs.HasValue && !MeasuredDiskBytes.HasValue)
+                    {
+                        return LocalizationManager.GetString("BootNotMeasured", LocalizationManager.CurrentLanguage == "ar" ? "لم يُقاس" : "Not measured");
+                    }
+                    return Impact switch
+                    {
+                        StartupImpactLevel.High => LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع" : "High Impact",
+                        StartupImpactLevel.Medium => LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط" : "Medium Impact",
+                        _ => LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف" : "Low Impact"
+                    };
+                }
+
+                return Impact switch
+                {
+                    StartupImpactLevel.High => LocalizationManager.GetString("StartupImpactHigh", LocalizationManager.CurrentLanguage == "ar" ? "أثر مرتفع (تقديري)" : "High Impact (est.)"),
+                    StartupImpactLevel.Medium => LocalizationManager.GetString("StartupImpactMedium", LocalizationManager.CurrentLanguage == "ar" ? "أثر متوسط (تقديري)" : "Medium Impact (est.)"),
+                    _ => LocalizationManager.GetString("StartupImpactLow", LocalizationManager.CurrentLanguage == "ar" ? "أثر خفيف (تقديري)" : "Low Impact (est.)")
+                };
+            }
+        }
+
+        public Brush ImpactBadgeBg => (!IsEnabled || (HasRealMeasurement && !MeasuredCpuMs.HasValue && !MeasuredDiskBytes.HasValue))
             ? new SolidColorBrush(Color.FromArgb(25, 100, 116, 139))
             : Impact switch
             {
@@ -141,7 +194,7 @@ namespace Tempo.Services
                 _ => new SolidColorBrush(Color.FromArgb(30, 16, 185, 129))
             };
 
-        public Brush ImpactBadgeFg => !IsEnabled
+        public Brush ImpactBadgeFg => (!IsEnabled || (HasRealMeasurement && !MeasuredCpuMs.HasValue && !MeasuredDiskBytes.HasValue))
             ? new SolidColorBrush(Color.FromRgb(148, 163, 184))
             : Impact switch
             {
@@ -1402,6 +1455,196 @@ namespace Tempo.Services
             return false;
         }
 
+        public static string ExtractProcessBaseName(string command, string name)
+        {
+            if (!string.IsNullOrWhiteSpace(command))
+            {
+                try
+                {
+                    string cmd = command.Trim();
+                    if (cmd.StartsWith("\""))
+                    {
+                        int endQuote = cmd.IndexOf('"', 1);
+                        if (endQuote > 1)
+                        {
+                            string exePath = cmd.Substring(1, endQuote - 1);
+                            return Path.GetFileNameWithoutExtension(exePath).ToLowerInvariant();
+                        }
+                    }
+                    else
+                    {
+                        int space = cmd.IndexOf(' ');
+                        string exePath = space > 0 ? cmd.Substring(0, space) : cmd;
+                        return Path.GetFileNameWithoutExtension(exePath).ToLowerInvariant();
+                    }
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Log($"ExtractProcessBaseName failed for command '{command}': {ex.Message}", "DEBUG");
+                }
+            }
+            try
+            {
+                return Path.GetFileNameWithoutExtension(name).Trim().ToLowerInvariant();
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                return name.Trim().ToLowerInvariant();
+            }
+        }
+
+        public static StartupImpactLevel ClassifyImpactFromMetrics(long cpuMs, long diskBytes)
+        {
+            // Task Manager parity:
+            // High: CPU > 1000ms OR Disk > 3MB
+            // Medium: CPU 300–1000ms OR Disk 300KB–3MB
+            // Low: rest
+            if (cpuMs > 1000 || diskBytes > 3 * 1024 * 1024)
+            {
+                return StartupImpactLevel.High;
+            }
+            if (cpuMs >= 300 || diskBytes >= 300 * 1024)
+            {
+                return StartupImpactLevel.Medium;
+            }
+            return StartupImpactLevel.Low;
+        }
+
+        private static BootMeasureCache? LoadBootMeasureCache()
+        {
+            try
+            {
+                string progDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Tempo", "boot-measure.json");
+                string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo", "boot-measure.json");
+
+                string targetPath = File.Exists(progDataPath) ? progDataPath : (File.Exists(appDataPath) ? appDataPath : "");
+                if (string.IsNullOrEmpty(targetPath)) return null;
+
+                string json = File.ReadAllText(targetPath);
+                var cache = JsonSerializer.Deserialize<BootMeasureCache>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (cache != null && cache.Timestamp > DateTime.UtcNow.AddDays(-14))
+                {
+                    return cache;
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException or JsonException)
+            {
+                Log($"LoadBootMeasureCache read failed: {ex.Message}", "DEBUG");
+            }
+            return null;
+        }
+
+        public BootMeasureResult MeasureBootPerformanceElevated()
+        {
+            try
+            {
+                string fallbackDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
+
+                string script =
+                    "$ErrorActionPreference = 'SilentlyContinue'; " +
+                    "$mainPathMs = 0; " +
+                    "try { " +
+                    "  $ev = Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational'; Id=100} -MaxEvents 1 -ErrorAction Stop; " +
+                    "  if ($ev) { " +
+                    "    [xml]$xml = $ev.ToXml(); " +
+                    "    $mp = $xml.Event.EventData.Data | Where-Object { $_.Name -eq 'MainPathBootTime' } | Select-Object -ExpandProperty '#text'; " +
+                    "    if ($mp) { $mainPathMs = [int64]$mp; } " +
+                    "  } " +
+                    "} catch {}; " +
+                    "$apps = @(); " +
+                    "$seen = @{}; " +
+                    "try { " +
+                    "  $xmlFiles = Get-ChildItem -Path \"$env:SystemRoot\\System32\\wdi\\LogFiles\\StartupInfo\\*.xml\" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending; " +
+                    "  if ($xmlFiles -and $xmlFiles.Count -gt 0) { " +
+                    "    [xml]$sXml = Get-Content -Path $xmlFiles[0].FullName -Raw -ErrorAction SilentlyContinue; " +
+                    "    if ($sXml) { " +
+                    "      foreach ($proc in $sXml.SelectNodes('//process')) { " +
+                    "        $pName = [System.IO.Path]::GetFileNameWithoutExtension($proc.name); " +
+                    "        if ($pName -and -not $seen.ContainsKey($pName.ToLower())) { " +
+                    "          $cpu = 0; if ($proc.cpuTimeMs) { [int64]::TryParse($proc.cpuTimeMs, [ref]$cpu); } " +
+                    "          $disk = 0; if ($proc.diskBytes) { [int64]::TryParse($proc.diskBytes, [ref]$disk); } elseif ($proc.diskBytesTotal) { [int64]::TryParse($proc.diskBytesTotal, [ref]$disk); } " +
+                    "          $seen[$pName.ToLower()] = $true; " +
+                    "          $apps += @{ ProcessName = $pName; CpuMs = $cpu; DiskBytes = $disk }; " +
+                    "        } " +
+                    "      } " +
+                    "    } " +
+                    "  } " +
+                    "} catch {}; " +
+                    "try { " +
+                    "  $ev101 = Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational'; Id=101} -MaxEvents 50 -ErrorAction SilentlyContinue; " +
+                    "  if ($ev101) { " +
+                    "    foreach ($e in $ev101) { " +
+                    "      [xml]$exml = $e.ToXml(); " +
+                    "      $nameData = $exml.Event.EventData.Data | Where-Object { $_.Name -eq 'Name' -or $_.Name -eq 'AppPath' } | Select-Object -First 1 -ExpandProperty '#text'; " +
+                    "      if ($nameData) { " +
+                    "        $pName = [System.IO.Path]::GetFileNameWithoutExtension($nameData); " +
+                    "        if ($pName -and -not $seen.ContainsKey($pName.ToLower())) { " +
+                    "          $cpuData = $exml.Event.EventData.Data | Where-Object { $_.Name -eq 'TotalTime' -or $_.Name -eq 'CpuTime' } | Select-Object -First 1 -ExpandProperty '#text'; " +
+                    "          $diskData = $exml.Event.EventData.Data | Where-Object { $_.Name -eq 'DiskBytes' -or $_.Name -eq 'TotalDiskBytes' } | Select-Object -First 1 -ExpandProperty '#text'; " +
+                    "          $cpu = 0; if ($cpuData) { [int64]::TryParse($cpuData, [ref]$cpu); } " +
+                    "          $disk = 0; if ($diskData) { [int64]::TryParse($diskData, [ref]$disk); } " +
+                    "          $seen[$pName.ToLower()] = $true; " +
+                    "          $apps += @{ ProcessName = $pName; CpuMs = $cpu; DiskBytes = $disk }; " +
+                    "        } " +
+                    "      } " +
+                    "    } " +
+                    "  } " +
+                    "} catch {}; " +
+                    "$outObj = @{ Timestamp = (Get-Date).ToString('o'); MainPathBootMs = $mainPathMs; Apps = $apps }; " +
+                    "$json = $outObj | ConvertTo-Json -Depth 4; " +
+                    "$outDir = [System.IO.Path]::Combine($env:ProgramData, 'Tempo'); " +
+                    "$targetFile = ''; " +
+                    "try { " +
+                    "  if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null; } " +
+                    "  $targetFile = [System.IO.Path]::Combine($outDir, 'boot-measure.json'); " +
+                    "  [System.IO.File]::WriteAllText($targetFile, $json, [System.Text.Encoding]::UTF8); " +
+                    "  $acl = Get-Acl $targetFile; " +
+                    "  $adminSid = New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid, $null); " +
+                    "  $usersSid = New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid, $null); " +
+                    "  $acl.SetAccessRuleProtection($true, $false); " +
+                    "  $acl.ResetAccessRule( (New-Object System.Security.AccessControl.FileSystemAccessRule($adminSid, 'FullControl', 'Allow')) ); " +
+                    "  $acl.AddAccessRule( (New-Object System.Security.AccessControl.FileSystemAccessRule($usersSid, 'ReadAndExecute', 'Allow')) ); " +
+                    "  Set-Acl -Path $targetFile -AclObject $acl; " +
+                    "} catch { " +
+                    $"  $fbDir = '{fallbackDir.Replace("\\", "\\\\")}'; " +
+                    "  if (-not (Test-Path $fbDir)) { New-Item -ItemType Directory -Path $fbDir -Force | Out-Null; } " +
+                    "  $targetFile = [System.IO.Path]::Combine($fbDir, 'boot-measure.json'); " +
+                    "  [System.IO.File]::WriteAllText($targetFile, $json, [System.Text.Encoding]::UTF8); " +
+                    "}; " +
+                    "exit 0;";
+
+                byte[] unicodeBytes = System.Text.Encoding.Unicode.GetBytes(script);
+                string encodedCommand = Convert.ToBase64String(unicodeBytes);
+
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "powershell.exe",
+                    Arguments = $"-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand {encodedCommand}",
+                    Verb = "runas",
+                    UseShellExecute = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    proc.WaitForExit(8000);
+                    return proc.ExitCode == 0 ? BootMeasureResult.Success : BootMeasureResult.Failed;
+                }
+            }
+            catch (Win32Exception wEx) when (wEx.NativeErrorCode == 1223)
+            {
+                Log("MeasureBootPerformanceElevated cancelled by user (UAC).", "INFO");
+                return BootMeasureResult.UserCancelledUac;
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
+            {
+                Log($"MeasureBootPerformanceElevated failed: {ex.Message}", "ERROR");
+            }
+            return BootMeasureResult.Failed;
+        }
+
         public BootPerformanceInfo GetBootPerformanceInfo(List<StartupAppItem>? startupApps = null)
         {
             var info = new BootPerformanceInfo();
@@ -1426,58 +1669,156 @@ namespace Tempo.Services
                 Log($"GetBootPerformanceInfo registry read failed: {ex.Message}", "DEBUG");
             }
 
-            if (info.BiosTimeSeconds <= 0)
+            try
             {
-                info.BiosTimeSeconds = 11.6; // Baseline UEFI boot time
+                info.Uptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"GetBootPerformanceInfo uptime read failed: {ex.Message}", "DEBUG");
+            }
+
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem");
+                foreach (ManagementObject mo in searcher.Get())
+                {
+                    if (mo["LastBootUpTime"] is string bootStr)
+                    {
+                        info.LastBootUpTime = ManagementDateTimeConverter.ToDateTime(bootStr);
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or COMException)
+            {
+                Log($"GetBootPerformanceInfo WMI LastBootUpTime read failed: {ex.Message}", "DEBUG");
+            }
+
+            double? unprivilegedMainPathSeconds = null;
+            try
+            {
+                string query = "*[System[(EventID=100)]]";
+                var logQuery = new EventLogQuery("Microsoft-Windows-Diagnostics-Performance/Operational", PathType.LogName, query)
+                {
+                    ReverseDirection = true
+                };
+                using var reader = new EventLogReader(logQuery);
+                EventRecord? record = reader.ReadEvent();
+                if (record != null)
+                {
+                    using (record)
+                    {
+                        string xml = record.ToXml();
+                        int idx = xml.IndexOf("MainPathBootTime", StringComparison.OrdinalIgnoreCase);
+                        if (idx >= 0)
+                        {
+                            int start = xml.IndexOf('>', idx);
+                            int end = xml.IndexOf('<', start);
+                            if (start >= 0 && end > start)
+                            {
+                                string val = xml.Substring(start + 1, end - start - 1);
+                                if (long.TryParse(val, out long ms) && ms > 0)
+                                {
+                                    unprivilegedMainPathSeconds = Math.Round(ms / 1000.0, 1);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is EventLogNotFoundException or EventLogException or EventLogReadingException or UnauthorizedAccessException or SecurityException or IOException)
+            {
+                Log($"GetBootPerformanceInfo unprivileged Event 100 read: {ex.Message}", "DEBUG");
             }
 
             var apps = startupApps ?? GetStartupApps();
             info.ActiveStartupAppsCount = apps.Count(a => a.IsEnabled);
             info.DisabledStartupAppsCount = apps.Count(a => !a.IsEnabled);
 
-            // Calculate active startup apps cumulative delay
-            double activeDelay = 0;
-            foreach (var app in apps.Where(a => a.IsEnabled))
+            var cache = LoadBootMeasureCache();
+            if (cache != null)
             {
-                activeDelay += app.Impact switch
+                info.IsMeasured = true;
+                if (cache.MainPathBootMs > 0)
                 {
-                    StartupImpactLevel.High => 1.8,
-                    StartupImpactLevel.Medium => 0.8,
-                    _ => 0.3
-                };
-            }
-            info.ActiveAppsDelaySeconds = Math.Round(activeDelay, 1);
+                    info.MainPathBootSeconds = Math.Round(cache.MainPathBootMs / 1000.0, 1);
+                }
+                else if (unprivilegedMainPathSeconds.HasValue)
+                {
+                    info.MainPathBootSeconds = unprivilegedMainPathSeconds;
+                }
 
-            // Estimated total boot time = BIOS + ~5.5s Kernel init + apps delay
-            info.EstimatedTotalBootSeconds = Math.Round(info.BiosTimeSeconds + 5.5 + info.ActiveAppsDelaySeconds, 1);
+                foreach (var app in apps)
+                {
+                    string baseName = ExtractProcessBaseName(app.Command, app.Name);
+                    var match = cache.Apps.FirstOrDefault(c =>
+                        string.Equals(c.ProcessName, baseName, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(c.ProcessName, app.Name, StringComparison.OrdinalIgnoreCase));
 
-            if (info.EstimatedTotalBootSeconds <= 20.0)
-            {
-                info.Rating = "Fast";
-                info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "ممتاز وسريع" : "Fast & Optimal";
-            }
-            else if (info.EstimatedTotalBootSeconds <= 35.0)
-            {
-                info.Rating = "Moderate";
-                info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "جيد ومقبول" : "Moderate";
+                    if (match != null)
+                    {
+                        app.HasRealMeasurement = true;
+                        app.MeasuredCpuMs = match.CpuMs;
+                        app.MeasuredDiskBytes = match.DiskBytes;
+                        app.Impact = app.IsEnabled ? ClassifyImpactFromMetrics(match.CpuMs, match.DiskBytes) : StartupImpactLevel.Disabled;
+                    }
+                    else
+                    {
+                        app.HasRealMeasurement = true;
+                        app.MeasuredCpuMs = null;
+                        app.MeasuredDiskBytes = null;
+                        app.Impact = app.IsEnabled ? StartupImpactLevel.Low : StartupImpactLevel.Disabled;
+                    }
+                }
+
+                info.ActiveAppsDelaySeconds = Math.Round(apps.Where(a => a.IsEnabled && a.MeasuredCpuMs.HasValue).Sum(a => a.MeasuredCpuMs!.Value) / 1000.0, 1);
             }
             else
             {
-                info.Rating = "Slow";
-                info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "يحتاج تحسين" : "Needs Optimization";
+                info.IsMeasured = false;
+                info.MainPathBootSeconds = unprivilegedMainPathSeconds;
+                info.ActiveAppsDelaySeconds = null;
             }
 
-            if (info.ActiveStartupAppsCount > 0 && info.ActiveAppsDelaySeconds > 1.5)
+            if (info.IsMeasured && info.MainPathBootSeconds.HasValue)
             {
-                info.Recommendation = LocalizationManager.CurrentLanguage == "ar"
-                    ? $"تعطيل برامج التحديث والخدمات غير الضرورية يوفر ~{info.ActiveAppsDelaySeconds:F1} ثانية من إقلاع جهازك."
-                    : $"Disabling non-essential background updaters can shave ~{info.ActiveAppsDelaySeconds:F1}s off your boot time.";
+                if (info.MainPathBootSeconds.Value <= 20.0)
+                {
+                    info.Rating = "Fast";
+                    info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "ممتاز وسريع" : "Fast & Optimal";
+                }
+                else if (info.MainPathBootSeconds.Value <= 35.0)
+                {
+                    info.Rating = "Moderate";
+                    info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "جيد ومقبول" : "Moderate";
+                }
+                else
+                {
+                    info.Rating = "Slow";
+                    info.RatingText = LocalizationManager.CurrentLanguage == "ar" ? "يحتاج تحسين" : "Needs Optimization";
+                }
+
+                if (apps.Any(a => a.IsEnabled && (a.Impact == StartupImpactLevel.High || a.Impact == StartupImpactLevel.Medium)))
+                {
+                    info.Recommendation = LocalizationManager.CurrentLanguage == "ar"
+                        ? "تعطيل التطبيقات ذات الأثر المرتفع يحسن سرعة بدء تشغيل النظام."
+                        : "Disabling high-impact startup applications helps improve system boot speed.";
+                }
+                else
+                {
+                    info.Recommendation = LocalizationManager.CurrentLanguage == "ar"
+                        ? "قائمة برامج بدء التشغيل محسنة ومثالية لأقصى سرعة إقلاع."
+                        : "Your startup list is cleanly optimized for maximum boot speed.";
+                }
             }
             else
             {
+                info.Rating = "";
+                info.RatingText = LocalizationManager.GetString("BootNA", LocalizationManager.CurrentLanguage == "ar" ? "غير متوفر" : "N/A");
                 info.Recommendation = LocalizationManager.CurrentLanguage == "ar"
-                    ? "قائمة برامج بدء التشغيل محسنة ومثالية لأقصى سرعة إقلاع."
-                    : "Your startup list is cleanly optimized for maximum boot speed.";
+                    ? "قائمة بدء التشغيل: تعطيل التطبيقات غير الضرورية التي تعمل في الخلفية يساعد على تحسين استجابة الإقلاع."
+                    : "Startup list: disabling non-essential background applications helps improve boot responsiveness.";
             }
 
             return info;

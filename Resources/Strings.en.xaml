@@ -140,12 +140,17 @@
     <system:String x:Key="TxtBiosTimeLabel">Last BIOS Time</system:String>
     <system:String x:Key="TxtEstBootTimeLabel">Estimated Total Boot</system:String>
     <system:String x:Key="TxtActiveImpactLabel">Active Apps Delay</system:String>
-    <system:String x:Key="StartupImpactDisabled">Disabled (0s)</system:String>
-    <system:String x:Key="StartupImpactSystem">System Service (0s)</system:String>
-    <system:String x:Key="StartupImpactHigh">High Impact (+2.1s est.)</system:String>
-    <system:String x:Key="StartupImpactMedium">Medium Impact (+0.9s est.)</system:String>
-    <system:String x:Key="StartupImpactLow">Low Impact (+0.3s est.)</system:String>
-    <system:String x:Key="StartupActiveCountFormat">{0} Active (~{1:F1}s est.)</system:String>
+    <system:String x:Key="StartupImpactDisabled">Disabled</system:String>
+    <system:String x:Key="StartupImpactSystem">System Service</system:String>
+    <system:String x:Key="StartupImpactHigh">High Impact (est.)</system:String>
+    <system:String x:Key="StartupImpactMedium">Medium Impact (est.)</system:String>
+    <system:String x:Key="StartupImpactLow">Low Impact (est.)</system:String>
+    <system:String x:Key="StartupActiveCountFormat">{0} Active</system:String>
+    <system:String x:Key="BootNA">N/A</system:String>
+    <system:String x:Key="BootMeasureBtn">Measure Real Boot Impact</system:String>
+    <system:String x:Key="BootNeedsAdmin">Requires Administrator privileges to inspect Windows Diagnostics infrastructure</system:String>
+    <system:String x:Key="BootDeniedUAC">Measurement cancelled (Administrator permission was not granted)</system:String>
+    <system:String x:Key="BootNotMeasured">Not measured</system:String>
     <system:String x:Key="SettingsStartWithWindowsTitle">Start Tempo with Windows</system:String>
     <system:String x:Key="SettingsStartWithWindowsDesc">Launch quietly into the desktop mini bar without delaying boot</system:String>
 
