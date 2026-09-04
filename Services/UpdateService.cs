@@ -196,6 +196,12 @@ namespace Tempo.Services
                 response.EnsureSuccessStatusCode();
 
                 long totalBytes = response.Content.Headers.ContentLength ?? -1L;
+                const long MaxDownloadBytes = 100 * 1024 * 1024; // 100 MB maximum threshold
+                if (totalBytes > MaxDownloadBytes)
+                {
+                    throw new InvalidDataException($"Update rejected: Content-Length ({totalBytes / (1024 * 1024)} MB) exceeds 100 MB safety threshold.");
+                }
+
                 using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
                 using var fileStream = new FileStream(targetFile, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 
@@ -205,8 +211,13 @@ namespace Tempo.Services
 
                 while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false)) > 0)
                 {
-                    await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
                     totalRead += bytesRead;
+                    if (totalRead > MaxDownloadBytes)
+                    {
+                        throw new InvalidDataException("Update rejected: Download stream exceeded 100 MB safety threshold.");
+                    }
+
+                    await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken).ConfigureAwait(false);
 
                     if (totalBytes > 0 && progress != null)
                     {
@@ -235,15 +246,18 @@ namespace Tempo.Services
 
         public static bool VerifySha256(string filePath, string expectedHash)
         {
-            if (!File.Exists(filePath)) return false;
+            if (!File.Exists(filePath) || string.IsNullOrWhiteSpace(expectedHash)) return false;
             try
             {
+                string cleanExpected = expectedHash.Trim();
+                if (cleanExpected.Length != 64) return false;
+
                 using var sha256 = SHA256.Create();
                 using var stream = File.OpenRead(filePath);
                 byte[] hashBytes = sha256.ComputeHash(stream);
-                string computed = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-                string expected = expectedHash.Trim().ToLowerInvariant();
-                return string.Equals(computed, expected, StringComparison.OrdinalIgnoreCase);
+                byte[] expectedBytes = Convert.FromHexString(cleanExpected);
+
+                return CryptographicOperations.FixedTimeEquals(hashBytes, expectedBytes);
             }
             catch
             {
@@ -298,13 +312,6 @@ namespace Tempo.Services
             if (matchFile.Success)
             {
                 return matchFile.Groups[1].Value.Trim();
-            }
-
-            // 3. Fallback: Any standalone 64-char hex hash
-            var anyMatch = Regex.Match(body, @"\b([a-fA-F0-9]{64})\b");
-            if (anyMatch.Success)
-            {
-                return anyMatch.Groups[1].Value.Trim();
             }
 
             return "";
