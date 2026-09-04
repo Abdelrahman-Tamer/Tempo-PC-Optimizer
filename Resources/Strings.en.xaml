@@ -179,4 +179,9 @@
     <system:String x:Key="BtnSendFeedback">Send Feedback</system:String>
     <system:String x:Key="FeedbackEmptyWarning">Please type your feedback message before sending.</system:String>
     <system:String x:Key="FeedbackSuccessToast">Thank you! Opening your email client to send feedback...</system:String>
+    <system:String x:Key="FeedbackSentSuccess">Thank you! Your feedback has been sent directly.</system:String>
+    <system:String x:Key="FeedbackSentError">Could not send feedback directly. Please check your internet connection.</system:String>
+    <system:String x:Key="TxtTempDetailsCleaned">Temporary files cleaned</system:String>
+    <system:String x:Key="TxtBrowserDetailsCleaned">Browser cache cleaned</system:String>
+    <system:String x:Key="TxtDevDetailsCleaned">Developer cache cleaned</system:String>
 </ResourceDictionary>
