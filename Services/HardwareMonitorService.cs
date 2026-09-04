@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using LibreHardwareMonitor.Hardware;
 using Microsoft.Win32;
+using Tempo.Models;
 
 using System.Windows;
 using System.Windows.Media;
@@ -249,28 +250,7 @@ namespace Tempo.Services
         private DateTime _lastNetTime = DateTime.MinValue;
         private readonly object _netLock = new();
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        private class MEMORYSTATUSEX
-        {
-            public uint dwLength;
-            public uint dwMemoryLoad;
-            public ulong ullTotalPhys;
-            public ulong ullAvailPhys;
-            public ulong ullTotalPageFile;
-            public ulong ullAvailPageFile;
-            public ulong ullTotalVirtual;
-            public ulong ullAvailVirtual;
-            public ulong ullAvailExtendedVirtual;
-
-            public MEMORYSTATUSEX()
-            {
-                dwLength = (uint)Marshal.SizeOf(typeof(MEMORYSTATUSEX));
-            }
-        }
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool GlobalMemoryStatusEx([In, Out] MEMORYSTATUSEX lpBuffer);
+        private static bool GlobalMemoryStatusEx(MEMORYSTATUSEX lpBuffer) => NativeMethods.GlobalMemoryStatusEx(lpBuffer);
 
         private volatile bool _isComputerOpen = false;
 
@@ -1029,8 +1009,6 @@ namespace Tempo.Services
             }
         }
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool DestroyIcon(IntPtr hIcon);
 
         public static ImageSource? ExtractIconFromCommand(string command)
         {
@@ -1274,21 +1252,41 @@ namespace Tempo.Services
             return false;
         }
 
-        private static bool WriteHklmStartupApprovedElevated(string subPath, string appName, byte[] bytes)
+        private static bool WriteHklmStartupApprovedElevated(string subPath, string appName, byte[] bytes, bool elevate = true)
         {
             try
             {
-                string byteArgs = string.Join(",", bytes);
-                string escapedSubPath = subPath.Replace(@"\", @"\\");
-                string escapedAppName = appName.Replace("'", "''");
-                string psScript = $"$k=[Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine,[Microsoft.Win32.RegistryView]::Registry64).CreateSubKey('{escapedSubPath}');$k.SetValue('{escapedAppName}',[byte[]]@({byteArgs}),[Microsoft.Win32.RegistryValueKind]::Binary);exit 0";
+                // Strict validation: reject any null, empty, or control characters in appName
+                if (string.IsNullOrWhiteSpace(appName) || appName.Any(char.IsControl))
+                    return false;
+
+                // Transfer all arguments as Base64 strings to prevent any shell/script command injection
+                string b64SubPath = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(subPath));
+                string b64AppName = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(appName));
+                string b64Bytes = Convert.ToBase64String(bytes);
+
+                string script =
+                    "$ErrorActionPreference = 'Stop'; " +
+                    "try { " +
+                    $"$subPath = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{b64SubPath}')); " +
+                    $"$name = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{b64AppName}')); " +
+                    $"$data = [System.Convert]::FromBase64String('{b64Bytes}'); " +
+                    $"$k = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64).CreateSubKey($subPath); " +
+                    $"$k.SetValue($name, $data, [Microsoft.Win32.RegistryValueKind]::Binary); " +
+                    $"$k.Dispose(); " +
+                    "exit 0; " +
+                    "} catch { exit 1; }";
+
+                // Encode the entire script as UTF-16LE (Unicode) Base64 for powershell -EncodedCommand
+                byte[] unicodeBytes = System.Text.Encoding.Unicode.GetBytes(script);
+                string encodedCommand = Convert.ToBase64String(unicodeBytes);
 
                 var psi = new ProcessStartInfo
                 {
                     FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -NonInteractive -WindowStyle Hidden -Command \"{psScript}\"",
-                    Verb = "runas",
-                    UseShellExecute = true,
+                    Arguments = $"-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand {encodedCommand}",
+                    Verb = elevate ? "runas" : "",
+                    UseShellExecute = elevate,
                     WindowStyle = ProcessWindowStyle.Hidden,
                     CreateNoWindow = true
                 };

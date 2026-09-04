@@ -298,10 +298,10 @@ namespace Tempo
             public int dwFlags;
         }
 
-        [DllImport("user32.dll")]
+        [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
 
-        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, [In, Out] MONITORINFO lpmi);
 
         private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
