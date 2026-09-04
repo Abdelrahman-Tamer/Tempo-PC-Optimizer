@@ -933,17 +933,19 @@ namespace Tempo
                     int enabledCount = apps.Count(a => a.IsEnabled);
                     string countFormat = LocalizationManager.GetString(
                         "StartupActiveCountFormat",
-                        LocalizationManager.CurrentLanguage == "ar" ? "{0} مفعّل (~{1:F1}s تقديري)" : "{0} Active (~{1:F1}s est.)");
-                    TxtRecStartupCount.Text = string.Format(countFormat, enabledCount, boot.ActiveAppsDelaySeconds);
+                        LocalizationManager.CurrentLanguage == "ar" ? "{0} مفعّل" : "{0} Active");
+                    TxtRecStartupCount.Text = countFormat.Contains("{1")
+                        ? string.Format(countFormat, enabledCount, boot.ActiveAppsDelaySeconds ?? 0)
+                        : string.Format(countFormat, enabledCount);
 
                     if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count(a => a.IsEnabled)}/{securityApps.Count}";
                     if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count(a => a.IsEnabled)}/{regularApps.Count}";
 
                     // Populate Boot Diagnostics Pod
-                    if (TxtBiosTimeVal != null) TxtBiosTimeVal.Text = $"{boot.BiosTimeSeconds:F1}s";
-                    if (TxtTotalBootVal != null) TxtTotalBootVal.Text = $"~{boot.EstimatedTotalBootSeconds:F1}s";
-                    if (TxtAppsDelayVal != null) TxtAppsDelayVal.Text = $"+~{boot.ActiveAppsDelaySeconds:F1}s";
-                    if (TxtBootRating != null) TxtBootRating.Text = boot.RatingText;
+                    if (TxtBiosTimeVal != null) TxtBiosTimeVal.Text = boot.BiosTimeSeconds.HasValue ? $"{boot.BiosTimeSeconds.Value:F1}s" : "--";
+                    if (TxtTotalBootVal != null) TxtTotalBootVal.Text = boot.MainPathBootSeconds.HasValue ? $"{boot.MainPathBootSeconds.Value:F1}s" : "--";
+                    if (TxtAppsDelayVal != null) TxtAppsDelayVal.Text = (boot.IsMeasured && boot.ActiveAppsDelaySeconds.HasValue) ? $"+{boot.ActiveAppsDelaySeconds.Value:F1}s" : "--";
+                    if (TxtBootRating != null) TxtBootRating.Text = boot.IsMeasured && !string.IsNullOrWhiteSpace(boot.RatingText) ? boot.RatingText : LocalizationManager.GetString("BootNA", LocalizationManager.CurrentLanguage == "ar" ? "غير متوفر" : "N/A");
                     if (TxtBootTip != null) TxtBootTip.Text = boot.Recommendation;
 
                     // Initialize Start With Windows checkbox
@@ -1072,6 +1074,37 @@ namespace Tempo
             {
                 ChkStartWithWindows.IsChecked = !enable;
                 ShowToast(LocalizationManager.CurrentLanguage == "ar" ? "تعذر تغيير إعداد بدء التشغيل" : "Failed to update startup setting", true);
+            }
+        }
+
+        private async void BtnMeasureBoot_Click(object sender, RoutedEventArgs e)
+        {
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+
+            bool isAr = LocalizationManager.CurrentLanguage == "ar";
+            ShowToast(isAr ? "جاري قياس أثر الإقلاع الفعلي..." : "Measuring real boot impact...", false);
+
+            try
+            {
+                var result = await Task.Run(() => _hardwareMonitor.MeasureBootPerformanceElevated());
+                if (result == BootMeasureResult.UserCancelledUac)
+                {
+                    ShowToast(LocalizationManager.GetString("BootDeniedUAC", isAr ? "تم إلغاء القياس (لم يتم منح صلاحيات المسؤول)" : "Measurement cancelled (Administrator permission was not granted)"), true);
+                }
+                else if (result == BootMeasureResult.Success)
+                {
+                    ShowToast(isAr ? "تم قياس أثر الإقلاع وتحديث البيانات بنجاح" : "Boot impact measured and updated successfully", false);
+                    LoadStartupApps();
+                }
+                else
+                {
+                    ShowToast(isAr ? "تعذر قياس أثر الإقلاع من سجلات النظام" : "Failed to measure boot impact from system logs", true);
+                }
+            }
+            finally
+            {
+                if (btn != null) btn.IsEnabled = true;
             }
         }
 
