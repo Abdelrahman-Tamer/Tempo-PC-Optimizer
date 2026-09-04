@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
 using Tempo.Models;
@@ -349,8 +348,6 @@ namespace Tempo.Services
             {
             }
         }
-
-        public CleanupResult OptimizeRamWorkingSets() => TurboRamBoost();
 
         public CleanupResult TurboRamBoost()
         {

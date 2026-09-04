@@ -7,6 +7,8 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>13</LangVersion>
+    <!-- AllowUnsafeBlocks: Required for high-performance memory queries and native interop with MEMORYSTATUSEX structures -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
@@ -18,7 +20,8 @@
     <AssemblyVersion>2.2.4.0</AssemblyVersion>
     <FileVersion>2.2.4.0</FileVersion>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <NoWarn>WFO0003;CS0104;CS0414</NoWarn>
+    <!-- WFO0003: NotifyIcon DPI awareness warnings; CS0104: Ambiguity between System.Windows and System.Windows.Forms resolved via aliases -->
+    <NoWarn>WFO0003;CS0104</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">

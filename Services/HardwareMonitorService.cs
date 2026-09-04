@@ -238,9 +238,6 @@ namespace Tempo.Services
                 return Name;
             }
         }
-
-        public string TechnicalDetails => "";
-        public Visibility TechnicalVisibility => Visibility.Collapsed;
     }
 
     public class HardwareMonitorService : IDisposable
@@ -310,9 +307,9 @@ namespace Tempo.Services
                     _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
                     _cpuCounter.NextValue();
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
-                    Debug.WriteLine("CPU PerformanceCounter notice: " + ex.Message);
+                    Log($"CPU PerformanceCounter notice: {ex.Message}", "DEBUG");
                 }
 
                 try
@@ -320,9 +317,9 @@ namespace Tempo.Services
                     _computer.Open();
                     _isComputerOpen = true;
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
-                    Debug.WriteLine("LibreHardwareMonitor Open notice: " + ex.Message);
+                    Log($"LibreHardwareMonitor Open notice: {ex.Message}", "DEBUG");
                 }
             });
         }
@@ -1404,11 +1401,6 @@ namespace Tempo.Services
             return false;
         }
 
-        public bool DisableStartupApp(StartupAppItem app)
-        {
-            return ToggleStartupApp(app);
-        }
-
         public BootPerformanceInfo GetBootPerformanceInfo(List<StartupAppItem>? startupApps = null)
         {
             var info = new BootPerformanceInfo();
@@ -1530,47 +1522,6 @@ namespace Tempo.Services
             {
                 Log($"SetRunAtStartup({enable}) failed: {ex.Message}", "WARN");
                 return false;
-            }
-        }
-
-        public (string displayName, bool isActive) GetWindowsSecurityStatus()
-        {
-            try
-            {
-                var searcher = new ManagementObjectSearcher(@"root\SecurityCenter2", "SELECT displayName, productState FROM AntiVirusProduct");
-                var results = searcher.Get();
-                var items = new List<(string name, bool active)>();
-
-                foreach (ManagementObject obj in results)
-                {
-                    string name = obj["displayName"]?.ToString() ?? "Unknown AV";
-                    uint state = obj["productState"] != null ? Convert.ToUInt32(obj["productState"]) : 0;
-                    // productState bits: bits 12-15 = active state (0x1000), bits 4-7 = up-to-date
-                    // Common active states: 397568 (0x61100), 393472 (0x60100), 266240 (0x41000)
-                    bool active = ((state >> 12) & 0xF) == 1;
-                    items.Add((name, active));
-                }
-
-                if (items.Count == 0)
-                    return (LocalizationManager.CurrentLanguage == "ar" ? "لا يوجد برنامج حماية مُعرَّف" : "No Antivirus Detected", false);
-
-                // Prefer first active AV; if none active, return first with inactive status
-                var activeAv = items.FirstOrDefault(i => i.active);
-                if (activeAv.name != null)
-                    return (activeAv.name, true);
-
-                return (items[0].name, false);
-            }
-            catch (ManagementException mex)
-            {
-                Log($"GetWindowsSecurityStatus ManagementException: {mex.Message}", "DEBUG");
-                // SecurityCenter2 unavailable (e.g. Server OS, permission denied)
-                return (LocalizationManager.CurrentLanguage == "ar" ? "Security Center غير متاح" : "Security Center Unavailable", false);
-            }
-            catch (Exception ex) when (ex is not OutOfMemoryException)
-            {
-                Log($"GetWindowsSecurityStatus query failed: {ex.Message}", "WARN");
-                return (LocalizationManager.CurrentLanguage == "ar" ? "حالة الحماية: غير معروفة" : "Protection Status: Unknown", false);
             }
         }
 

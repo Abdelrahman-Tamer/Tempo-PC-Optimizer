@@ -1,14 +1,40 @@
 using System;
-using System.ComponentModel;
 using System.Security;
-using System.Security.Principal;
 using System.Windows;
 
 namespace Tempo
 {
     public partial class App : System.Windows.Application
     {
-        public static bool IsAdmin { get; private set; } = false;
+        private static readonly object _logLock = new();
+        private const long MaxLogSizeBytes = 5 * 1024 * 1024; // 5 MB rotation threshold
+
+        private static void LogError(string level, string message)
+        {
+            try
+            {
+                lock (_logLock)
+                {
+                    string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
+                    if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+                    string logFile = System.IO.Path.Combine(dir, "error.log");
+
+                    var fi = new System.IO.FileInfo(logFile);
+                    if (fi.Exists && fi.Length > MaxLogSizeBytes)
+                    {
+                        string oldLog = logFile + ".old";
+                        System.IO.File.Move(logFile, oldLog, overwrite: true);
+                    }
+
+                    string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] {message}";
+                    System.IO.File.AppendAllText(logFile, line + Environment.NewLine);
+                }
+            }
+            catch (Exception logEx) when (logEx is System.IO.IOException or UnauthorizedAccessException or SecurityException)
+            {
+                // Defensive fallback: logging failure swallowed silently to avoid crash loop
+            }
+        }
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -20,50 +46,17 @@ namespace Tempo
                     return; // Fatal: let runtime terminate cleanly
                 }
 
-                try
-                {
-                    string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
-                    if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
-                    System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "error.log"), $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] UI Exception ({ex.GetType().Name}): {ex.Message}\n{ex.StackTrace}\n\n");
-                }
-                catch (Exception logEx) when (logEx is System.IO.IOException or UnauthorizedAccessException or SecurityException)
-                {
-                    // Defensive fallback: error logging itself failed, swallow silently to avoid crash loop
-                }
+                LogError("ERROR", $"UI Exception ({ex.GetType().Name}): {ex.Message}\n{ex.StackTrace}");
                 args.Handled = true;
             };
 
             AppDomain.CurrentDomain.UnhandledException += (s, args) =>
             {
-                try
-                {
-                    string dir = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
-                    if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
-                    System.IO.File.AppendAllText(System.IO.Path.Combine(dir, "error.log"), $"[{DateTime.Now}] Domain Exception: {args.ExceptionObject}\n");
-                }
-                catch (Exception logEx) when (logEx is System.IO.IOException or UnauthorizedAccessException or SecurityException)
-                {
-                    // Defensive fallback: logging failure swallowed silently
-                }
+                LogError("FATAL", $"Domain Exception: {args.ExceptionObject}");
             };
 
             base.OnStartup(e);
-            IsAdmin = IsRunningAsAdministrator();
             // Least privilege: runs normally for standard user; elevation requested only per-action
-        }
-
-        private static bool IsRunningAsAdministrator()
-        {
-            try
-            {
-                using var identity = WindowsIdentity.GetCurrent();
-                var principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
-            }
-            catch (Exception ex) when (ex is SecurityException or Win32Exception or UnauthorizedAccessException)
-            {
-                return false;
-            }
         }
     }
 }

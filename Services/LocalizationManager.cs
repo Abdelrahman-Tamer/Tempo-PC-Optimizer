@@ -7,7 +7,6 @@ namespace Tempo.Services
     public static class LocalizationManager
     {
         public static string CurrentLanguage { get; private set; } = "en"; // Default is English!
-        public static bool IsRtl => CurrentLanguage == "ar";
 
         public static event Action<string>? LanguageChanged;
 
@@ -74,17 +73,7 @@ namespace Tempo.Services
 
         // LTR/RTL Safe Number & Unit Formatting Helpers (Always Left-to-Right Mark isolated)
         public static string FormatMb(double mb) => $"\u200E{mb:F1} MB\u200E";
-        public static string FormatGb(double gb) => $"\u200E{gb:F1} GB\u200E";
         public static string FormatPercent(double val) => $"\u200E{val:F0}%\u200E";
-
-        public static string FormatSpeed(double kbSec)
-        {
-            if (kbSec >= 1024)
-            {
-                return $"\u200E{kbSec / 1024.0:F1} MB/s\u200E";
-            }
-            return $"\u200E{kbSec:F1} KB/s\u200E";
-        }
 
         public static string FormatRamSummary(double usedGb, double totalGb)
         {
