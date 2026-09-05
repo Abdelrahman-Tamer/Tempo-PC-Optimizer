@@ -151,6 +151,11 @@
     <system:String x:Key="BootNeedsAdmin">يتطلب صلاحيات مسؤول لفحص سجلات تشخيص ويندوز</system:String>
     <system:String x:Key="BootDeniedUAC">تم إلغاء القياس (لم يتم منح صلاحيات المسؤول)</system:String>
     <system:String x:Key="BootNotMeasured">لم يُقاس</system:String>
+    <system:String x:Key="BootLastDuration">مدة الإقلاع الأخيرة</system:String>
+    <system:String x:Key="BootAtFormat">تم الإقلاع في {0}</system:String>
+    <system:String x:Key="BootUptimeFormat">وقت التشغيل: {0}</system:String>
+    <system:String x:Key="BootMeasured">مقاس فعلياً</system:String>
+    <system:String x:Key="BootStaleWarning">القياس من جلسة إقلاع سابقة</system:String>
     <system:String x:Key="SettingsStartWithWindowsTitle">تشغيل Tempo تلقائياً مع بدء ويندوز</system:String>
     <system:String x:Key="SettingsStartWithWindowsDesc">بدء التشغيل بهدوء في شريط الأدوات المصغر دون التأثير على سرعة الإقلاع</system:String>
 

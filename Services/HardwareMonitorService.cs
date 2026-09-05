@@ -55,6 +55,7 @@ namespace Tempo.Services
         public int ActiveStartupAppsCount { get; set; }
         public int DisabledStartupAppsCount { get; set; }
         public bool IsMeasured { get; set; }
+        public bool IsCacheStale { get; set; }
         public string Rating { get; set; } = "";
         public string RatingText { get; set; } = "";
         public string Recommendation { get; set; } = "";
@@ -63,6 +64,7 @@ namespace Tempo.Services
     public class BootMeasureCache
     {
         public DateTime Timestamp { get; set; }
+        public string BootId { get; set; } = "";
         public long MainPathBootMs { get; set; }
         public List<BootMeasureAppItem> Apps { get; set; } = new();
     }
@@ -1410,49 +1412,70 @@ namespace Tempo.Services
                 if (string.IsNullOrWhiteSpace(appName) || appName.Any(char.IsControl))
                     return false;
 
+                if (bytes == null || bytes.Length != 12)
+                    return false;
+
                 // Transfer all arguments as Base64 strings to prevent any shell/script command injection
                 string b64SubPath = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(subPath));
                 string b64AppName = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(appName));
                 string b64Bytes = Convert.ToBase64String(bytes);
 
-                string script =
-                    "$ErrorActionPreference = 'Stop'; " +
-                    "try { " +
-                    $"$subPath = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{b64SubPath}')); " +
-                    $"$name = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('{b64AppName}')); " +
-                    $"$data = [System.Convert]::FromBase64String('{b64Bytes}'); " +
-                    $"$k = [Microsoft.Win32.RegistryKey]::OpenBaseKey([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryView]::Registry64).CreateSubKey($subPath); " +
-                    $"$k.SetValue($name, $data, [Microsoft.Win32.RegistryValueKind]::Binary); " +
-                    $"$k.Dispose(); " +
-                    "exit 0; " +
-                    "} catch { exit 1; }";
-
-                // Encode the entire script as UTF-16LE (Unicode) Base64 for powershell -EncodedCommand
-                byte[] unicodeBytes = System.Text.Encoding.Unicode.GetBytes(script);
-                string encodedCommand = Convert.ToBase64String(unicodeBytes);
-
-                var psi = new ProcessStartInfo
+                if (!elevate)
                 {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand {encodedCommand}",
-                    Verb = elevate ? "runas" : "",
-                    UseShellExecute = elevate,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true
-                };
-
-                using var proc = Process.Start(psi);
-                if (proc != null)
-                {
-                    proc.WaitForExit(8000);
-                    return proc.ExitCode == 0;
+                    try
+                    {
+                        using var hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+                        using var key = hklm64.CreateSubKey(subPath, true);
+                        if (key != null)
+                        {
+                            key.SetValue(appName, bytes, RegistryValueKind.Binary);
+                            return true;
+                        }
+                    }
+                    catch (Exception ex) when (ex is not OutOfMemoryException) { }
+                    return false;
                 }
+
+                var (success, _) = RelaunchSelfElevated($"--set-approved {b64SubPath} {b64AppName} {b64Bytes}");
+                return success;
             }
             catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
             {
                 Log($"WriteHklmStartupApprovedElevated failed for {appName}: {ex.Message}", "ERROR");
             }
             return false;
+        }
+
+        private static (bool Success, bool UserCancelled) RelaunchSelfElevated(string arguments)
+        {
+            try
+            {
+                string exePath = App.GetOwnExePath();
+                var psi = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = arguments,
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    proc.WaitForExit(8000);
+                    return (proc.ExitCode == 0, false);
+                }
+            }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                // Error 1223: The operation was canceled by the user (UAC prompt denied)
+                return (false, true);
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
+            {
+                Log($"RelaunchSelfElevated failed: {ex.Message}", "ERROR");
+            }
+            return (false, false);
         }
 
         public static string ExtractProcessBaseName(string command, string name)
@@ -1522,7 +1545,7 @@ namespace Tempo.Services
 
                 string json = File.ReadAllText(targetPath);
                 var cache = JsonSerializer.Deserialize<BootMeasureCache>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (cache != null && cache.Timestamp > DateTime.UtcNow.AddDays(-14))
+                if (cache != null)
                 {
                     return cache;
                 }
@@ -1538,105 +1561,13 @@ namespace Tempo.Services
         {
             try
             {
-                string fallbackDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
-
-                string script =
-                    "$ErrorActionPreference = 'SilentlyContinue'; " +
-                    "$mainPathMs = 0; " +
-                    "try { " +
-                    "  $ev = Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational'; Id=100} -MaxEvents 1 -ErrorAction Stop; " +
-                    "  if ($ev) { " +
-                    "    [xml]$xml = $ev.ToXml(); " +
-                    "    $mp = $xml.Event.EventData.Data | Where-Object { $_.Name -eq 'MainPathBootTime' } | Select-Object -ExpandProperty '#text'; " +
-                    "    if ($mp) { $mainPathMs = [int64]$mp; } " +
-                    "  } " +
-                    "} catch {}; " +
-                    "$apps = @(); " +
-                    "$seen = @{}; " +
-                    "try { " +
-                    "  $xmlFiles = Get-ChildItem -Path \"$env:SystemRoot\\System32\\wdi\\LogFiles\\StartupInfo\\*.xml\" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending; " +
-                    "  if ($xmlFiles -and $xmlFiles.Count -gt 0) { " +
-                    "    [xml]$sXml = Get-Content -Path $xmlFiles[0].FullName -Raw -ErrorAction SilentlyContinue; " +
-                    "    if ($sXml) { " +
-                    "      foreach ($proc in $sXml.SelectNodes('//process')) { " +
-                    "        $pName = [System.IO.Path]::GetFileNameWithoutExtension($proc.name); " +
-                    "        if ($pName -and -not $seen.ContainsKey($pName.ToLower())) { " +
-                    "          $cpu = 0; if ($proc.cpuTimeMs) { [int64]::TryParse($proc.cpuTimeMs, [ref]$cpu); } " +
-                    "          $disk = 0; if ($proc.diskBytes) { [int64]::TryParse($proc.diskBytes, [ref]$disk); } elseif ($proc.diskBytesTotal) { [int64]::TryParse($proc.diskBytesTotal, [ref]$disk); } " +
-                    "          $seen[$pName.ToLower()] = $true; " +
-                    "          $apps += @{ ProcessName = $pName; CpuMs = $cpu; DiskBytes = $disk }; " +
-                    "        } " +
-                    "      } " +
-                    "    } " +
-                    "  } " +
-                    "} catch {}; " +
-                    "try { " +
-                    "  $ev101 = Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Diagnostics-Performance/Operational'; Id=101} -MaxEvents 50 -ErrorAction SilentlyContinue; " +
-                    "  if ($ev101) { " +
-                    "    foreach ($e in $ev101) { " +
-                    "      [xml]$exml = $e.ToXml(); " +
-                    "      $nameData = $exml.Event.EventData.Data | Where-Object { $_.Name -eq 'Name' -or $_.Name -eq 'AppPath' } | Select-Object -First 1 -ExpandProperty '#text'; " +
-                    "      if ($nameData) { " +
-                    "        $pName = [System.IO.Path]::GetFileNameWithoutExtension($nameData); " +
-                    "        if ($pName -and -not $seen.ContainsKey($pName.ToLower())) { " +
-                    "          $cpuData = $exml.Event.EventData.Data | Where-Object { $_.Name -eq 'TotalTime' -or $_.Name -eq 'CpuTime' } | Select-Object -First 1 -ExpandProperty '#text'; " +
-                    "          $diskData = $exml.Event.EventData.Data | Where-Object { $_.Name -eq 'DiskBytes' -or $_.Name -eq 'TotalDiskBytes' } | Select-Object -First 1 -ExpandProperty '#text'; " +
-                    "          $cpu = 0; if ($cpuData) { [int64]::TryParse($cpuData, [ref]$cpu); } " +
-                    "          $disk = 0; if ($diskData) { [int64]::TryParse($diskData, [ref]$disk); } " +
-                    "          $seen[$pName.ToLower()] = $true; " +
-                    "          $apps += @{ ProcessName = $pName; CpuMs = $cpu; DiskBytes = $disk }; " +
-                    "        } " +
-                    "      } " +
-                    "    } " +
-                    "  } " +
-                    "} catch {}; " +
-                    "$outObj = @{ Timestamp = (Get-Date).ToString('o'); MainPathBootMs = $mainPathMs; Apps = $apps }; " +
-                    "$json = $outObj | ConvertTo-Json -Depth 4; " +
-                    "$outDir = [System.IO.Path]::Combine($env:ProgramData, 'Tempo'); " +
-                    "$targetFile = ''; " +
-                    "try { " +
-                    "  if (-not (Test-Path $outDir)) { New-Item -ItemType Directory -Path $outDir -Force | Out-Null; } " +
-                    "  $targetFile = [System.IO.Path]::Combine($outDir, 'boot-measure.json'); " +
-                    "  [System.IO.File]::WriteAllText($targetFile, $json, [System.Text.Encoding]::UTF8); " +
-                    "  $acl = Get-Acl $targetFile; " +
-                    "  $adminSid = New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::BuiltinAdministratorsSid, $null); " +
-                    "  $usersSid = New-Object System.Security.Principal.SecurityIdentifier([System.Security.Principal.WellKnownSidType]::BuiltinUsersSid, $null); " +
-                    "  $acl.SetAccessRuleProtection($true, $false); " +
-                    "  $acl.ResetAccessRule( (New-Object System.Security.AccessControl.FileSystemAccessRule($adminSid, 'FullControl', 'Allow')) ); " +
-                    "  $acl.AddAccessRule( (New-Object System.Security.AccessControl.FileSystemAccessRule($usersSid, 'ReadAndExecute', 'Allow')) ); " +
-                    "  Set-Acl -Path $targetFile -AclObject $acl; " +
-                    "} catch { " +
-                    $"  $fbDir = '{fallbackDir.Replace("\\", "\\\\")}'; " +
-                    "  if (-not (Test-Path $fbDir)) { New-Item -ItemType Directory -Path $fbDir -Force | Out-Null; } " +
-                    "  $targetFile = [System.IO.Path]::Combine($fbDir, 'boot-measure.json'); " +
-                    "  [System.IO.File]::WriteAllText($targetFile, $json, [System.Text.Encoding]::UTF8); " +
-                    "}; " +
-                    "exit 0;";
-
-                byte[] unicodeBytes = System.Text.Encoding.Unicode.GetBytes(script);
-                string encodedCommand = Convert.ToBase64String(unicodeBytes);
-
-                var psi = new ProcessStartInfo
+                var (success, userCancelled) = RelaunchSelfElevated("--measure-boot");
+                if (userCancelled)
                 {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand {encodedCommand}",
-                    Verb = "runas",
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                    CreateNoWindow = true
-                };
-
-                using var proc = Process.Start(psi);
-                if (proc != null)
-                {
-                    proc.WaitForExit(8000);
-                    return proc.ExitCode == 0 ? BootMeasureResult.Success : BootMeasureResult.Failed;
+                    Log("MeasureBootPerformanceElevated cancelled by user (UAC).", "INFO");
+                    return BootMeasureResult.UserCancelledUac;
                 }
-            }
-            catch (Win32Exception wEx) when (wEx.NativeErrorCode == 1223)
-            {
-                Log("MeasureBootPerformanceElevated cancelled by user (UAC).", "INFO");
-                return BootMeasureResult.UserCancelledUac;
+                return success ? BootMeasureResult.Success : BootMeasureResult.Failed;
             }
             catch (Exception ex) when (ex is Win32Exception or InvalidOperationException or IOException)
             {
@@ -1654,13 +1585,23 @@ namespace Tempo.Services
                 if (pwrKey != null)
                 {
                     var fwVal = pwrKey.GetValue("FwPOSTTime");
+                    double? val = null;
                     if (fwVal is int fwInt && fwInt > 0)
                     {
-                        info.BiosTimeSeconds = Math.Round(fwInt / 1000.0, 1);
+                        val = Math.Round(fwInt / 1000.0, 1);
                     }
                     else if (fwVal is long fwLong && fwLong > 0)
                     {
-                        info.BiosTimeSeconds = Math.Round(fwLong / 1000.0, 1);
+                        val = Math.Round(fwLong / 1000.0, 1);
+                    }
+
+                    if (val.HasValue && val.Value >= 0.0 && val.Value <= 120.0)
+                    {
+                        info.BiosTimeSeconds = val.Value;
+                    }
+                    else
+                    {
+                        info.BiosTimeSeconds = null;
                     }
                 }
             }
@@ -1720,7 +1661,11 @@ namespace Tempo.Services
                                 string val = xml.Substring(start + 1, end - start - 1);
                                 if (long.TryParse(val, out long ms) && ms > 0)
                                 {
-                                    unprivilegedMainPathSeconds = Math.Round(ms / 1000.0, 1);
+                                    double sec = Math.Round(ms / 1000.0, 1);
+                                    if (sec >= 0.0 && sec <= 600.0)
+                                    {
+                                        unprivilegedMainPathSeconds = sec;
+                                    }
                                 }
                             }
                         }
@@ -1740,9 +1685,34 @@ namespace Tempo.Services
             if (cache != null)
             {
                 info.IsMeasured = true;
+
+                // Staleness check:
+                // Stale if:
+                // 1. cache is older than 14 days
+                // 2. cache timestamp < LastBootUpTime (system rebooted since last measurement)
+                // 3. BootId is missing or doesn't match current boot session
+                bool isStale = false;
+                if (cache.Timestamp < DateTime.UtcNow.AddDays(-14))
+                {
+                    isStale = true;
+                }
+                else if (info.LastBootUpTime.HasValue && cache.Timestamp < info.LastBootUpTime.Value)
+                {
+                    isStale = true;
+                }
+                else if (string.IsNullOrEmpty(cache.BootId) || (info.LastBootUpTime.HasValue && !string.Equals(cache.BootId, info.LastBootUpTime.Value.ToUniversalTime().ToString("o"), StringComparison.OrdinalIgnoreCase)))
+                {
+                    isStale = true;
+                }
+                info.IsCacheStale = isStale;
+
                 if (cache.MainPathBootMs > 0)
                 {
-                    info.MainPathBootSeconds = Math.Round(cache.MainPathBootMs / 1000.0, 1);
+                    double sec = Math.Round(cache.MainPathBootMs / 1000.0, 1);
+                    if (sec >= 0.0 && sec <= 600.0)
+                    {
+                        info.MainPathBootSeconds = sec;
+                    }
                 }
                 else if (unprivilegedMainPathSeconds.HasValue)
                 {
@@ -1777,8 +1747,14 @@ namespace Tempo.Services
             else
             {
                 info.IsMeasured = false;
+                info.IsCacheStale = false;
                 info.MainPathBootSeconds = unprivilegedMainPathSeconds;
                 info.ActiveAppsDelaySeconds = null;
+            }
+
+            if (info.MainPathBootSeconds.HasValue && (info.MainPathBootSeconds.Value < 0.0 || info.MainPathBootSeconds.Value > 600.0))
+            {
+                info.MainPathBootSeconds = null;
             }
 
             if (info.IsMeasured && info.MainPathBootSeconds.HasValue)

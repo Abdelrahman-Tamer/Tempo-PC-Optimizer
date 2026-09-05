@@ -151,6 +151,11 @@
     <system:String x:Key="BootNeedsAdmin">Requires Administrator privileges to inspect Windows Diagnostics infrastructure</system:String>
     <system:String x:Key="BootDeniedUAC">Measurement cancelled (Administrator permission was not granted)</system:String>
     <system:String x:Key="BootNotMeasured">Not measured</system:String>
+    <system:String x:Key="BootLastDuration">Last Boot Duration</system:String>
+    <system:String x:Key="BootAtFormat">Booted at {0}</system:String>
+    <system:String x:Key="BootUptimeFormat">Uptime: {0}</system:String>
+    <system:String x:Key="BootMeasured">Measured</system:String>
+    <system:String x:Key="BootStaleWarning">Measurement is from a previous boot session</system:String>
     <system:String x:Key="SettingsStartWithWindowsTitle">Start Tempo with Windows</system:String>
     <system:String x:Key="SettingsStartWithWindowsDesc">Launch quietly into the desktop mini bar without delaying boot</system:String>
 
