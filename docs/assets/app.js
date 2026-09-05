@@ -304,8 +304,8 @@ async function handleWebFeedback(e) {
     if (successEl) {
       successEl.style.display = "block";
       if (data.message && data.message.includes("Activation")) {
-        successEl.textContent = currentLang === 'ar' 
-          ? "شكراً لك! تم استلام رسالتك وإرسال إشعار التفعيل إلى بريدك الإلكتروني لأول مرة." 
+        successEl.textContent = currentLang === 'ar'
+          ? "شكراً لك! تم استلام رسالتك وإرسال إشعار التفعيل إلى بريدك الإلكتروني لأول مرة."
           : "Thank you! Your feedback was received (first-time activation sent to your email).";
       } else {
         successEl.textContent = currentLang === 'ar'
@@ -322,8 +322,8 @@ async function handleWebFeedback(e) {
     const successEl = document.getElementById("fbSuccessMsg");
     if (successEl) {
       successEl.style.display = "block";
-      successEl.textContent = currentLang === 'ar' 
-        ? "تعذر الإرسال المباشر حالياً، يُرجى التحقق من اتصال الإنترنت والمحاولة ثانية." 
+      successEl.textContent = currentLang === 'ar'
+        ? "تعذر الإرسال المباشر حالياً، يُرجى التحقق من اتصال الإنترنت والمحاولة ثانية."
         : "Could not submit directly right now. Please check your internet connection.";
       successEl.style.color = "#EF4444";
       successEl.style.borderColor = "#EF4444";
