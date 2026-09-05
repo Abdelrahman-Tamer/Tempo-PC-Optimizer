@@ -1,6 +1,6 @@
 ; Tempo PC Optimizer - Official Inno Setup 6 Script
 #define MyAppName "Tempo PC Optimizer"
-#define MyAppVersion "2.2.4"
+#define MyAppVersion "2.2.5"
 #define MyAppPublisher "Eng. Abdelrahman Emam"
 #define MyAppURL "https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/"
 #define MyAppExeName "Tempo.exe"
@@ -19,7 +19,7 @@ AllowNoIcons=yes
 LicenseFile=..\LICENSE
 OutputDir=..\dist
 OutputBaseFilename=Tempo-Setup-v{#MyAppVersion}
-SetupIconFile=..\publish_tempo\tempo_v2.ico
+SetupIconFile=..\app.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
@@ -42,9 +42,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "..\publish_tempo\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\tempo_v2.ico"
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\app.ico"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\tempo_v2.ico"; Tasks: desktopicon
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\app.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall runascurrentuser

@@ -1466,6 +1466,26 @@ namespace Tempo
                 Task.Run(() =>
                 {
                     var res = _cleanupService.SsdReTrim(letter);
+                    if (!res.Success && (res.Message.Contains("Administrator") || res.Message.Contains("مسؤول") || res.Message.Contains("40001") || res.Message.Contains("Access denied", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        var (elevatedOk, userCancelled, elevatedMsg) = CleanupService.ExecuteTrimElevated(letter);
+                        if (elevatedOk)
+                        {
+                            res.Success = true;
+                            res.Message = isArMsg ? $"تم تنشيط الـ SSD للقرص {letter}: بنجاح (بصلاحيات المسؤول)" : $"SSD {letter}: TRIM complete (Administrator)";
+                        }
+                        else if (userCancelled)
+                        {
+                            res.Success = false;
+                            res.Message = elevatedMsg;
+                        }
+                        else if (!string.IsNullOrEmpty(elevatedMsg))
+                        {
+                            res.Success = false;
+                            res.Message = elevatedMsg;
+                        }
+                    }
+
                     Dispatcher.InvokeAsync(() =>
                     {
                         btn.IsEnabled = vm.IsTrimEnabled;
@@ -2569,8 +2589,6 @@ namespace Tempo
 
                 string json = JsonSerializer.Serialize(payload);
                 using var request = new HttpRequestMessage(HttpMethod.Post, GetFeedbackApiUrl());
-                request.Headers.Add("Origin", "https://abdelrahman-tamer.github.io");
-                request.Headers.Add("Referer", "https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/");
                 request.Headers.Add("Accept", "application/json");
                 request.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 

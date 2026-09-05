@@ -1111,6 +1111,58 @@ namespace Tempo.Services
             return result;
         }
 
+        public static (bool Success, bool UserCancelled, string Message) ExecuteTrimElevated(string driveLetter)
+        {
+            bool isAr = (LocalizationManager.CurrentLanguage == "ar");
+            try
+            {
+                if (string.IsNullOrWhiteSpace(driveLetter))
+                {
+                    return (false, false, isAr ? "حرف القرص غير صالح." : "Invalid drive letter.");
+                }
+                driveLetter = driveLetter.Trim().TrimEnd(':', '\\', '/').ToUpperInvariant();
+                if (driveLetter.Length != 1 || driveLetter[0] < 'A' || driveLetter[0] > 'Z')
+                {
+                    return (false, false, isAr ? "حرف القرص غير صالح." : "Invalid drive letter.");
+                }
+
+                string exePath = App.GetOwnExePath();
+                var psi = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = $"--trim {driveLetter}",
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    bool exited = proc.WaitForExit(35000);
+                    if (!exited)
+                    {
+                        try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                        return (false, false, isAr ? "انتهت مهلة تشغيل TRIM." : "TRIM operation timed out.");
+                    }
+
+                    if (proc.ExitCode == 0)
+                    {
+                        return (true, false, isAr ? $"تم تنشيط الـ SSD للقرص {driveLetter}: بنجاح" : $"SSD {driveLetter}: TRIM complete");
+                    }
+                    return (false, false, isAr ? $"فشل تنشيط TRIM (رمز الخطأ: {proc.ExitCode})" : $"TRIM failed (Exit code: {proc.ExitCode})");
+                }
+            }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                return (false, true, isAr ? "تم إلغاء إذن المسؤول (UAC)." : "Administrator elevation (UAC) cancelled.");
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                return (false, false, ex.Message);
+            }
+            return (false, false, isAr ? "تعذر تشغيل عملية TRIM بصلاحيات المسؤول." : "Unable to execute elevated TRIM.");
+        }
+
         public CleanupScanSummary ScanAllCaches()
         {
             var summary = new CleanupScanSummary();

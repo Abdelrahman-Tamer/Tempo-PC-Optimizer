@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.IO;
@@ -166,6 +167,70 @@ namespace Tempo
                 catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
                     Environment.Exit(20);
+                }
+            }
+            else if (command.Equals("--trim", StringComparison.OrdinalIgnoreCase))
+            {
+                if (args.Length != 2)
+                {
+                    Environment.Exit(11); // Invalid argument count
+                }
+
+                string letter = args[1].Trim().TrimEnd(':', '\\', '/').ToUpperInvariant();
+                if (letter.Length != 1 || letter[0] < 'A' || letter[0] > 'Z')
+                {
+                    Environment.Exit(12); // Invalid drive letter
+                }
+
+                try
+                {
+                    var dInfo = new DriveInfo(letter);
+                    if (dInfo.DriveType != DriveType.Fixed)
+                    {
+                        Environment.Exit(12); // Non-fixed drive rejected
+                    }
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Environment.Exit(12);
+                }
+
+                try
+                {
+                    string defragExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "defrag.exe");
+                    if (!File.Exists(defragExe))
+                    {
+                        Environment.Exit(13);
+                    }
+
+                    var defragPsi = new ProcessStartInfo
+                    {
+                        FileName = defragExe,
+                        Arguments = $"{letter}: /L",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    using var proc = Process.Start(defragPsi);
+                    if (proc == null)
+                    {
+                        Environment.Exit(13);
+                    }
+
+                    bool exited = proc.WaitForExit(30000);
+                    if (!exited)
+                    {
+                        try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                        Environment.Exit(14); // 30s timeout watchdog triggered
+                    }
+
+                    Environment.Exit(proc.ExitCode == 0 ? 0 : proc.ExitCode);
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Environment.Exit(13);
                 }
             }
 
@@ -382,7 +447,8 @@ namespace Tempo
             {
                 string firstArg = e.Args[0];
                 if (firstArg.Equals("--set-approved", StringComparison.OrdinalIgnoreCase) ||
-                    firstArg.Equals("--measure-boot", StringComparison.OrdinalIgnoreCase))
+                    firstArg.Equals("--measure-boot", StringComparison.OrdinalIgnoreCase) ||
+                    firstArg.Equals("--trim", StringComparison.OrdinalIgnoreCase))
                 {
                     HandleElevatedChildCommand(e.Args);
                     return;
