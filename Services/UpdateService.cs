@@ -47,7 +47,7 @@ namespace Tempo.Services
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
             }
-            return new Version(2, 2, 5);
+            return new Version(2, 2, 6);
         }
 
         public async Task<UpdateInfo?> CheckForUpdatesAsync(bool force = false)

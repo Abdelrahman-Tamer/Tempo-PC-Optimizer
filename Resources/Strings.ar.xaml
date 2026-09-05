@@ -122,6 +122,13 @@
     <system:String x:Key="BtnModalUpdateNow">تحديث الآن</system:String>
     <system:String x:Key="BtnModalRemindLater">لاحقاً</system:String>
     <system:String x:Key="BtnModalSkipVersion">تخطي هذا الإصدار</system:String>
+    <system:String x:Key="BtnModalViewDetails">التفاصيل الكاملة على GitHub</system:String>
+    <system:String x:Key="UpdateGroupChanges">التغييرات</system:String>
+    <system:String x:Key="UpdateGroupImprovements">التحسينات</system:String>
+    <system:String x:Key="UpdateGroupFixes">الإصلاحات</system:String>
+    <system:String x:Key="UpdateVagueChange">استخدام يومي أكثر سلاسة</system:String>
+    <system:String x:Key="UpdateVagueImprovement">أداء أكثر ثباتا</system:String>
+    <system:String x:Key="UpdateVagueFix">تحسينات وإصلاحات عامة</system:String>
 
     <!-- Punchy Short Toasts & Statuses (المختصر المفيد) -->
     <system:String x:Key="TxtActionCompleted">تم بنجاح</system:String>

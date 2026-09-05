@@ -122,6 +122,13 @@
     <system:String x:Key="BtnModalUpdateNow">Update Now</system:String>
     <system:String x:Key="BtnModalRemindLater">Later</system:String>
     <system:String x:Key="BtnModalSkipVersion">Skip Version</system:String>
+    <system:String x:Key="BtnModalViewDetails">Full details on GitHub</system:String>
+    <system:String x:Key="UpdateGroupChanges">Changes</system:String>
+    <system:String x:Key="UpdateGroupImprovements">Improvements</system:String>
+    <system:String x:Key="UpdateGroupFixes">Fixes</system:String>
+    <system:String x:Key="UpdateVagueChange">Smoother daily use</system:String>
+    <system:String x:Key="UpdateVagueImprovement">More reliable performance</system:String>
+    <system:String x:Key="UpdateVagueFix">General fixes and polish</system:String>
 
     <!-- Punchy Short Toasts & Statuses -->
     <system:String x:Key="TxtActionCompleted">Done</system:String>

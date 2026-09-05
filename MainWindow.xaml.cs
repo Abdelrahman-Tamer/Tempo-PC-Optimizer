@@ -18,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Security;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Tempo.Services;
 using Tempo.Models;
 
@@ -151,7 +152,8 @@ namespace Tempo
 
         private const double DashboardWidth = 440.0;
         private const double DashboardHeight = 700.0;
-        private const double BarWidthH = 570.0;
+        // BarWidthH: Expanded to 630 (612px usable interior vs ~594px required when Temp + Update indicators are visible)
+        private const double BarWidthH = 630.0;
         private const double BarHeightH = 42.0;
         private const double BarWidthV = 34.0;
         private const double BarHeightV = 315.0;
@@ -264,6 +266,8 @@ namespace Tempo
 
             // 7. Apply Language & Layout Alignment (English Default or Saved Language)
             ApplyLanguageUi(_selectedLanguage);
+
+
         }
 
         private void LoadAppIconAndLogos()
@@ -2107,6 +2111,7 @@ namespace Tempo
             }
         }
 
+
         private void ShowUpdateModal()
         {
             if (_availableUpdate == null) return;
@@ -2119,6 +2124,60 @@ namespace Tempo
             PanelUpdateActions.IsEnabled = true;
 
             UpdateModalOverlay.Visibility = Visibility.Visible;
+        }
+
+        private static readonly Regex DenylistRegex = new(
+            @"(\.exe\b|SHA-?256|https?://|runas|--set-approved|--measure-boot|--trim|watchdog|AllowUnsafeBlocks|0x06|IsSafePath|\bUAC\b|\bTRIM\b|\bWCAG\b)",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        private enum UpdateCategory { Changes, Improvements, Fixes }
+
+        private static bool IsWhatsNewSectionHeader(string line)
+        {
+            string lower = line.ToLowerInvariant();
+            return lower.Contains("what's new") ||
+                   lower.Contains("what is new") ||
+                   lower.Contains("الجديد") ||
+                   lower.Contains("highlights") ||
+                   lower.Contains("changelog");
+        }
+
+        private static bool IsIgnoredSectionHeader(string line)
+        {
+            string lower = line.ToLowerInvariant();
+            return lower.Contains("checksum") ||
+                   lower.Contains("requirement") ||
+                   lower.Contains("installation") ||
+                   lower.Contains("sha256") ||
+                   lower.Contains("security notes") ||
+                   lower.Contains("download") ||
+                   lower.Contains("virustotal");
+        }
+
+        private static UpdateCategory ClassifyBullet(string text)
+        {
+            string lower = text.ToLowerInvariant();
+
+            // Fixes: fix/leak/crash/bug/issue/error/prevent/solve/إصلاح/معالجة/تسريب
+            if (lower.Contains("fix") || lower.Contains("leak") || lower.Contains("crash") ||
+                lower.Contains("bug") || lower.Contains("issue") || lower.Contains("error") ||
+                lower.Contains("prevent") || lower.Contains("solve") ||
+                lower.Contains("إصلاح") || lower.Contains("معالجة") || lower.Contains("تسريب"))
+            {
+                return UpdateCategory.Fixes;
+            }
+
+            // Improvements: improve/optimize/perf/speed/faster/enhanc/boost/polish/clean/تحسين/أداء/تسريع
+            if (lower.Contains("improve") || lower.Contains("optimize") || lower.Contains("perf") ||
+                lower.Contains("speed") || lower.Contains("faster") || lower.Contains("enhanc") ||
+                lower.Contains("boost") || lower.Contains("polish") || lower.Contains("clean") ||
+                lower.Contains("تحسين") || lower.Contains("أداء") || lower.Contains("تسريع"))
+            {
+                return UpdateCategory.Improvements;
+            }
+
+            // Changes: default + add/new/change/update/support/feature/إضافة/ميزة/تغيير
+            return UpdateCategory.Changes;
         }
 
         internal static string FormatReleaseHighlights(string? rawNotes)
@@ -2136,12 +2195,43 @@ namespace Tempo
                                 .Where(l => !string.IsNullOrWhiteSpace(l))
                                 .ToList();
 
-            var bulletPoints = new List<string>();
+            bool hasWhatsNew = lines.Any(l => l.StartsWith("#") && IsWhatsNewSectionHeader(l));
+            bool inTargetSection = !hasWhatsNew;
+
+            var changesBucket = new List<string>();
+            var improvementsBucket = new List<string>();
+            var fixesBucket = new List<string>();
 
             foreach (var line in lines)
             {
-                // Skip markdown headers (#, ##, ###) or divider lines (---, ===)
-                if (line.StartsWith("#") || line.StartsWith("---") || line.StartsWith("===") || line.StartsWith("```"))
+                if (line.StartsWith("#"))
+                {
+                    if (IsWhatsNewSectionHeader(line))
+                    {
+                        inTargetSection = true;
+                        continue;
+                    }
+                    else if (hasWhatsNew && inTargetSection)
+                    {
+                        inTargetSection = false;
+                        continue;
+                    }
+                    else if (IsIgnoredSectionHeader(line))
+                    {
+                        inTargetSection = false;
+                        continue;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+
+                if (!inTargetSection)
+                    continue;
+
+                // Skip divider lines or code blocks
+                if (line.StartsWith("---") || line.StartsWith("===") || line.StartsWith("```"))
                     continue;
 
                 // Skip technical hash / URL lines
@@ -2164,20 +2254,65 @@ namespace Tempo
                 cleaned = cleaned.Replace("**", "").Replace("__", "");
 
                 // Strip markdown links [Title](URL) -> Title
-                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\[([^\]]+)\]\([^\)]+\)", "$1");
+                cleaned = Regex.Replace(cleaned, @"\[([^\]]+)\]\([^\)]+\)", "$1");
 
                 // Strip GitHub PR/commit references like (#12) or by @user
-                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*\(#[0-9]+\)", "");
-                cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\s*by\s+@[a-zA-Z0-9_-]+", "");
+                cleaned = Regex.Replace(cleaned, @"\s*\(#[0-9]+\)", "");
+                cleaned = Regex.Replace(cleaned, @"\s*by\s+@[a-zA-Z0-9_-]+", "");
 
-                if (!string.IsNullOrWhiteSpace(cleaned) && cleaned.Length >= 4)
+                if (string.IsNullOrWhiteSpace(cleaned) || cleaned.Length < 4)
+                    continue;
+
+                var category = ClassifyBullet(cleaned);
+                bool isDenylisted = DenylistRegex.IsMatch(cleaned);
+
+                string bulletText;
+                if (isDenylisted)
                 {
-                    bulletPoints.Add($"• {cleaned}");
-                    if (bulletPoints.Count >= 5) break; // Keep concise (up to 5 points)
+                    bulletText = category switch
+                    {
+                        UpdateCategory.Fixes => LocalizationManager.GetString("UpdateVagueFix", isAr ? "تحسينات وإصلاحات عامة" : "General fixes and polish"),
+                        UpdateCategory.Improvements => LocalizationManager.GetString("UpdateVagueImprovement", isAr ? "أداء أكثر ثباتا" : "More reliable performance"),
+                        _ => LocalizationManager.GetString("UpdateVagueChange", isAr ? "استخدام يومي أكثر سلاسة" : "Smoother daily use")
+                    };
+                }
+                else
+                {
+                    bulletText = cleaned;
+                }
+
+                var targetBucket = category switch
+                {
+                    UpdateCategory.Fixes => fixesBucket,
+                    UpdateCategory.Improvements => improvementsBucket,
+                    _ => changesBucket
+                };
+
+                if (!targetBucket.Any(b => string.Equals(b, bulletText, StringComparison.OrdinalIgnoreCase)))
+                {
+                    targetBucket.Add(bulletText);
                 }
             }
 
-            if (bulletPoints.Count == 0)
+            var changes = changesBucket.Take(2).ToList();
+            var improvements = improvementsBucket.Take(2).ToList();
+            var fixes = fixesBucket.Take(2).ToList();
+
+            var sections = new List<string>();
+
+            void AddSection(string headingKey, string fallbackEn, string fallbackAr, List<string> items)
+            {
+                if (items.Count == 0) return;
+                string heading = LocalizationManager.GetString(headingKey, isAr ? fallbackAr : fallbackEn);
+                string bullets = string.Join("\n", items.Select(item => $"• {item}"));
+                sections.Add($"{heading}:\n{bullets}");
+            }
+
+            AddSection("UpdateGroupChanges", "Changes", "التغييرات", changes);
+            AddSection("UpdateGroupImprovements", "Improvements", "التحسينات", improvements);
+            AddSection("UpdateGroupFixes", "Fixes", "الإصلاحات", fixes);
+
+            if (sections.Count == 0)
             {
                 string snippet = rawNotes.Trim();
                 if (snippet.Length > 200) snippet = snippet.Substring(0, 197) + "...";
@@ -2186,7 +2321,8 @@ namespace Tempo
                     : $"No release notes provided.\n\n{snippet}";
             }
 
-            return string.Join("\n\n", bulletPoints);
+            string tailText = LocalizationManager.GetString("BtnModalViewDetails", isAr ? "التفاصيل الكاملة على GitHub" : "Full details on GitHub");
+            return string.Join("\n\n", sections) + $"\n\n{tailText}";
         }
 
         private void BtnCloseUpdateModal_Click(object sender, RoutedEventArgs e)
@@ -2215,6 +2351,30 @@ namespace Tempo
 
                 TxtSettingsUpdateBadge.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم تخطي التحديث" : "Version Skipped";
                 TxtSettingsUpdateBadge.Foreground = (Brush)FindResource("TextMuted");
+            }
+        }
+
+        private void BtnModalViewDetails_Click(object sender, RoutedEventArgs e)
+        {
+            string rawTag = _availableUpdate?.LatestVersion?.Trim() ?? "";
+            string cleanTag = rawTag.TrimStart('v', 'V');
+            string url = !string.IsNullOrEmpty(cleanTag)
+                ? $"https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/tag/v{cleanTag}"
+                : "https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/latest";
+
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
+            {
+                LogError("OpenUpdateDetailsUrl", ex);
+                bool isAr = LocalizationManager.CurrentLanguage == "ar";
+                ShowToast(isAr ? $"تعذر فتح الرابط: {ex.Message}" : $"Could not open link: {ex.Message}", true);
             }
         }
 
