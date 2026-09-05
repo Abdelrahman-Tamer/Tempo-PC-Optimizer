@@ -8,8 +8,8 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>13</LangVersion>
-    <!-- AllowUnsafeBlocks: Required for high-performance memory queries and native interop with MEMORYSTATUSEX structures -->
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- AllowUnsafeBlocks: Disabled for security; zero unsafe code required -->
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <!-- Code Signing: Not yet configured. See docs/SIGNING.md for the Authenticode roadmap and CI/CD signing draft. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>

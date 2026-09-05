@@ -115,6 +115,11 @@ namespace Tempo
                         Environment.Exit(12); // Invalid bytes length
                     }
 
+                    if (bytes[0] == 0x06)
+                    {
+                        Environment.Exit(12); // Cannot forge or force system-managed status
+                    }
+
                     var allowedSubKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     {
                         @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
@@ -128,6 +133,16 @@ namespace Tempo
                     }
 
                     using var hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+                    using var existingKey = hklm64.OpenSubKey(subPath, false);
+                    if (existingKey != null)
+                    {
+                        var existingVal = existingKey.GetValue(appName);
+                        if (existingVal is byte[] existingBytes && existingBytes.Length > 0 && existingBytes[0] == 0x06)
+                        {
+                            Environment.Exit(12); // System managed app protected from modification
+                        }
+                    }
+
                     using var key = hklm64.CreateSubKey(subPath, true);
                     if (key != null)
                     {
@@ -306,12 +321,16 @@ namespace Tempo
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem");
-                foreach (ManagementObject mo in searcher.Get())
+                using var coll = searcher.Get();
+                foreach (ManagementObject mo in coll)
                 {
-                    if (mo["LastBootUpTime"] is string bStr)
+                    using (mo)
                     {
-                        bootId = ManagementDateTimeConverter.ToDateTime(bStr).ToUniversalTime().ToString("o");
-                        break;
+                        if (mo["LastBootUpTime"] is string bStr)
+                        {
+                            bootId = ManagementDateTimeConverter.ToDateTime(bStr).ToUniversalTime().ToString("o");
+                            break;
+                        }
                     }
                 }
             }

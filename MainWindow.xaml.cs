@@ -752,7 +752,8 @@ namespace Tempo
             }
             if (TxtCpuClockTemp != null)
             {
-                TxtCpuClockTemp.Text = cpuTemp.HasValue ? $"{cpuTemp.Value:F0}°C | {cpuClock:F2} GHz" : $"{cpuClock:F2} GHz";
+                string clockStr = cpuClock > 0.05f ? $"{cpuClock:F2} GHz" : "--";
+                TxtCpuClockTemp.Text = cpuTemp.HasValue ? $"{cpuTemp.Value:F0}°C | {clockStr}" : clockStr;
             }
 
             // Overview Tab: RAM with Threshold Warnings (>85% Alert, 65-85% Warning)
@@ -1068,11 +1069,18 @@ namespace Tempo
             });
         }
 
+        private static string GetSystemTool(string toolName)
+        {
+            string sysDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            string fullPath = Path.Combine(sysDir, toolName);
+            return File.Exists(fullPath) ? fullPath : toolName;
+        }
+
         private void LaunchTool_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is string toolKey)
             {
-                string cmd = toolKey switch
+                string toolFileName = toolKey switch
                 {
                     "taskmgr" => "taskmgr.exe",
                     "diskmgmt" => "diskmgmt.msc",
@@ -1082,6 +1090,7 @@ namespace Tempo
                     "ncpa" => "ncpa.cpl",
                     _ => ""
                 };
+                string cmd = !string.IsNullOrEmpty(toolFileName) ? GetSystemTool(toolFileName) : "";
 
                 bool isAr = (LocalizationManager.CurrentLanguage == "ar");
                 string toolName = toolKey switch
@@ -1119,7 +1128,7 @@ namespace Tempo
             catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
             {
                 LogError("OpenStartupSettingsFallback", ex);
-                try { Process.Start(new ProcessStartInfo("taskmgr.exe") { UseShellExecute = true }); }
+                try { Process.Start(new ProcessStartInfo(GetSystemTool("taskmgr.exe")) { UseShellExecute = true }); }
                 catch (Exception ex2) when (ex2 is Win32Exception or InvalidOperationException) { ShowToast((LocalizationManager.CurrentLanguage == "ar") ? $"تعذر فتح إعدادات بدء التشغيل: {ex2.Message}" : $"Unable to open Startup Settings: {ex2.Message}", true); }
             }
         }
@@ -2098,8 +2107,8 @@ namespace Tempo
             if (string.IsNullOrWhiteSpace(rawNotes))
             {
                 return isAr
-                    ? "• تحسين سرعة استجابة واستقرار التطبيق.\n\n• إضافة كبسولات لمراقبة القرص والشبكة المزدوجة في شريط المهام.\n\n• زيادة دقة فحص برامج بدء التشغيل ومستوى الحماية."
-                    : "• Enhanced application responsiveness and system stability.\n\n• Added real-time SSD storage and dual-speed network pods to toolbar.\n\n• Improved startup apps accuracy and Windows security detection.";
+                    ? "لا توجد ملاحظات إصدار متوفرة لهذا التحديث."
+                    : "No release notes provided for this update.";
             }
 
             var lines = rawNotes.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
@@ -2116,8 +2125,9 @@ namespace Tempo
                     continue;
 
                 // Skip technical hash / URL lines
-                if (line.Contains("SHA256", StringComparison.OrdinalIgnoreCase) ||
-                    line.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                if (line.Contains("SHA256", StringComparison.OrdinalIgnoreCase) && (line.StartsWith("SHA256", StringComparison.OrdinalIgnoreCase) || line.Contains("SHA256:")))
+                    continue;
+                if (line.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
                     line.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
                     continue;
 
@@ -2149,9 +2159,11 @@ namespace Tempo
 
             if (bulletPoints.Count == 0)
             {
+                string snippet = rawNotes.Trim();
+                if (snippet.Length > 200) snippet = snippet.Substring(0, 197) + "...";
                 return isAr
-                    ? "• تحسين سرعة استجابة واستقرار التطبيق.\n\n• إضافة كبسولات لمراقبة القرص والشبكة المزدوجة في شريط المهام.\n\n• زيادة دقة فحص برامج بدء التشغيل ومستوى الحماية."
-                    : "• Enhanced application responsiveness and system stability.\n\n• Added real-time SSD storage and dual-speed network pods to toolbar.\n\n• Improved startup apps accuracy and Windows security detection.";
+                    ? $"لا توجد ملاحظات إصدار متوفرة.\n\n{snippet}"
+                    : $"No release notes provided.\n\n{snippet}";
             }
 
             return string.Join("\n\n", bulletPoints);
