@@ -119,6 +119,17 @@ namespace Tempo.Services
                     return false;
                 }
 
+                // Forbidden source / project directory segments (e.g. .git, .vs)
+                var segments = fullPath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var segment in segments)
+                {
+                    if (segment.Equals(".git", StringComparison.OrdinalIgnoreCase) ||
+                        segment.Equals(".vs", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return false;
+                    }
+                }
+
                 return true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SecurityException or ArgumentException)
@@ -929,7 +940,7 @@ namespace Tempo.Services
             }
         }
 
-        private static string? ResolveSignedDotnet()
+        internal static string? ResolveSignedDotnet()
         {
             var primaryCandidates = new List<string>();
 

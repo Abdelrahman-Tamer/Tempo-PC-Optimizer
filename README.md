@@ -141,13 +141,13 @@ dotnet publish Tempo.csproj -c Release -r win-x64 --self-contained false -o publ
 
 | API / Behaviour | Purpose | Safeguards |
 | :--- | :--- | :--- |
-| `EmptyWorkingSet` (psapi.dll) | Flushes inactive process working sets to free physical RAM | 31+ Windows system processes excluded (svchost, csrss, lsass, dwm …), foreground window skipped, >40 MB threshold, max 10 processes per cycle |
-| `-EncodedCommand` (PowerShell) | Passes scripts to PowerShell as Base64 UTF-16LE | **Injection hardening, not evasion** — all dynamic inputs (registry paths, app names, byte arrays) are individually Base64-encoded before interpolation to prevent shell injection |
+| `EmptyWorkingSet` (psapi.dll) | Flushes inactive process working sets to free physical RAM | 37 Windows system processes excluded (svchost, csrss, lsass, dwm …), foreground window skipped, >40 MB threshold, max 10 processes per cycle |
+| Native Self-Elevation (`--set-approved`, `--measure-boot`, `--trim`) | Elevated operations dispatched via own executable (`runas`) | **Zero external scripting** — PowerShell completely retired. Direct child process handlers with strict parameter validation, Base64 encoding, and process tree watchdogs |
 | `HKCU\…\Run` write | "Start with Windows" checkbox | User-initiated only, HKCU scope (no admin), deleted on uncheck |
 | `HKLM\StartupApproved` toggle | Enable/disable existing startup apps | Task Manager feature parity — toggles existing entries only, never creates new ones; system-managed entries (0x06) rejected; HKLM write requires UAC consent |
-| `Process.Kill()` | Timeout watchdogs + user-initiated end-task | Child-process-only for cleanup timeouts (5–30 s); user end-task guarded by 31+ protected process names |
+| `Process.Kill()` | Timeout watchdogs + user-initiated end-task | Child-process-only for cleanup timeouts (5–30 s); user end-task guarded by 58 protected process names |
 | Update installer launch (`runas`) | Applies downloaded update | 5-gate chain: HTTPS-only → `.exe`-only → mandatory SHA256 from GitHub release → random temp filename → post-download `CryptographicOperations.FixedTimeEquals` verify |
-| `AllowUnsafeBlocks` | `GlobalMemoryStatusEx` interop (kernel32.dll) | Single 31-line struct file (`Models/NativeInterop.cs`); no manual buffer manipulation |
+| `AllowUnsafeBlocks: false` | Safe memory queries | Completely disabled across solution; 100% managed safe C# with zero unsafe blocks |
 
 ### Code Signing Status
 

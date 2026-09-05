@@ -23,6 +23,7 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <!-- WFO0003: NotifyIcon DPI awareness warnings; CS0104: Ambiguity between System.Windows and System.Windows.Forms resolved via aliases; NU1510: EventLog package pruning in net10.0-windows -->
     <NoWarn>WFO0003;CS0104;NU1510</NoWarn>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Tempo.Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -53,6 +54,10 @@
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.11" />
     <PackageReference Include="System.Management" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tempo.Tests" />
   </ItemGroup>
 
 </Project>

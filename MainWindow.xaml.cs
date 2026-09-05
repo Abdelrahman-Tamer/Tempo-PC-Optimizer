@@ -2121,7 +2121,7 @@ namespace Tempo
             UpdateModalOverlay.Visibility = Visibility.Visible;
         }
 
-        private static string FormatReleaseHighlights(string? rawNotes)
+        internal static string FormatReleaseHighlights(string? rawNotes)
         {
             bool isAr = LocalizationManager.CurrentLanguage == "ar";
             if (string.IsNullOrWhiteSpace(rawNotes))
