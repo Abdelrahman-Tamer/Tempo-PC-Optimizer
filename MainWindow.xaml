@@ -1283,7 +1283,7 @@
                                             <!-- Chip 2: Est. Total Boot -->
                                             <Border Grid.Column="1" Background="#161922" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6" Padding="8,6" Margin="2,0,2,0">
                                                 <StackPanel>
-                                                    <TextBlock Text="{DynamicResource TxtEstBootTimeLabel}" Foreground="{StaticResource TextMuted}" FontSize="9"/>
+                                                    <TextBlock Text="{DynamicResource BootLastDuration}" Foreground="{StaticResource TextMuted}" FontSize="9"/>
                                                     <TextBlock x:Name="TxtTotalBootVal" Text="--" Foreground="{StaticResource TextPrimary}" FontSize="13" FontWeight="Bold" Margin="0,2,0,0" FontFamily="Consolas, monospace"/>
                                                 </StackPanel>
                                             </Border>
@@ -1295,6 +1295,16 @@
                                                     <TextBlock x:Name="TxtAppsDelayVal" Text="--" Foreground="{StaticResource AmberWarn}" FontSize="13" FontWeight="Bold" Margin="0,2,0,0" FontFamily="Consolas, monospace"/>
                                                 </StackPanel>
                                             </Border>
+                                        </Grid>
+
+                                        <!-- 4th Row: Boot At & Uptime Telemetry -->
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock x:Name="TxtBootAt" Text="--" Foreground="{StaticResource TextSecondary}" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" x:Name="TxtBootUptime" Text="--" Foreground="{StaticResource TextMuted}" FontSize="10" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         </Grid>
 
                                         <!-- Tier 2: Real Boot Measurement (Requires Admin) -->

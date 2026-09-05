@@ -1545,7 +1545,7 @@ namespace Tempo.Services
 
                 string json = File.ReadAllText(targetPath);
                 var cache = JsonSerializer.Deserialize<BootMeasureCache>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-                if (cache != null && cache.Timestamp > DateTime.UtcNow.AddDays(-14))
+                if (cache != null)
                 {
                     return cache;
                 }
@@ -1585,13 +1585,23 @@ namespace Tempo.Services
                 if (pwrKey != null)
                 {
                     var fwVal = pwrKey.GetValue("FwPOSTTime");
+                    double? val = null;
                     if (fwVal is int fwInt && fwInt > 0)
                     {
-                        info.BiosTimeSeconds = Math.Round(fwInt / 1000.0, 1);
+                        val = Math.Round(fwInt / 1000.0, 1);
                     }
                     else if (fwVal is long fwLong && fwLong > 0)
                     {
-                        info.BiosTimeSeconds = Math.Round(fwLong / 1000.0, 1);
+                        val = Math.Round(fwLong / 1000.0, 1);
+                    }
+
+                    if (val.HasValue && val.Value >= 0.0 && val.Value <= 120.0)
+                    {
+                        info.BiosTimeSeconds = val.Value;
+                    }
+                    else
+                    {
+                        info.BiosTimeSeconds = null;
                     }
                 }
             }
@@ -1651,7 +1661,11 @@ namespace Tempo.Services
                                 string val = xml.Substring(start + 1, end - start - 1);
                                 if (long.TryParse(val, out long ms) && ms > 0)
                                 {
-                                    unprivilegedMainPathSeconds = Math.Round(ms / 1000.0, 1);
+                                    double sec = Math.Round(ms / 1000.0, 1);
+                                    if (sec >= 0.0 && sec <= 600.0)
+                                    {
+                                        unprivilegedMainPathSeconds = sec;
+                                    }
                                 }
                             }
                         }
@@ -1671,9 +1685,34 @@ namespace Tempo.Services
             if (cache != null)
             {
                 info.IsMeasured = true;
+
+                // Staleness check:
+                // Stale if:
+                // 1. cache is older than 14 days
+                // 2. cache timestamp < LastBootUpTime (system rebooted since last measurement)
+                // 3. BootId is missing or doesn't match current boot session
+                bool isStale = false;
+                if (cache.Timestamp < DateTime.UtcNow.AddDays(-14))
+                {
+                    isStale = true;
+                }
+                else if (info.LastBootUpTime.HasValue && cache.Timestamp < info.LastBootUpTime.Value)
+                {
+                    isStale = true;
+                }
+                else if (string.IsNullOrEmpty(cache.BootId) || (info.LastBootUpTime.HasValue && !string.Equals(cache.BootId, info.LastBootUpTime.Value.ToUniversalTime().ToString("o"), StringComparison.OrdinalIgnoreCase)))
+                {
+                    isStale = true;
+                }
+                info.IsCacheStale = isStale;
+
                 if (cache.MainPathBootMs > 0)
                 {
-                    info.MainPathBootSeconds = Math.Round(cache.MainPathBootMs / 1000.0, 1);
+                    double sec = Math.Round(cache.MainPathBootMs / 1000.0, 1);
+                    if (sec >= 0.0 && sec <= 600.0)
+                    {
+                        info.MainPathBootSeconds = sec;
+                    }
                 }
                 else if (unprivilegedMainPathSeconds.HasValue)
                 {
@@ -1708,8 +1747,14 @@ namespace Tempo.Services
             else
             {
                 info.IsMeasured = false;
+                info.IsCacheStale = false;
                 info.MainPathBootSeconds = unprivilegedMainPathSeconds;
                 info.ActiveAppsDelaySeconds = null;
+            }
+
+            if (info.MainPathBootSeconds.HasValue && (info.MainPathBootSeconds.Value < 0.0 || info.MainPathBootSeconds.Value > 600.0))
+            {
+                info.MainPathBootSeconds = null;
             }
 
             if (info.IsMeasured && info.MainPathBootSeconds.HasValue)
