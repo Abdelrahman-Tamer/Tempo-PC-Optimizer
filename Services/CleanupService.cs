@@ -997,7 +997,13 @@ namespace Tempo.Services
         public CleanupResult SsdReTrim(string driveLetter = "C")
         {
             var result = new CleanupResult { ActionName = "SSD Re-Trim" };
-            driveLetter = (string.IsNullOrWhiteSpace(driveLetter) ? "C" : driveLetter).Trim().TrimEnd(':', '\\', '/').ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(driveLetter))
+            {
+                result.Success = false;
+                result.Message = (LocalizationManager.CurrentLanguage == "ar") ? "حرف القرص غير صالح." : "Invalid drive letter.";
+                return result;
+            }
+            driveLetter = driveLetter.Trim().TrimEnd(':', '\\', '/').ToUpperInvariant();
 
             if (driveLetter.Length != 1 || driveLetter[0] < 'A' || driveLetter[0] > 'Z')
             {
@@ -1063,62 +1069,35 @@ namespace Tempo.Services
                                     : $"SSD {driveLetter}: TRIM complete";
                                 return result;
                             }
+                            else
+                            {
+                                string combinedErr = !string.IsNullOrWhiteSpace(defragErr) ? defragErr : defragOut;
+                                if (combinedErr.Contains("40001") || combinedErr.Contains("Access denied", StringComparison.OrdinalIgnoreCase) || combinedErr.Contains("0x89000024"))
+                                {
+                                    result.Success = false;
+                                    result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                                        ? $"يتطلب تشغيل TRIM على القرص {driveLetter}: تشغيل التطبيق بصلاحيات مسؤول النظام (Administrator)."
+                                        : $"Running TRIM on drive {driveLetter}: requires Administrator privileges.";
+                                }
+                                else
+                                {
+                                    result.Success = false;
+                                    result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                                        ? $"تعذر إكمال TRIM على القرص {driveLetter}: {combinedErr.Trim()}"
+                                        : $"Unable to complete TRIM on drive {driveLetter}: {combinedErr.Trim()}";
+                                }
+                                return result;
+                            }
                         }
                     }
                 }
-
-                // Engine 2: PowerShell Storage Provider Fallback
-                var psPsi = new ProcessStartInfo
+                else
                 {
-                    FileName = "powershell.exe",
-                    Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"Optimize-Volume -DriveLetter {driveLetter} -ReTrim -Verbose 2>&1\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (var psProc = Process.Start(psPsi))
-                {
-                    if (psProc != null)
-                    {
-                        var psOutTask = psProc.StandardOutput.ReadToEndAsync();
-                        var psErrTask = psProc.StandardError.ReadToEndAsync();
-                        bool psExited = psProc.WaitForExit(30000);
-                        if (!psExited)
-                        {
-                            try { psProc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
-                        }
-                        string psOut = psOutTask.GetAwaiter().GetResult();
-                        string psErr = psErrTask.GetAwaiter().GetResult();
-
-                        if (psExited && psProc.ExitCode == 0)
-                        {
-                            result.Success = true;
-                            result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                                    ? $"تم تنشيط الـ SSD للقرص {driveLetter}: بنجاح"
-                                    : $"SSD {driveLetter}: TRIM complete";
-                            return result;
-                        }
-                        else
-                        {
-                            string combinedErr = !string.IsNullOrWhiteSpace(psErr) ? psErr : psOut;
-                            if (combinedErr.Contains("40001") || combinedErr.Contains("Access denied", StringComparison.OrdinalIgnoreCase) || combinedErr.Contains("0x89000024"))
-                            {
-                                result.Success = false;
-                                result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                                    ? $"يتطلب تشغيل TRIM على القرص {driveLetter}: تشغيل التطبيق بصلاحيات مسؤول النظام (Administrator)."
-                                    : $"Running TRIM on drive {driveLetter}: requires Administrator privileges.";
-                            }
-                            else
-                            {
-                                result.Success = false;
-                                result.Message = (LocalizationManager.CurrentLanguage == "ar")
-                                    ? $"تعذر إكمال TRIM على القرص {driveLetter}: {combinedErr.Trim()}"
-                                    : $"Unable to complete TRIM on drive {driveLetter}: {combinedErr.Trim()}";
-                            }
-                        }
-                    }
+                    result.Success = false;
+                    result.Message = (LocalizationManager.CurrentLanguage == "ar")
+                        ? $"تعذر إكمال TRIM على القرص {driveLetter}: defrag.exe not found"
+                        : $"Unable to complete TRIM on drive {driveLetter}: defrag.exe not found";
+                    return result;
                 }
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
