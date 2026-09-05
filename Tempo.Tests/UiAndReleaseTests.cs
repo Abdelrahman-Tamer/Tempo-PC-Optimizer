@@ -148,6 +148,29 @@ https://example.com/download
         }
 
         [Fact]
+        public void FormatReleaseHighlights_HandlesRealReleaseBodyV227()
+        {
+            string bodyPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "dist", "RELEASE-BODY-v2.2.7.md"));
+            if (File.Exists(bodyPath))
+            {
+                string rawBody = File.ReadAllText(bodyPath);
+                string formattedEn = MainWindow.FormatReleaseHighlights(rawBody);
+
+                Assert.False(string.IsNullOrWhiteSpace(formattedEn));
+                Assert.DoesNotContain("SHA256", formattedEn, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain("https://", formattedEn, StringComparison.OrdinalIgnoreCase);
+                Assert.DoesNotContain(".exe", formattedEn, StringComparison.OrdinalIgnoreCase);
+
+                // Cap enforced: at most 6 bullets total
+                int bullets = formattedEn.Split('\n').Count(l => l.Trim().StartsWith("• "));
+                Assert.InRange(bullets, 1, 6);
+
+                // Tail present
+                Assert.Contains("Full details on GitHub", formattedEn);
+            }
+        }
+
+        [Fact]
         public void FormatReleaseHighlights_ExtractsSnippetWhenNoBulletsPresent()
         {
             string headersAndUrlsOnly = "# Release v2.2.5\n## Security Updates\nhttps://github.com/repo/releases";
@@ -159,17 +182,17 @@ https://example.com/download
         }
 
         [Fact]
-        public void UpdateInfo_CurrentVersion_IsVersion226()
+        public void UpdateInfo_CurrentVersion_IsVersion227()
         {
             var updateInfo = new UpdateInfo();
-            Assert.Equal("2.2.6", updateInfo.CurrentVersion);
+            Assert.Equal("2.2.7", updateInfo.CurrentVersion);
         }
 
         [Fact]
-        public void UpdateService_GetCurrentVersion_Matches226()
+        public void UpdateService_GetCurrentVersion_Matches227()
         {
             var version = UpdateService.GetCurrentVersion();
-            Assert.Equal(new Version(2, 2, 6), version);
+            Assert.Equal(new Version(2, 2, 7), version);
         }
 
         [Fact]
@@ -180,5 +203,37 @@ https://example.com/download
             double width = (double)field.GetValue(null)!;
             Assert.Equal(630.0, width);
         }
+
+        [Fact]
+        public void HardwareMonitor_GetStorageMetricsWithDriveType_ResolvesReadyDrives()
+        {
+            var hw = new HardwareMonitorService();
+            var drives = hw.GetStorageMetricsWithDriveType();
+            Assert.NotNull(drives);
+            Assert.NotEmpty(drives);
+            foreach (var d in drives)
+            {
+                Assert.False(string.IsNullOrWhiteSpace(d.DriveLetter));
+                Assert.True(d.TotalGb > 0);
+            }
+            var cDrive = drives.FirstOrDefault(d => d.DriveLetter.StartsWith("C", StringComparison.OrdinalIgnoreCase));
+            Assert.NotNull(cDrive);
+            Assert.Equal("SSD", cDrive.MediaType);
+        }
+
+        [Fact]
+        public void HardwareMonitor_GetStartupAppsAndBootPerformance_DoesNotThrow()
+        {
+            var hw = new HardwareMonitorService();
+            var apps = hw.GetStartupApps();
+            Assert.NotNull(apps);
+            Assert.NotEmpty(apps);
+            var boot = hw.GetBootPerformanceInfo(apps);
+            Assert.NotNull(boot);
+            Assert.True(boot.BiosTimeSeconds.HasValue);
+            Assert.True(boot.Uptime.HasValue);
+            Assert.True(boot.LastBootUpTime.HasValue);
+        }
     }
 }
+

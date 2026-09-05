@@ -4,6 +4,15 @@ All notable changes to the **Tempo PC Optimizer** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.7] - 2026-09-06
+
+### Fixed & Improved
+- **WMI Runtime Assembly Resolution**: Resolved an issue where published standalone builds packaged an abstract reference assembly (`System.Management.dll`, 74 KB) in the application root, throwing `PlatformNotSupportedException` on Windows and causing SSD media detection, BIOS post time, uptime, and startup apps telemetry to fail. Enforced automated MSBuild deployment of the native Windows runtime assembly (314 KB) into the publish output.
+- **Physical Drive Media Detection**: Fixed SSD/HDD partition mapping to validate proper letter drive identifiers (`C`, `D`), preventing null partition pointers from corrupting the media type lookup and correctly restoring the `SSD` badge for all storage drives.
+- **Startup Apps & Boot Telemetry Resilience**: Hardened background boot performance loading with comprehensive exception guards (`when (ex is not OutOfMemoryException)` and task-level error logging), preventing background worker termination and ensuring startup applications and boot time metrics are displayed reliably.
+
+---
+
 ## [2.2.6] - 2026-09-06
 
 ### UI & Layout Polish

@@ -697,9 +697,10 @@ namespace Tempo.Services
                             {
                                 string diskNum = part["DiskNumber"]?.ToString() ?? "";
                                 string driveLetter = part["DriveLetter"]?.ToString() ?? "";
-                                if (!string.IsNullOrEmpty(driveLetter) && diskTypes.TryGetValue(diskNum, out string? mediaType))
+                                driveLetter = driveLetter.Trim().TrimEnd(':');
+                                if (!string.IsNullOrEmpty(driveLetter) && char.IsLetter(driveLetter[0]) && diskTypes.TryGetValue(diskNum, out string? mediaType))
                                 {
-                                    _cachedDiskMediaMap[driveLetter.TrimEnd(':').ToUpperInvariant()] = mediaType!;
+                                    _cachedDiskMediaMap[driveLetter.ToUpperInvariant()] = mediaType!;
                                 }
                             }
                         }
@@ -1672,7 +1673,7 @@ namespace Tempo.Services
                     }
                 }
             }
-            catch (Exception ex) when (ex is ManagementException or UnauthorizedAccessException or COMException)
+            catch (Exception ex) when (ex is not OutOfMemoryException)
             {
                 Log($"GetBootPerformanceInfo WMI LastBootUpTime read failed: {ex.Message}", "DEBUG");
             }

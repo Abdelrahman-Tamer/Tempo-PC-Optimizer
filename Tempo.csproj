@@ -17,9 +17,9 @@
     <Product>Tempo PC Optimizer</Product>
     <Company>Eng. Abdelrahman Emam</Company>
     <Authors>Eng. Abdelrahman Emam</Authors>
-    <Version>2.2.6</Version>
-    <AssemblyVersion>2.2.6.0</AssemblyVersion>
-    <FileVersion>2.2.6.0</FileVersion>
+    <Version>2.2.7</Version>
+    <AssemblyVersion>2.2.7.0</AssemblyVersion>
+    <FileVersion>2.2.7.0</FileVersion>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <!-- WFO0003: NotifyIcon DPI awareness warnings; CS0104: Ambiguity between System.Windows and System.Windows.Forms resolved via aliases; NU1510: EventLog package pruning in net10.0-windows -->
     <NoWarn>WFO0003;CS0104;NU1510</NoWarn>
@@ -36,6 +36,11 @@
       <_UnwantedPdb Include="$(PublishDir)*.pdb" />
     </ItemGroup>
     <Delete Files="@(_UnwantedPdb)" />
+    <!-- Ensure Windows-specific System.Management.dll overrides any generic reference stub in the publish root -->
+    <Copy SourceFiles="$(PublishDir)runtimes\win\lib\net10.0\System.Management.dll" 
+          DestinationFolder="$(PublishDir)" 
+          Condition="Exists('$(PublishDir)runtimes\win\lib\net10.0\System.Management.dll')" 
+          OverwriteReadOnlyFiles="true" />
     <Exec Command="powershell -NoProfile -Command &quot;if (Test-Path '$(PublishDir)runtimes') { Get-ChildItem '$(PublishDir)runtimes' -Directory | Where-Object { $_.Name -notmatch '^win' } | Remove-Item -Recurse -Force }&quot;" />
   </Target>
 

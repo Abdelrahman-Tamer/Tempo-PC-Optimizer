@@ -916,114 +916,121 @@ namespace Tempo
         {
             Task.Run(() =>
             {
-                var apps = _hardwareMonitor.GetStartupApps();
-                var boot = _hardwareMonitor.GetBootPerformanceInfo(apps);
-
-                Dispatcher.InvokeAsync(() =>
+                try
                 {
-                    var securityApps = apps.Where(a => a.IsSecurityApp)
-                        .OrderByDescending(a => a.IsEnabled)
-                        .ThenByDescending(a => a.Impact)
-                        .ThenBy(a => a.DisplayName)
-                        .ToList();
+                    var apps = _hardwareMonitor.GetStartupApps();
+                    var boot = _hardwareMonitor.GetBootPerformanceInfo(apps);
 
-                    var regularApps = apps.Where(a => !a.IsSecurityApp)
-                        .OrderByDescending(a => a.IsEnabled)
-                        .ThenByDescending(a => a.Impact)
-                        .ThenBy(a => a.DisplayName)
-                        .ToList();
-
-                    if (ListStartupSecurityApps != null) ListStartupSecurityApps.ItemsSource = securityApps;
-                    if (ListStartupRegularApps != null) ListStartupRegularApps.ItemsSource = regularApps;
-
-                    int enabledCount = apps.Count(a => a.IsEnabled);
-                    string countFormat = LocalizationManager.GetString(
-                        "StartupActiveCountFormat",
-                        LocalizationManager.CurrentLanguage == "ar" ? "{0} مفعّل" : "{0} Active");
-                    try
+                    Dispatcher.InvokeAsync(() =>
                     {
-                        TxtRecStartupCount.Text = System.Text.RegularExpressions.Regex.IsMatch(countFormat, @"\{\s*1[\s,:]")
-                            ? string.Format(countFormat, enabledCount, boot.ActiveAppsDelaySeconds ?? 0)
-                            : string.Format(countFormat, enabledCount);
-                    }
-                    catch (FormatException)
-                    {
-                        TxtRecStartupCount.Text = string.Format(LocalizationManager.CurrentLanguage == "ar" ? "{0} مفعّل" : "{0} Active", enabledCount);
-                    }
+                        var securityApps = apps.Where(a => a.IsSecurityApp)
+                            .OrderByDescending(a => a.IsEnabled)
+                            .ThenByDescending(a => a.Impact)
+                            .ThenBy(a => a.DisplayName)
+                            .ToList();
 
-                    if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count(a => a.IsEnabled)}/{securityApps.Count}";
-                    if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count(a => a.IsEnabled)}/{regularApps.Count}";
+                        var regularApps = apps.Where(a => !a.IsSecurityApp)
+                            .OrderByDescending(a => a.IsEnabled)
+                            .ThenByDescending(a => a.Impact)
+                            .ThenBy(a => a.DisplayName)
+                            .ToList();
 
-                    // Populate Boot Diagnostics Pod
-                    if (TxtBiosTimeVal != null) TxtBiosTimeVal.Text = boot.BiosTimeSeconds.HasValue ? $"{boot.BiosTimeSeconds.Value.ToString("F1", CultureInfo.InvariantCulture)}s" : "--";
-                    if (TxtTotalBootVal != null) TxtTotalBootVal.Text = boot.MainPathBootSeconds.HasValue ? $"{boot.MainPathBootSeconds.Value.ToString("F1", CultureInfo.InvariantCulture)}s" : "--";
-                    if (TxtAppsDelayVal != null) TxtAppsDelayVal.Text = (boot.IsMeasured && boot.ActiveAppsDelaySeconds.HasValue) ? $"+{boot.ActiveAppsDelaySeconds.Value.ToString("F1", CultureInfo.InvariantCulture)}s" : "--";
-                    if (TxtBootAt != null) TxtBootAt.Text = boot.LastBootUpTime.HasValue ? string.Format(LocalizationManager.GetString("BootAtFormat", LocalizationManager.CurrentLanguage == "ar" ? "تم الإقلاع في {0}" : "Booted at {0}"), boot.LastBootUpTime.Value.ToString("g")) : "--";
-                    if (TxtBootUptime != null) TxtBootUptime.Text = boot.Uptime.HasValue ? string.Format(LocalizationManager.GetString("BootUptimeFormat", LocalizationManager.CurrentLanguage == "ar" ? "وقت التشغيل: {0}" : "Uptime: {0}"), $"{(int)boot.Uptime.Value.TotalHours}h {boot.Uptime.Value.Minutes}m") : "--";
+                        if (ListStartupSecurityApps != null) ListStartupSecurityApps.ItemsSource = securityApps;
+                        if (ListStartupRegularApps != null) ListStartupRegularApps.ItemsSource = regularApps;
 
-                    if (boot.IsMeasured && !string.IsNullOrWhiteSpace(boot.RatingText))
-                    {
-                        if (boot.IsCacheStale)
+                        int enabledCount = apps.Count(a => a.IsEnabled);
+                        string countFormat = LocalizationManager.GetString(
+                            "StartupActiveCountFormat",
+                            LocalizationManager.CurrentLanguage == "ar" ? "{0} مفعّل" : "{0} Active");
+                        try
                         {
-                            if (TxtBootRating != null)
+                            TxtRecStartupCount.Text = System.Text.RegularExpressions.Regex.IsMatch(countFormat, @"\{\s*1[\s,:]")
+                                ? string.Format(countFormat, enabledCount, boot.ActiveAppsDelaySeconds ?? 0)
+                                : string.Format(countFormat, enabledCount);
+                        }
+                        catch (FormatException)
+                        {
+                            TxtRecStartupCount.Text = string.Format(LocalizationManager.CurrentLanguage == "ar" ? "{0} مفعّل" : "{0} Active", enabledCount);
+                        }
+
+                        if (TxtSecurityAppsCount != null) TxtSecurityAppsCount.Text = $"{securityApps.Count(a => a.IsEnabled)}/{securityApps.Count}";
+                        if (TxtRegularAppsCount != null) TxtRegularAppsCount.Text = $"{regularApps.Count(a => a.IsEnabled)}/{regularApps.Count}";
+
+                        // Populate Boot Diagnostics Pod
+                        if (TxtBiosTimeVal != null) TxtBiosTimeVal.Text = boot.BiosTimeSeconds.HasValue ? $"{boot.BiosTimeSeconds.Value.ToString("F1", CultureInfo.InvariantCulture)}s" : "--";
+                        if (TxtTotalBootVal != null) TxtTotalBootVal.Text = boot.MainPathBootSeconds.HasValue ? $"{boot.MainPathBootSeconds.Value.ToString("F1", CultureInfo.InvariantCulture)}s" : "--";
+                        if (TxtAppsDelayVal != null) TxtAppsDelayVal.Text = (boot.IsMeasured && boot.ActiveAppsDelaySeconds.HasValue) ? $"+{boot.ActiveAppsDelaySeconds.Value.ToString("F1", CultureInfo.InvariantCulture)}s" : "--";
+                        if (TxtBootAt != null) TxtBootAt.Text = boot.LastBootUpTime.HasValue ? string.Format(LocalizationManager.GetString("BootAtFormat", LocalizationManager.CurrentLanguage == "ar" ? "تم الإقلاع في {0}" : "Booted at {0}"), boot.LastBootUpTime.Value.ToString("g")) : "--";
+                        if (TxtBootUptime != null) TxtBootUptime.Text = boot.Uptime.HasValue ? string.Format(LocalizationManager.GetString("BootUptimeFormat", LocalizationManager.CurrentLanguage == "ar" ? "وقت التشغيل: {0}" : "Uptime: {0}"), $"{(int)boot.Uptime.Value.TotalHours}h {boot.Uptime.Value.Minutes}m") : "--";
+
+                        if (boot.IsMeasured && !string.IsNullOrWhiteSpace(boot.RatingText))
+                        {
+                            if (boot.IsCacheStale)
                             {
-                                TxtBootRating.Text = $"{boot.RatingText}*";
-                                TxtBootRating.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // AmberWarn
+                                if (TxtBootRating != null)
+                                {
+                                    TxtBootRating.Text = $"{boot.RatingText}*";
+                                    TxtBootRating.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)); // AmberWarn
+                                }
+                                if (BadgeBootRating != null)
+                                {
+                                    BadgeBootRating.Background = new SolidColorBrush(Color.FromArgb(0x20, 0xF5, 0x9E, 0x0B));
+                                    BadgeBootRating.BorderBrush = new SolidColorBrush(Color.FromArgb(0x50, 0xF5, 0x9E, 0x0B));
+                                    BadgeBootRating.ToolTip = LocalizationManager.GetString("BootStaleWarning", LocalizationManager.CurrentLanguage == "ar" ? "القياس من جلسة إقلاع سابقة" : "Measurement is from a previous boot session");
+                                }
                             }
-                            if (BadgeBootRating != null)
+                            else
                             {
-                                BadgeBootRating.Background = new SolidColorBrush(Color.FromArgb(0x20, 0xF5, 0x9E, 0x0B));
-                                BadgeBootRating.BorderBrush = new SolidColorBrush(Color.FromArgb(0x50, 0xF5, 0x9E, 0x0B));
-                                BadgeBootRating.ToolTip = LocalizationManager.GetString("BootStaleWarning", LocalizationManager.CurrentLanguage == "ar" ? "القياس من جلسة إقلاع سابقة" : "Measurement is from a previous boot session");
+                                if (TxtBootRating != null)
+                                {
+                                    TxtBootRating.Text = boot.RatingText;
+                                    TxtBootRating.Foreground = (boot.Rating == "Slow")
+                                        ? new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)) // RedError
+                                        : (boot.Rating == "Moderate")
+                                            ? new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)) // AmberWarn
+                                            : new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)); // TealHealth
+                                }
+                                if (BadgeBootRating != null)
+                                {
+                                    Color ratingColor = (boot.Rating == "Slow")
+                                        ? Color.FromRgb(0xEF, 0x44, 0x44)
+                                        : (boot.Rating == "Moderate")
+                                            ? Color.FromRgb(0xF5, 0x9E, 0x0B)
+                                            : Color.FromRgb(0x10, 0xB9, 0x81);
+                                    BadgeBootRating.Background = new SolidColorBrush(Color.FromArgb(0x20, ratingColor.R, ratingColor.G, ratingColor.B));
+                                    BadgeBootRating.BorderBrush = new SolidColorBrush(Color.FromArgb(0x50, ratingColor.R, ratingColor.G, ratingColor.B));
+                                    BadgeBootRating.ToolTip = LocalizationManager.GetString("BootMeasured", LocalizationManager.CurrentLanguage == "ar" ? "مقاس فعلياً" : "Measured");
+                                }
                             }
                         }
                         else
                         {
                             if (TxtBootRating != null)
                             {
-                                TxtBootRating.Text = boot.RatingText;
-                                TxtBootRating.Foreground = (boot.Rating == "Slow")
-                                    ? new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44)) // RedError
-                                    : (boot.Rating == "Moderate")
-                                        ? new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B)) // AmberWarn
-                                        : new SolidColorBrush(Color.FromRgb(0x10, 0xB9, 0x81)); // TealHealth
+                                TxtBootRating.Text = LocalizationManager.GetString("BootNA", LocalizationManager.CurrentLanguage == "ar" ? "غير متوفر" : "N/A");
+                                TxtBootRating.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8)); // TextMuted
                             }
                             if (BadgeBootRating != null)
                             {
-                                Color ratingColor = (boot.Rating == "Slow")
-                                    ? Color.FromRgb(0xEF, 0x44, 0x44)
-                                    : (boot.Rating == "Moderate")
-                                        ? Color.FromRgb(0xF5, 0x9E, 0x0B)
-                                        : Color.FromRgb(0x10, 0xB9, 0x81);
-                                BadgeBootRating.Background = new SolidColorBrush(Color.FromArgb(0x20, ratingColor.R, ratingColor.G, ratingColor.B));
-                                BadgeBootRating.BorderBrush = new SolidColorBrush(Color.FromArgb(0x50, ratingColor.R, ratingColor.G, ratingColor.B));
-                                BadgeBootRating.ToolTip = LocalizationManager.GetString("BootMeasured", LocalizationManager.CurrentLanguage == "ar" ? "مقاس فعلياً" : "Measured");
+                                BadgeBootRating.Background = new SolidColorBrush(Color.FromArgb(0x20, 0x64, 0x74, 0x8B));
+                                BadgeBootRating.BorderBrush = new SolidColorBrush(Color.FromArgb(0x50, 0x64, 0x74, 0x8B));
+                                BadgeBootRating.ToolTip = null;
                             }
                         }
-                    }
-                    else
-                    {
-                        if (TxtBootRating != null)
-                        {
-                            TxtBootRating.Text = LocalizationManager.GetString("BootNA", LocalizationManager.CurrentLanguage == "ar" ? "غير متوفر" : "N/A");
-                            TxtBootRating.Foreground = new SolidColorBrush(Color.FromRgb(0x94, 0xA3, 0xB8)); // TextMuted
-                        }
-                        if (BadgeBootRating != null)
-                        {
-                            BadgeBootRating.Background = new SolidColorBrush(Color.FromArgb(0x20, 0x64, 0x74, 0x8B));
-                            BadgeBootRating.BorderBrush = new SolidColorBrush(Color.FromArgb(0x50, 0x64, 0x74, 0x8B));
-                            BadgeBootRating.ToolTip = null;
-                        }
-                    }
 
-                    if (TxtBootTip != null) TxtBootTip.Text = boot.Recommendation;
+                        if (TxtBootTip != null) TxtBootTip.Text = boot.Recommendation;
 
-                    // Initialize Start With Windows checkbox
-                    if (ChkStartWithWindows != null)
-                    {
-                        ChkStartWithWindows.IsChecked = HardwareMonitorService.IsRunAtStartupEnabled();
-                    }
-                });
+                        // Initialize Start With Windows checkbox
+                        if (ChkStartWithWindows != null)
+                        {
+                            ChkStartWithWindows.IsChecked = HardwareMonitorService.IsRunAtStartupEnabled();
+                        }
+                    });
+                }
+                catch (Exception ex)
+                {
+                    LogError("LoadStartupApps", ex);
+                }
             });
         }
 
