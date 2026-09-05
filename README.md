@@ -93,13 +93,13 @@
 Verify downloaded binaries before execution via PowerShell:
 
 ```powershell
-Get-FileHash .\Tempo-Setup-v2.2.4.exe -Algorithm SHA256
+Get-FileHash .\Tempo-Setup-v2.2.5.exe -Algorithm SHA256
 ```
 
 | File | Expected SHA256 Checksum |
 | :--- | :--- |
-| `Tempo-Setup-v2.2.4.exe` | `5192abefec48f58e36e5e02c3d34216e7728f015ba65fe7c912e9c5922a7c6a4` |
-| `Tempo-v2.2.4-win-x64.zip` | `60f04fd290b337ecdf17a5c4f2f5b104aaaddd19764a2189a9a53c3a0c2e75b7` |
+| `Tempo-Setup-v2.2.5.exe` | `86d2fde147763dea7c81762d89ed7f4001147b99a4a0905fb2f1aae265bf614a` |
+| `Tempo-v2.2.5-win-x64.zip` | `6b5c1b1fbdf3c88c99a33faf1be79232cb77de3e043d4e1dd3918a536652bdec` |
 
 ---
 
@@ -141,13 +141,13 @@ dotnet publish Tempo.csproj -c Release -r win-x64 --self-contained false -o publ
 
 | API / Behaviour | Purpose | Safeguards |
 | :--- | :--- | :--- |
-| `EmptyWorkingSet` (psapi.dll) | Flushes inactive process working sets to free physical RAM | 31+ Windows system processes excluded (svchost, csrss, lsass, dwm …), foreground window skipped, >40 MB threshold, max 10 processes per cycle |
-| `-EncodedCommand` (PowerShell) | Passes scripts to PowerShell as Base64 UTF-16LE | **Injection hardening, not evasion** — all dynamic inputs (registry paths, app names, byte arrays) are individually Base64-encoded before interpolation to prevent shell injection |
+| `EmptyWorkingSet` (psapi.dll) | Flushes inactive process working sets to free physical RAM | 37 Windows system processes excluded (svchost, csrss, lsass, dwm …), foreground window skipped, >40 MB threshold, max 10 processes per cycle |
+| Native Self-Elevation (`--set-approved`, `--measure-boot`, `--trim`) | Elevated operations dispatched via own executable (`runas`) | **Zero external scripting** — PowerShell completely retired. Direct child process handlers with strict parameter validation, Base64 encoding, and process tree watchdogs |
 | `HKCU\…\Run` write | "Start with Windows" checkbox | User-initiated only, HKCU scope (no admin), deleted on uncheck |
 | `HKLM\StartupApproved` toggle | Enable/disable existing startup apps | Task Manager feature parity — toggles existing entries only, never creates new ones; system-managed entries (0x06) rejected; HKLM write requires UAC consent |
-| `Process.Kill()` | Timeout watchdogs + user-initiated end-task | Child-process-only for cleanup timeouts (5–30 s); user end-task guarded by 31+ protected process names |
+| `Process.Kill()` | Timeout watchdogs + user-initiated end-task | Child-process-only for cleanup timeouts (5–30 s); user end-task guarded by 58 protected process names |
 | Update installer launch (`runas`) | Applies downloaded update | 5-gate chain: HTTPS-only → `.exe`-only → mandatory SHA256 from GitHub release → random temp filename → post-download `CryptographicOperations.FixedTimeEquals` verify |
-| `AllowUnsafeBlocks` | `GlobalMemoryStatusEx` interop (kernel32.dll) | Single 31-line struct file (`Models/NativeInterop.cs`); no manual buffer manipulation |
+| `AllowUnsafeBlocks: false` | Safe memory queries | Completely disabled across solution; 100% managed safe C# with zero unsafe blocks |
 
 ### Code Signing Status
 

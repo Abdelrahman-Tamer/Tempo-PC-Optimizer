@@ -8,8 +8,8 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <LangVersion>13</LangVersion>
-    <!-- AllowUnsafeBlocks: Required for high-performance memory queries and native interop with MEMORYSTATUSEX structures -->
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- AllowUnsafeBlocks: Disabled for security; zero unsafe code required -->
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <!-- Code Signing: Not yet configured. See docs/SIGNING.md for the Authenticode roadmap and CI/CD signing draft. -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>app.ico</ApplicationIcon>
@@ -17,12 +17,13 @@
     <Product>Tempo PC Optimizer</Product>
     <Company>Eng. Abdelrahman Emam</Company>
     <Authors>Eng. Abdelrahman Emam</Authors>
-    <Version>2.2.4</Version>
-    <AssemblyVersion>2.2.4.0</AssemblyVersion>
-    <FileVersion>2.2.4.0</FileVersion>
+    <Version>2.2.5</Version>
+    <AssemblyVersion>2.2.5.0</AssemblyVersion>
+    <FileVersion>2.2.5.0</FileVersion>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <!-- WFO0003: NotifyIcon DPI awareness warnings; CS0104: Ambiguity between System.Windows and System.Windows.Forms resolved via aliases; NU1510: EventLog package pruning in net10.0-windows -->
     <NoWarn>WFO0003;CS0104;NU1510</NoWarn>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Tempo.Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -53,6 +54,10 @@
     <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <PackageReference Include="System.Diagnostics.EventLog" Version="10.0.11" />
     <PackageReference Include="System.Management" Version="10.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tempo.Tests" />
   </ItemGroup>
 
 </Project>

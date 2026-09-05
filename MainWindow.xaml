@@ -73,7 +73,7 @@
 
         <SolidColorBrush x:Key="TextPrimary" Color="#F1F5F9"/>
         <SolidColorBrush x:Key="TextSecondary" Color="#94A3B8"/>
-        <SolidColorBrush x:Key="TextMuted" Color="#64748B"/>
+        <SolidColorBrush x:Key="TextMuted" Color="#94A3B8"/>
 
         <!-- Window Control Buttons (─, ✕) -->
         <Style x:Key="WindowControlBtn" TargetType="Button">

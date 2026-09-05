@@ -4,6 +4,27 @@ All notable changes to the **Tempo PC Optimizer** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.5] - 2026-09-05
+
+### Security & Hardening
+- **Native Self-Elevation Engine**: Completely retired external PowerShell scripting in favor of native self-elevation (`runas`) via Tempo's own binary for `--set-approved`, `--measure-boot`, and `--trim <LETTER>` with strict argument validation and watchdog termination.
+- **Zero-Unsafe Memory Blocks**: Enforced `<AllowUnsafeBlocks>false</AllowUnsafeBlocks>` across the solution, ensuring 100% managed type safety.
+- **Startup Protection Guard**: Added detection for Windows-managed startup entries (`0x06` byte flag in HKCU and HKLM `StartupApproved`), safeguarding system-critical autostart items from tampering.
+- **Filesystem Traversal Protection**: Enhanced `IsSafePath` to strictly protect `.git` and `.vs` repository folders alongside system roots, drive roots, and personal user libraries.
+- **Strict Web Content Security Policy**: Extracted all inline scripts from `docs/index.html` into `docs/assets/app.js`, eliminated inline `onclick`/`onsubmit` event attributes, and tightened CSP `script-src` to `'self'` (dropped `'unsafe-inline'`).
+- **Uninstaller Safety Confirmation**: Modified Inno Setup uninstaller to explicitly ask the user before deleting `%APPDATA%\Tempo` configuration and logs, defaulting to preserving user data.
+
+### Added
+- **Automated Security Test Suite (`Tempo.Tests`)**: Added a dedicated xUnit test project targeting .NET 10.0-windows covering security path guards, 24-hour temp file cutoff, SHA-256 validation, startup protection logic, and process exclusion counts.
+- **Synchronized Security Counts**: Updated documentation and landing page to reflect 37 protected RAM processes and 58 protected task management processes.
+
+### Fixed & Improved
+- **WCAG 2.2 AA Contrast Compliance**: Enhanced muted text brush (`TextMuted`) in `MainWindow.xaml` to `#94A3B8`, achieving accessible contrast ratios (≥ 4.5:1) against dark backgrounds.
+- **WMI Resource Management**: Wrapped all WMI searcher queries across `App.xaml.cs` and `HardwareMonitorService.cs` in deterministic `using` scopes to prevent native COM collection leaks.
+- **Honest UI Telemetry Fallbacks**: Eliminated synthetic CPU clock fallbacks and fabricated release notes; UI displays honest `"--"` or structured notices when hardware sensors or release bullets are absent.
+
+---
+
 ## [2.2.4] - 2026-09-03
 
 ### Added

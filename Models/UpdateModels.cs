@@ -7,7 +7,7 @@ namespace Tempo.Models
     public class UpdateInfo
     {
         public bool IsUpdateAvailable { get; set; }
-        public string CurrentVersion { get; set; } = "2.2.0";
+        public string CurrentVersion { get; set; } = "2.2.5";
         public string LatestVersion { get; set; } = "";
         public string ReleaseName { get; set; } = "";
         public string ReleaseNotes { get; set; } = "";

@@ -408,7 +408,7 @@ namespace Tempo.Services
                 Log($"GetBaseCpuClockMhz failed: {ex.Message}", "DEBUG");
             }
 
-            _detectedCpuBaseClockMhz = 2600f;
+            _detectedCpuBaseClockMhz = 0f;
             return _detectedCpuBaseClockMhz;
         }
 
@@ -573,12 +573,16 @@ namespace Tempo.Services
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController");
-                foreach (ManagementObject mo in searcher.Get())
+                using var coll = searcher.Get();
+                foreach (ManagementObject mo in coll)
                 {
-                    string? name = mo["Name"]?.ToString();
-                    if (!string.IsNullOrWhiteSpace(name))
+                    using (mo)
                     {
-                        return (name, null, null, 0, 0);
+                        string? name = mo["Name"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(name))
+                        {
+                            return (name, null, null, 0, 0);
+                        }
                     }
                 }
             }
@@ -671,8 +675,8 @@ namespace Tempo.Services
                         using var diskSearcher = new ManagementObjectSearcher(
                             @"root\Microsoft\Windows\Storage",
                             "SELECT DeviceId, MediaType FROM MSFT_PhysicalDisk");
-
-                        foreach (ManagementObject disk in diskSearcher.Get())
+                        using var diskColl = diskSearcher.Get();
+                        foreach (ManagementObject disk in diskColl)
                         {
                             using (disk)
                             {
@@ -686,8 +690,8 @@ namespace Tempo.Services
                         using var partSearcher = new ManagementObjectSearcher(
                             @"root\Microsoft\Windows\Storage",
                             "SELECT DiskNumber, DriveLetter FROM MSFT_Partition WHERE DriveLetter IS NOT NULL");
-
-                        foreach (ManagementObject part in partSearcher.Get())
+                        using var partColl = partSearcher.Get();
+                        foreach (ManagementObject part in partColl)
                         {
                             using (part)
                             {
@@ -1340,6 +1344,12 @@ namespace Tempo.Services
 
         public bool ToggleStartupApp(StartupAppItem app)
         {
+            if (app.IsSystemManaged)
+            {
+                Log($"ToggleStartupApp blocked for system-managed app: {app.Name}", "WARN");
+                return false;
+            }
+
             try
             {
                 byte targetByte = app.IsEnabled ? (byte)0x03 : (byte)0x02; // 0x03 = Disabled, 0x02 = Enabled
@@ -1348,6 +1358,19 @@ namespace Tempo.Services
                 if (app.IsUserScope)
                 {
                     const string approvedPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+                    using (var readKey = Registry.CurrentUser.OpenSubKey(approvedPath, false))
+                    {
+                        if (readKey != null)
+                        {
+                            var val = readKey.GetValue(app.Name);
+                            if (val is byte[] b && b.Length > 0 && b[0] == 0x06)
+                            {
+                                Log($"ToggleStartupApp blocked for system-managed app (0x06 in HKCU): {app.Name}", "WARN");
+                                return false;
+                            }
+                        }
+                    }
+
                     using var approvedKey = Registry.CurrentUser.CreateSubKey(approvedPath, true);
                     if (approvedKey != null)
                     {
@@ -1363,6 +1386,20 @@ namespace Tempo.Services
                     string subPath = app.Location.Contains("32", StringComparison.OrdinalIgnoreCase)
                         ? @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run32"
                         : @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run";
+
+                    using (var hklm64Read = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64))
+                    using (var readKey = hklm64Read.OpenSubKey(subPath, false))
+                    {
+                        if (readKey != null)
+                        {
+                            var val = readKey.GetValue(app.Name);
+                            if (val is byte[] b && b.Length > 0 && b[0] == 0x06)
+                            {
+                                Log($"ToggleStartupApp blocked for system-managed app (0x06 in HKLM): {app.Name}", "WARN");
+                                return false;
+                            }
+                        }
+                    }
 
                     // Try direct registry write first
                     try
@@ -1412,7 +1449,7 @@ namespace Tempo.Services
                 if (string.IsNullOrWhiteSpace(appName) || appName.Any(char.IsControl))
                     return false;
 
-                if (bytes == null || bytes.Length != 12)
+                if (bytes == null || bytes.Length != 12 || bytes[0] == 0x06)
                     return false;
 
                 // Transfer all arguments as Base64 strings to prevent any shell/script command injection
@@ -1622,12 +1659,16 @@ namespace Tempo.Services
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem");
-                foreach (ManagementObject mo in searcher.Get())
+                using var coll = searcher.Get();
+                foreach (ManagementObject mo in coll)
                 {
-                    if (mo["LastBootUpTime"] is string bootStr)
+                    using (mo)
                     {
-                        info.LastBootUpTime = ManagementDateTimeConverter.ToDateTime(bootStr);
-                        break;
+                        if (mo["LastBootUpTime"] is string bootStr)
+                        {
+                            info.LastBootUpTime = ManagementDateTimeConverter.ToDateTime(bootStr);
+                            break;
+                        }
                     }
                 }
             }

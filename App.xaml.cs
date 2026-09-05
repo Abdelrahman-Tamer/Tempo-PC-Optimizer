@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.Eventing.Reader;
 using System.IO;
@@ -115,6 +116,11 @@ namespace Tempo
                         Environment.Exit(12); // Invalid bytes length
                     }
 
+                    if (bytes[0] == 0x06)
+                    {
+                        Environment.Exit(12); // Cannot forge or force system-managed status
+                    }
+
                     var allowedSubKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                     {
                         @"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run",
@@ -128,6 +134,16 @@ namespace Tempo
                     }
 
                     using var hklm64 = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry64);
+                    using var existingKey = hklm64.OpenSubKey(subPath, false);
+                    if (existingKey != null)
+                    {
+                        var existingVal = existingKey.GetValue(appName);
+                        if (existingVal is byte[] existingBytes && existingBytes.Length > 0 && existingBytes[0] == 0x06)
+                        {
+                            Environment.Exit(12); // System managed app protected from modification
+                        }
+                    }
+
                     using var key = hklm64.CreateSubKey(subPath, true);
                     if (key != null)
                     {
@@ -151,6 +167,70 @@ namespace Tempo
                 catch (Exception ex) when (ex is not OutOfMemoryException)
                 {
                     Environment.Exit(20);
+                }
+            }
+            else if (command.Equals("--trim", StringComparison.OrdinalIgnoreCase))
+            {
+                if (args.Length != 2)
+                {
+                    Environment.Exit(11); // Invalid argument count
+                }
+
+                string letter = args[1].Trim().TrimEnd(':', '\\', '/').ToUpperInvariant();
+                if (letter.Length != 1 || letter[0] < 'A' || letter[0] > 'Z')
+                {
+                    Environment.Exit(12); // Invalid drive letter
+                }
+
+                try
+                {
+                    var dInfo = new DriveInfo(letter);
+                    if (dInfo.DriveType != DriveType.Fixed)
+                    {
+                        Environment.Exit(12); // Non-fixed drive rejected
+                    }
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Environment.Exit(12);
+                }
+
+                try
+                {
+                    string defragExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "defrag.exe");
+                    if (!File.Exists(defragExe))
+                    {
+                        Environment.Exit(13);
+                    }
+
+                    var defragPsi = new ProcessStartInfo
+                    {
+                        FileName = defragExe,
+                        Arguments = $"{letter}: /L",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+
+                    using var proc = Process.Start(defragPsi);
+                    if (proc == null)
+                    {
+                        Environment.Exit(13);
+                    }
+
+                    bool exited = proc.WaitForExit(30000);
+                    if (!exited)
+                    {
+                        try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                        Environment.Exit(14); // 30s timeout watchdog triggered
+                    }
+
+                    Environment.Exit(proc.ExitCode == 0 ? 0 : proc.ExitCode);
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Environment.Exit(13);
                 }
             }
 
@@ -306,12 +386,16 @@ namespace Tempo
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT LastBootUpTime FROM Win32_OperatingSystem");
-                foreach (ManagementObject mo in searcher.Get())
+                using var coll = searcher.Get();
+                foreach (ManagementObject mo in coll)
                 {
-                    if (mo["LastBootUpTime"] is string bStr)
+                    using (mo)
                     {
-                        bootId = ManagementDateTimeConverter.ToDateTime(bStr).ToUniversalTime().ToString("o");
-                        break;
+                        if (mo["LastBootUpTime"] is string bStr)
+                        {
+                            bootId = ManagementDateTimeConverter.ToDateTime(bStr).ToUniversalTime().ToString("o");
+                            break;
+                        }
                     }
                 }
             }
@@ -363,7 +447,8 @@ namespace Tempo
             {
                 string firstArg = e.Args[0];
                 if (firstArg.Equals("--set-approved", StringComparison.OrdinalIgnoreCase) ||
-                    firstArg.Equals("--measure-boot", StringComparison.OrdinalIgnoreCase))
+                    firstArg.Equals("--measure-boot", StringComparison.OrdinalIgnoreCase) ||
+                    firstArg.Equals("--trim", StringComparison.OrdinalIgnoreCase))
                 {
                     HandleElevatedChildCommand(e.Args);
                     return;
