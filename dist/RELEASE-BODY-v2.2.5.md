@@ -16,9 +16,9 @@
 ### Cryptographic Checksums (SHA256)
 
 ```
-SHA256: b1250292cef86164ca31ff607542a2ff05332931d11e5e578793384d8922eaaf
-Tempo-Setup-v2.2.5.exe: b1250292cef86164ca31ff607542a2ff05332931d11e5e578793384d8922eaaf
-Tempo-v2.2.5-win-x64.zip: 95bf4ee639d4acb00d8bd5a60d74e12b89f1257cac5ade6cc3506ef1b76f4aad
+SHA256: 86d2fde147763dea7c81762d89ed7f4001147b99a4a0905fb2f1aae265bf614a
+Tempo-Setup-v2.2.5.exe: 86d2fde147763dea7c81762d89ed7f4001147b99a4a0905fb2f1aae265bf614a
+Tempo-v2.2.5-win-x64.zip: 6b5c1b1fbdf3c88c99a33faf1be79232cb77de3e043d4e1dd3918a536652bdec
 ```
 
 **Verify with PowerShell**:

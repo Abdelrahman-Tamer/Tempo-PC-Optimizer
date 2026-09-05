@@ -93,13 +93,13 @@
 Verify downloaded binaries before execution via PowerShell:
 
 ```powershell
-Get-FileHash .\Tempo-Setup-v2.2.4.exe -Algorithm SHA256
+Get-FileHash .\Tempo-Setup-v2.2.5.exe -Algorithm SHA256
 ```
 
 | File | Expected SHA256 Checksum |
 | :--- | :--- |
-| `Tempo-Setup-v2.2.4.exe` | `5192abefec48f58e36e5e02c3d34216e7728f015ba65fe7c912e9c5922a7c6a4` |
-| `Tempo-v2.2.4-win-x64.zip` | `60f04fd290b337ecdf17a5c4f2f5b104aaaddd19764a2189a9a53c3a0c2e75b7` |
+| `Tempo-Setup-v2.2.5.exe` | `86d2fde147763dea7c81762d89ed7f4001147b99a4a0905fb2f1aae265bf614a` |
+| `Tempo-v2.2.5-win-x64.zip` | `6b5c1b1fbdf3c88c99a33faf1be79232cb77de3e043d4e1dd3918a536652bdec` |
 
 ---
 
