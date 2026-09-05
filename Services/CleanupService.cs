@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using Tempo.Models;
 
 namespace Tempo.Services
@@ -794,25 +796,29 @@ namespace Tempo.Services
 
             try
             {
-                var psi = new ProcessStartInfo
+                string? resolvedDotnet = ResolveSignedDotnet();
+                if (!string.IsNullOrEmpty(resolvedDotnet))
                 {
-                    FileName = "dotnet",
-                    Arguments = "nuget locals http-cache --clear",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                using var proc = Process.Start(psi);
-                if (proc != null)
-                {
-                    if (!proc.WaitForExit(5000))
+                    var psi = new ProcessStartInfo
                     {
-                        try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                        FileName = resolvedDotnet,
+                        Arguments = "nuget locals http-cache --clear",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc != null)
+                    {
+                        if (!proc.WaitForExit(5000))
+                        {
+                            try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                        }
                     }
                 }
             }
-            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
+            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception or IOException or UnauthorizedAccessException or SecurityException or CryptographicException or FormatException)
             {
             }
 
@@ -823,6 +829,169 @@ namespace Tempo.Services
                 ? $"تم تنظيف كاش المطورين (\u200E{result.ReclaimedMb:F1} MB\u200E)"
                 : $"Developer cache cleaned (\u200E{result.ReclaimedMb:F1} MB\u200E)";
             return result;
+        }
+
+        private static bool IsSuspiciousOrUserWritablePath(string path)
+        {
+            try
+            {
+                string fullPath = Path.GetFullPath(path);
+                string temp = Path.GetTempPath();
+                if (!string.IsNullOrEmpty(temp) && fullPath.StartsWith(Path.GetFullPath(temp), StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                string? envTemp = Environment.GetEnvironmentVariable("TEMP");
+                if (!string.IsNullOrEmpty(envTemp) && fullPath.StartsWith(Path.GetFullPath(envTemp), StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                string? envTmp = Environment.GetEnvironmentVariable("TMP");
+                if (!string.IsNullOrEmpty(envTmp) && fullPath.StartsWith(Path.GetFullPath(envTmp), StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                if (fullPath.IndexOf(@"\Temp\", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    fullPath.IndexOf(@"\Tmp\", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return true;
+
+                return false;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                return true;
+            }
+        }
+
+        private static string? ValidateSignedDotnetCandidate(string candidate)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(candidate) || !File.Exists(candidate))
+                    return null;
+
+                if (IsSuspiciousOrUserWritablePath(candidate))
+                    return null;
+
+                string fullPath = Path.GetFullPath(candidate);
+
+#pragma warning disable SYSLIB0057
+                using var rawCert = X509Certificate.CreateFromSignedFile(fullPath);
+#pragma warning restore SYSLIB0057
+                using var cert = new X509Certificate2(rawCert);
+
+                bool hasMsSubjectOrIssuer =
+                    (cert.Subject?.Contains("Microsoft Corporation", StringComparison.OrdinalIgnoreCase) == true) ||
+                    (cert.Issuer?.Contains("Microsoft Corporation", StringComparison.OrdinalIgnoreCase) == true);
+
+                if (!hasMsSubjectOrIssuer)
+                    return null;
+
+                using var chain = new X509Chain();
+                chain.ChainPolicy.RevocationMode = X509RevocationMode.Offline;
+                chain.ChainPolicy.VerificationFlags = X509VerificationFlags.NoFlag;
+                bool chainOk = chain.Build(cert);
+
+                bool notTimeValid = false;
+                foreach (var status in chain.ChainStatus)
+                {
+                    if (status.Status.HasFlag(X509ChainStatusFlags.NotTimeValid))
+                    {
+                        notTimeValid = true;
+                        break;
+                    }
+                }
+                if (notTimeValid)
+                    return null;
+
+                if (!chainOk)
+                {
+                    bool hasMsInChain = false;
+                    foreach (var elem in chain.ChainElements)
+                    {
+                        if (elem.Certificate.Subject.Contains("Microsoft Corporation", StringComparison.OrdinalIgnoreCase) ||
+                            elem.Certificate.Issuer.Contains("Microsoft Corporation", StringComparison.OrdinalIgnoreCase))
+                        {
+                            hasMsInChain = true;
+                            break;
+                        }
+                    }
+                    if (!hasMsInChain)
+                        return null;
+                }
+
+                var fvi = FileVersionInfo.GetVersionInfo(fullPath);
+                if (!string.Equals(fvi.CompanyName, "Microsoft Corporation", StringComparison.OrdinalIgnoreCase))
+                    return null;
+
+                return fullPath;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                return null;
+            }
+        }
+
+        private static string? ResolveSignedDotnet()
+        {
+            var primaryCandidates = new List<string>();
+
+            string pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            if (!string.IsNullOrEmpty(pf))
+                primaryCandidates.Add(Path.Combine(pf, "dotnet", "dotnet.exe"));
+
+            string pfx86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            if (!string.IsNullOrEmpty(pfx86))
+                primaryCandidates.Add(Path.Combine(pfx86, "dotnet", "dotnet.exe"));
+
+            string? dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
+            if (!string.IsNullOrEmpty(dotnetRoot))
+                primaryCandidates.Add(Path.Combine(dotnetRoot, "dotnet.exe"));
+
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            if (!string.IsNullOrEmpty(localAppData))
+                primaryCandidates.Add(Path.Combine(localAppData, "Microsoft", "dotnet", "dotnet.exe"));
+
+            foreach (var candidate in primaryCandidates)
+            {
+                string? valid = ValidateSignedDotnetCandidate(candidate);
+                if (valid != null) return valid;
+            }
+
+            // where.exe via Path.Combine(SystemDirectory, "where.exe") LAST
+            try
+            {
+                string whereExe = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "where.exe");
+                if (File.Exists(whereExe))
+                {
+                    var psi = new ProcessStartInfo
+                    {
+                        FileName = whereExe,
+                        Arguments = "dotnet",
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var proc = Process.Start(psi);
+                    if (proc != null && proc.WaitForExit(1000))
+                    {
+                        string output = proc.StandardOutput.ReadToEnd();
+                        var lines = output.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (var line in lines)
+                        {
+                            string candidate = line.Trim();
+                            if (!string.IsNullOrEmpty(candidate) && candidate.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string? valid = ValidateSignedDotnetCandidate(candidate);
+                                if (valid != null) return valid;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+            }
+
+            return null;
         }
 
         public CleanupResult SsdReTrim(string driveLetter = "C")
