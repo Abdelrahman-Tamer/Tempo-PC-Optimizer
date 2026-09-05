@@ -4,6 +4,17 @@ All notable changes to the **Tempo PC Optimizer** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.6] - 2026-09-06
+
+### UI & Layout Polish
+- **Companion Toolbar Expansion & Dedicated Update Styling**: Expanded horizontal companion toolbar width to 630px to comfortably accommodate all hardware telemetry and dynamic indicators. Designed a dedicated circular update action style (`ToolbarUpdateBtn`) with vibrant emerald green `#10B981` background and isolated rendering to prevent visual cutoff.
+- **Update Progress Layout Separation**: Restructured update modal download progress panel with distinct two-column layout (`*` and `Auto`) and text trimming, preventing overlap between download status text and percentage indicator.
+- **Structured 2+2+2 Release Notes Categorization**: In-app update modal now organizes release highlights into structured categories (Changes, Improvements, Fixes) capped at 2 points each with denylist sanitization, eliminating technical clutter and jargon.
+- **GitHub Release Direct Link**: Added a clean "Full details on GitHub" ghost action link in the update modal for complete release changelog review.
+- **Bilingual Localization Sync**: Added localized strings across English and Arabic dictionaries for update groupings, sanitized categories, and GitHub release links.
+
+---
+
 ## [2.2.5] - 2026-09-05
 
 ### Security & Hardening
