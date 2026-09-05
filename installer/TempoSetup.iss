@@ -130,13 +130,22 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   AppDataDir: String;
+  MsgText: String;
 begin
   if CurUninstallStep = usPostUninstall then
   begin
     AppDataDir := ExpandConstant('{userappdata}\Tempo');
     if DirExists(AppDataDir) then
     begin
-      DelTree(AppDataDir, True, True, True);
+      if ActiveLanguage = 'arabic' then
+        MsgText := 'هل ترغب في حذف سجلات وبيانات تطبيق Tempo من مجلد AppData؟'
+      else
+        MsgText := 'Do you want to remove Tempo logs and application data from AppData?';
+
+      if MsgBox(MsgText, mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES then
+      begin
+        DelTree(AppDataDir, True, True, True);
+      end;
     end;
   end;
 end;
