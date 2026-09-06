@@ -19,6 +19,10 @@
 
   [**🌐 Official Website & Download Page**](https://abdelrahman-tamer.github.io/Tempo-PC-Optimizer/) • [**📦 Download Setup (.exe)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.7/Tempo-Setup-v2.2.7.exe) • [**🪶 Portable (.zip)**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.7/Tempo-v2.2.7-win-x64.zip) • [**🐛 Report an Issue**](https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/issues)
 
+  <br />
+
+  <sub>Free code signing provided by [SignPath.io](https://signpath.io/) / [SignPath Foundation](https://signpath.org/).</sub>
+
 </div>
 
 ---
