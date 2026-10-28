@@ -97,6 +97,10 @@ namespace Tempo.Services
         public ImageSource? IconSource { get; set; }
         public int MainPid { get; set; }
         public string MainPath { get; set; } = "";
+        public bool HasActiveWindow { get; set; } = false;
+        public string Monogram => !string.IsNullOrEmpty(DisplayName)
+            ? DisplayName.Substring(0, 1).ToUpperInvariant()
+            : (!string.IsNullOrEmpty(MainProcessName) ? MainProcessName.Substring(0, 1).ToUpperInvariant() : "A");
 
         // Tag string for End Task button (comma-separated process names)
         public string ProcessNamesTag => AssociatedProcesses.Count > 0
@@ -109,17 +113,17 @@ namespace Tempo.Services
             get
             {
                 bool isAr = LocalizationManager.CurrentLanguage == "ar";
-                string procText = AssociatedProcesses.Count > 1
-                    ? string.Join(", ", AssociatedProcesses)
-                    : MainProcessName;
+                string stateText = HasActiveWindow
+                    ? (isAr ? "نافذة نشطة" : "Active Window")
+                    : (isAr ? "يعمل في الخلفية" : "Background App");
 
                 if (InstanceCount > 1)
                 {
                     return isAr
-                        ? $"{InstanceCount} عمليات ({procText})"
-                        : $"{InstanceCount} processes ({procText})";
+                        ? $"{stateText} • {InstanceCount} عمليات"
+                        : $"{stateText} • {InstanceCount} processes";
                 }
-                return procText;
+                return stateText;
             }
         }
 
@@ -136,6 +140,9 @@ namespace Tempo.Services
         public bool IsEnabled { get; set; } = true;
         public StartupImpactLevel Impact { get; set; } = StartupImpactLevel.Low;
         public ImageSource? IconSource { get; set; }
+        public Visibility HasIconVisibility => IconSource != null ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility FallbackIconVisibility => IconSource == null ? Visibility.Visible : Visibility.Collapsed;
+        public string Monogram => !string.IsNullOrEmpty(Name) ? Name.Substring(0, 1).ToUpperInvariant() : "A";
         public bool IsUserScope => Location.Contains("HKCU", StringComparison.OrdinalIgnoreCase);
 
         public bool IsSystemManaged { get; set; } = false;
@@ -304,6 +311,8 @@ namespace Tempo.Services
         private long _lastNetSentBytes = -1;
         private DateTime _lastNetTime = DateTime.MinValue;
         private readonly object _netLock = new();
+        private NetworkInterface[]? _cachedNics = null; // Cached network interfaces (Fix 4)
+
         private static readonly object _logLock = new();
         private const long MaxLogSizeBytes = 5 * 1024 * 1024; // 5 MB rotation threshold
         private static readonly string _logFilePath = Path.Combine(
@@ -339,6 +348,7 @@ namespace Tempo.Services
         private static bool GlobalMemoryStatusEx(MEMORYSTATUSEX lpBuffer) => NativeMethods.GlobalMemoryStatusEx(lpBuffer);
 
         private volatile bool _isComputerOpen = false;
+        private string? _cachedGpuName = null; // Cached after first successful WMI GPU query (Fix 3)
 
         public HardwareMonitorService()
         {
@@ -570,6 +580,12 @@ namespace Tempo.Services
                 }
             }
 
+            // WMI fallback: only query once and cache the result (Fix 3)
+            if (_cachedGpuName != null)
+            {
+                return (_cachedGpuName, null, null, 0, 0);
+            }
+
             try
             {
                 using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_VideoController");
@@ -581,6 +597,7 @@ namespace Tempo.Services
                         string? name = mo["Name"]?.ToString();
                         if (!string.IsNullOrWhiteSpace(name))
                         {
+                            _cachedGpuName = name;
                             return (name, null, null, 0, 0);
                         }
                     }
@@ -602,9 +619,15 @@ namespace Tempo.Services
                 long currentRecv = 0;
                 long currentSent = 0;
                 DateTime now = DateTime.UtcNow;
+                bool needRefresh = false;
 
-                var nics = NetworkInterface.GetAllNetworkInterfaces();
-                foreach (var nic in nics)
+                // Use cached NICs to avoid the heavy OS call every 1.5s (Fix 4)
+                if (_cachedNics == null)
+                {
+                    _cachedNics = NetworkInterface.GetAllNetworkInterfaces();
+                }
+
+                foreach (var nic in _cachedNics)
                 {
                     if (nic.OperationalStatus == OperationalStatus.Up &&
                         nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)
@@ -617,9 +640,16 @@ namespace Tempo.Services
                         }
                         catch (Exception ex) when (ex is not OutOfMemoryException)
                         {
+                            // Adapter may have gone away — force a refresh next tick
+                            needRefresh = true;
                             Log($"Network interface stats query failed: {ex.Message}", "DEBUG");
                         }
                     }
+                }
+
+                if (needRefresh)
+                {
+                    _cachedNics = null;
                 }
 
                 double downKb = 0;
@@ -652,9 +682,251 @@ namespace Tempo.Services
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
+                _cachedNics = null; // Force refresh on next call after unexpected failure
                 Log($"GetNetworkMetrics failed: {ex.Message}", "DEBUG");
                 return (0, 0, "0.0 KB/s", "0.0 KB/s");
             }
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetSystemPowerStatus(out SYSTEM_POWER_STATUS lpSystemPowerStatus);
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SYSTEM_POWER_STATUS
+        {
+            public byte ACLineStatus;      // 0 = Offline, 1 = Online, 255 = Unknown
+            public byte BatteryFlag;       // 1 = High, 2 = Low, 4 = Critical, 8 = Charging, 128 = No battery, 255 = Unknown
+            public byte BatteryLifePercent;// 0..100, 255 = Unknown
+            public byte SystemStatusFlag;
+            public int BatteryLifeTime;
+            public int BatteryFullLifeTime;
+        }
+
+        private static string? _cachedCpuModelName = null;
+        public string GetCpuName()
+        {
+            if (_cachedCpuModelName != null) return _cachedCpuModelName;
+            try
+            {
+                if (_isComputerOpen)
+                {
+                    foreach (var hw in _computer.Hardware)
+                    {
+                        if (hw.HardwareType == HardwareType.Cpu && !string.IsNullOrWhiteSpace(hw.Name))
+                        {
+                            _cachedCpuModelName = CleanCpuName(hw.Name);
+                            return _cachedCpuModelName;
+                        }
+                    }
+                }
+
+                // Fallback: Registry
+                using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
+                string? regName = key?.GetValue("ProcessorNameString") as string;
+                if (!string.IsNullOrWhiteSpace(regName))
+                {
+                    _cachedCpuModelName = CleanCpuName(regName);
+                    return _cachedCpuModelName;
+                }
+            }
+            catch { }
+
+            _cachedCpuModelName = "Intel / AMD Processor";
+            return _cachedCpuModelName;
+        }
+
+        private static string CleanCpuName(string raw)
+        {
+            return raw.Replace("(R)", "")
+                      .Replace("(TM)", "")
+                      .Replace("CPU", "")
+                      .Replace("@", "")
+                      .Trim();
+        }
+
+        private static string? _cachedDeviceModel = null;
+        public string GetDeviceModel()
+        {
+            if (_cachedDeviceModel != null) return _cachedDeviceModel;
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Manufacturer, Model FROM Win32_ComputerSystem");
+                foreach (ManagementObject mo in searcher.Get())
+                {
+                    using (mo)
+                    {
+                        string mfg = (mo["Manufacturer"] as string ?? "").Trim();
+                        string model = (mo["Model"] as string ?? "").Trim();
+                        if (mfg.Contains("System manufacturer", StringComparison.OrdinalIgnoreCase)) mfg = "";
+                        if (model.Contains("System Product Name", StringComparison.OrdinalIgnoreCase)) model = "";
+
+                        string combined = string.IsNullOrEmpty(mfg) ? model : $"{mfg} {model}".Trim();
+                        if (!string.IsNullOrWhiteSpace(combined))
+                        {
+                            _cachedDeviceModel = combined.Replace("Dell Inc.", "Dell").Trim();
+                            return _cachedDeviceModel;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            _cachedDeviceModel = "Windows PC";
+            return _cachedDeviceModel;
+        }
+
+        private static string? _cachedRamSpecs = null;
+        public string GetRamHardwareSpecs()
+        {
+            if (_cachedRamSpecs != null) return _cachedRamSpecs;
+            try
+            {
+                long totalBytes = 0;
+                uint speed = 0;
+                uint smbiosType = 0;
+                int modulesCount = 0;
+
+                using var searcher = new ManagementObjectSearcher("SELECT Capacity, Speed, SMBIOSMemoryType FROM Win32_PhysicalMemory");
+                foreach (ManagementObject mo in searcher.Get())
+                {
+                    using (mo)
+                    {
+                        if (mo["Capacity"] != null && long.TryParse(mo["Capacity"].ToString(), out long cap))
+                        {
+                            totalBytes += cap;
+                            modulesCount++;
+                        }
+                        if (speed == 0 && mo["Speed"] != null && uint.TryParse(mo["Speed"].ToString(), out uint sp))
+                        {
+                            speed = sp;
+                        }
+                        if (smbiosType == 0 && mo["SMBIOSMemoryType"] != null && uint.TryParse(mo["SMBIOSMemoryType"].ToString(), out uint st))
+                        {
+                            smbiosType = st;
+                        }
+                    }
+                }
+
+                if (totalBytes > 0)
+                {
+                    double totalGb = Math.Round(totalBytes / (1024.0 * 1024.0 * 1024.0), 0);
+                    string typeStr = smbiosType switch
+                    {
+                        26 => "DDR4",
+                        34 => "DDR5",
+                        24 => "DDR3",
+                        _ => "RAM"
+                    };
+
+                    string speedStr = speed > 0 ? $" @ {speed} MHz" : "";
+                    string slotsStr = modulesCount > 1 ? $" • {modulesCount} Slots" : "";
+                    _cachedRamSpecs = $"{totalGb:F0} GB {typeStr}{speedStr}{slotsStr}";
+                    return _cachedRamSpecs;
+                }
+            }
+            catch { }
+
+            var (tot, _, _, _) = GetRamMetrics();
+            _cachedRamSpecs = $"{tot:F0} GB RAM";
+            return _cachedRamSpecs;
+        }
+
+        public string GetSystemUptimeFormatted()
+        {
+            var uptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            bool isAr = LocalizationManager.CurrentLanguage == "ar";
+
+            if (uptime.TotalDays >= 1)
+            {
+                int days = (int)uptime.TotalDays;
+                int hours = uptime.Hours;
+                return isAr
+                    ? (days == 1 ? $"يوم و {hours} س" : (days == 2 ? $"يومان و {hours} س" : $"{days} أيام و {hours} س"))
+                    : $"{days}d {hours}h {uptime.Minutes}m";
+            }
+            if (uptime.TotalHours >= 1)
+            {
+                return isAr
+                    ? $"{uptime.Hours} س و {uptime.Minutes} د"
+                    : $"{uptime.Hours}h {uptime.Minutes}m";
+            }
+            return isAr
+                ? $"{uptime.Minutes} دقيقة"
+                : $"{uptime.Minutes}m {uptime.Seconds}s";
+        }
+
+        public (bool hasBattery, string powerText) GetPowerAndBatteryStatus()
+        {
+            if (GetSystemPowerStatus(out var status))
+            {
+                bool isAr = LocalizationManager.CurrentLanguage == "ar";
+                bool noBattery = status.BatteryFlag == 128 || status.BatteryLifePercent == 255;
+                bool isPluggedIn = status.ACLineStatus == 1;
+                bool isCharging = (status.BatteryFlag & 8) != 0;
+
+                if (noBattery)
+                {
+                    return (false, isAr ? "جهاز مكتبي (متصل بالكهرباء)" : "Desktop (AC Power)");
+                }
+
+                int pct = Math.Min(100, (int)status.BatteryLifePercent);
+                string stateStr;
+                if (isCharging)
+                {
+                    stateStr = isAr ? "جارٍ الشحن ⚡" : "Charging ⚡";
+                }
+                else if (isPluggedIn)
+                {
+                    stateStr = isAr ? "متصل بالشاحن" : "Plugged In";
+                }
+                else
+                {
+                    stateStr = isAr ? "على البطارية" : "On Battery";
+                }
+
+                return (true, $"{pct}% ({stateStr})");
+            }
+
+            return (false, "AC Power");
+        }
+
+        private static long _lastPingMs = -1;
+        private static DateTime _lastPingTime = DateTime.MinValue;
+        private static bool _isPinging = false;
+
+        public long GetNetworkPingMs()
+        {
+            if ((DateTime.UtcNow - _lastPingTime).TotalSeconds >= 4 && !_isPinging)
+            {
+                _isPinging = true;
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var pinger = new System.Net.NetworkInformation.Ping();
+                        var reply = await pinger.SendPingAsync("1.1.1.1", 300);
+                        if (reply.Status == System.Net.NetworkInformation.IPStatus.Success)
+                        {
+                            _lastPingMs = reply.RoundtripTime;
+                        }
+                        else
+                        {
+                            _lastPingMs = -1;
+                        }
+                    }
+                    catch
+                    {
+                        _lastPingMs = -1;
+                    }
+                    finally
+                    {
+                        _lastPingTime = DateTime.UtcNow;
+                        _isPinging = false;
+                    }
+                });
+            }
+
+            return _lastPingMs;
         }
 
         private static readonly Dictionary<string, string> _cachedDiskMediaMap = new(StringComparer.OrdinalIgnoreCase);
@@ -755,6 +1027,13 @@ namespace Tempo.Services
             return list;
         }
 
+        // Fix 9: Named value struct to replace anonymous LINQ object (reduces GC pressure)
+        private struct ProcessRamEntry
+        {
+            public string Name;
+            public double WorkingSetMb;
+        }
+
         public (string processName, double ramMb)[] GetTop5RamProcesses()
         {
             Process[] processes = Array.Empty<Process>();
@@ -766,11 +1045,11 @@ namespace Tempo.Services
                     {
                         try
                         {
-                            return new { Name = p.ProcessName, WorkingSetMb = p.WorkingSet64 / (1024.0 * 1024.0) };
+                            return new ProcessRamEntry { Name = p.ProcessName, WorkingSetMb = p.WorkingSet64 / (1024.0 * 1024.0) };
                         }
                         catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
                         {
-                            return new { Name = "", WorkingSetMb = 0.0 };
+                            return new ProcessRamEntry { Name = "", WorkingSetMb = 0.0 };
                         }
                     })
                     .Where(p => !string.IsNullOrEmpty(p.Name))
@@ -798,144 +1077,751 @@ namespace Tempo.Services
         {
             "system", "idle", "registry", "smss", "csrss", "wininit", "services", "lsass", "winlogon",
             "fontdrvhost", "dwm", "memory compression", "svchost", "msmpeng", "securityhealthservice",
-            "securityhealthhost", "tempo", "taskhostw", "sihost", "ctfmon", "explorer",
+            "securityhealthhost", "taskhostw", "sihost", "ctfmon", "explorer",
             "shellexperiencehost", "startmenuexperiencehost", "searchhost", "textinputhost",
             "runtimebroker", "applicationframehost", "systemsettings", "shellhost", "backgroundtaskhost",
-            "conhost", "dllhost", "wlanext", "smartscreen", "widgets", "widgetservice",
-            "phoneexperiencehost", "crossdeviceservice", "gameinputredistservice", "esrv", "dsatray",
-            "smmonitor", "nvdisplay.container", "nvwmi64", "applemobiledevicelauncher",
-            "applemobiledeviceprocess", "acrobatnotificationclient", "useroobebroker", "audiodg",
-            "spoolsv", "werfault", "werfaultsecure", "crashpad_handler", "openconsole",
-            "securityhealthsystray", "wmpf_installer", "tiworker", "trustedinstaller"
+            "conhost", "dllhost", "wlanext", "smartscreen", "spoolsv", "audiodg",
+            "werfault", "werfaultsecure", "tiworker", "trustedinstaller", "useroobebroker",
+            "tempo"
         };
+
+        public static bool IsSystemOrServiceProcess(string pName, string? exePath, IntPtr hwnd, string? windowTitle)
+        {
+            if (string.IsNullOrWhiteSpace(pName)) return true;
+
+            string lowerName = pName.ToLowerInvariant();
+            if (ProtectedSystemProcesses.Contains(lowerName))
+                return true;
+
+            // Known system-only background services & daemons in user session
+            if (lowerName is "wsqmcons" or "devicecensus" or "compattelrunner" or "mousocoreworker" or 
+                "sedlauncher" or "usoclient" or "gamebarftpresencewriter" or "systemsettingsbroker" or 
+                "sihost" or "ctfmon" or "taskhostw" or "dllhost" or "conhost" or "svchost" or "dashost" or
+                "securityhealthservice" or "securityhealthhost" or "smartscreen" or "spoolsv" or "audiodg")
+            {
+                return true;
+            }
+
+            bool hasWindow = hwnd != IntPtr.Zero && !string.IsNullOrWhiteSpace(windowTitle) && windowTitle.Length > 0;
+
+            if (!string.IsNullOrEmpty(exePath))
+            {
+                string pathLower = exePath.ToLowerInvariant();
+
+                // Core Windows system directories
+                bool inSystemDir = pathLower.Contains(@"\windows\system32\") ||
+                                   pathLower.Contains(@"\windows\syswow64\") ||
+                                   pathLower.Contains(@"\windows\systemapps\");
+
+                if (inSystemDir)
+                {
+                    // Allowed interactive Windows built-in utilities
+                    bool isAllowedUtility = lowerName is "notepad" or "calc" or "calculatorapp" or "taskmgr" or 
+                                            "mspaint" or "regedit" or "snippingtool" or "powershell" or 
+                                            "windowsterminal" or "wt" or "cmd" or "write";
+
+                    // If it's located in System32 and has no user window and is not an allowed utility, it's a background OS service
+                    if (!isAllowedUtility && !hasWindow)
+                        return true;
+                }
+            }
+
+            return false;
+        }
 
         private static (string appKey, string displayName)? IdentifyApplication(string pName, string? path, IntPtr hwnd, string? title)
         {
             string pLower = pName.ToLowerInvariant();
             string pathLower = (path ?? "").ToLowerInvariant();
 
-            // 1. Specific High-Profile Suites and Apps (Roll up helpers into root app)
-            if (pathLower.Contains("antigravity ide"))
-                return ("Antigravity IDE", "Antigravity IDE");
+            // 1. Roll up known multi-process suites into a single clean application card:
 
-            if (pathLower.Contains(@"\programs\antigravity\") || pLower == "antigravity")
-                return ("Antigravity", "Antigravity");
-
+            // Google Chrome
             if (pLower == "chrome" || pathLower.Contains(@"\google\chrome\"))
                 return ("Google Chrome", "Google Chrome");
 
-            if (pLower == "msedge" || pLower == "msedgewebview2" || pathLower.Contains(@"\microsoft\edge"))
+            // Brave Browser
+            if (pLower == "brave" || pathLower.Contains(@"\bravesoftware\"))
+                return ("Brave Browser", "Brave Browser");
+
+            // Microsoft Edge
+            if (pLower == "msedge" || pathLower.Contains(@"\microsoft\edge\application\msedge.exe"))
                 return ("Microsoft Edge", "Microsoft Edge");
 
+            // Microsoft Edge WebView2 (Helper embedded in various apps)
+            if (pLower == "msedgewebview2" || pathLower.Contains(@"\edgewebview\"))
+                return ("Microsoft Edge WebView2", "Microsoft Edge WebView2");
+
+            // Google Gemini
+            if (pLower.Contains("gemini") || pathLower.Contains(@"\google\gemini\"))
+                return ("Google Gemini", "Google Gemini");
+
+            // Telegram
+            if (pLower.Contains("telegram") || pathLower.Contains(@"\telegram"))
+                return ("Telegram", "Telegram Desktop");
+
+            // WhatsApp
+            if (pLower.Contains("whatsapp") || pathLower.Contains(@"\whatsapp"))
+                return ("WhatsApp", "WhatsApp");
+
+            // Claude
+            if (pLower == "claude" || pathLower.Contains(@"\anthropicclaude\"))
+                return ("Claude", "Claude");
+
+            // Antigravity IDE & Antigravity
+            if (pathLower.Contains("antigravity ide"))
+                return ("Antigravity IDE", "Antigravity IDE");
+
+            if (pLower == "antigravity-manager" || pLower == "antigravity manager")
+                return ("Antigravity Manager", "Antigravity Manager");
+
+            if (pLower == "antigravity" || pLower == "language_server" || pathLower.Contains(@"\programs\antigravity\"))
+                return ("Antigravity", "Antigravity");
+
+            // KDE Connect
+            if (pLower.Contains("kdeconnect"))
+                return ("KDE Connect", "KDE Connect");
+
+            // Screen Recorders (iScreen, etc.)
+            if (pLower.StartsWith("iscr") || pLower.Contains("screenrec"))
+                return ("Screen Recorder", "iScreen Recorder");
+
+            // OBS Studio
+            if (pLower.StartsWith("obs") || pathLower.Contains(@"\obs-studio\"))
+                return ("OBS Studio", "OBS Studio");
+
+            // Node.js
             if (pLower.Contains("node") || pathLower.Contains(@"\nodejs\"))
                 return ("Node.js", "Node.js JavaScript Runtime");
 
+            // Docker
+            if (pLower.Contains("docker") || pathLower.Contains(@"\docker"))
+                return ("Docker", "Docker Desktop");
+
+            // Microsoft PC Manager
             if (pLower == "mspcmanager" || pLower == "mspcmanagercore")
                 return ("MSPCManager", "Microsoft PC Manager");
 
-            if (pLower == "open design" || pathLower.Contains(@"\open design\"))
+            // Open Design
+            if (pLower == "open design" || pathLower.Contains(@"\open design\") || pLower.StartsWith("opendesign"))
                 return ("Open Design", "Open Design");
 
-            if (pLower == "spotify" || pLower == "spotifylauncher")
+            // Spotify
+            if (pLower.Contains("spotify") || pathLower.Contains(@"\spotify\"))
                 return ("Spotify", "Spotify");
 
-            if (pLower == "discord" || pathLower.Contains(@"\discord\"))
+            // Discord
+            if (pLower.Contains("discord") || pathLower.Contains(@"\discord\"))
                 return ("Discord", "Discord");
 
-            if (pLower == "slack" || pathLower.Contains(@"\slack\"))
+            // Slack
+            if (pLower.Contains("slack") || pathLower.Contains(@"\slack\"))
                 return ("Slack", "Slack");
 
-            if (pLower == "steam" || pathLower.Contains(@"\steam\"))
+            // Steam
+            if (pLower.Contains("steam") || pathLower.Contains(@"\steam\"))
                 return ("Steam", "Steam");
 
-            if (pLower == "telegram" || pathLower.Contains(@"\telegram"))
-                return ("Telegram", "Telegram Desktop");
+            // Epic Games Launcher
+            if (pLower.Contains("epicgames") || pathLower.Contains(@"\epic games\"))
+                return ("Epic Games", "Epic Games Launcher");
 
+            // Sunshine Streaming
+            if (pLower == "sunshine")
+                return ("Sunshine", "Sunshine Game Stream");
+
+            // VLC Media Player
+            if (pLower == "vlc" || pathLower.Contains(@"\videolan\vlc\"))
+                return ("VLC Media Player", "VLC Media Player");
+
+            // Internet Download Manager (IDM)
+            if (pLower == "idman" || pathLower.Contains(@"\internet download manager\"))
+                return ("IDM", "Internet Download Manager");
+
+            // qBittorrent & uTorrent
+            if (pLower == "qbittorrent")
+                return ("qBittorrent", "qBittorrent");
+            if (pLower == "utorrent")
+                return ("uTorrent", "µTorrent");
+
+            // Zoom & Microsoft Teams
+            if (pLower.Contains("zoom"))
+                return ("Zoom", "Zoom Workplace");
+            if (pLower == "teams" || pLower == "ms-teams")
+                return ("Microsoft Teams", "Microsoft Teams");
+
+            // GitHub Desktop & Git
+            if (pLower.Contains("githubdesktop") || pathLower.Contains(@"\githubdesktop\"))
+                return ("GitHub Desktop", "GitHub Desktop");
+
+            // Postman
+            if (pLower == "postman")
+                return ("Postman", "Postman");
+
+            // Notepad++
+            if (pLower == "notepad++")
+                return ("Notepad++", "Notepad++");
+
+            // WinRAR & 7-Zip
+            if (pLower == "winrar")
+                return ("WinRAR", "WinRAR Archiver");
+            if (pLower == "7zfm" || pLower == "7zg")
+                return ("7-Zip", "7-Zip File Manager");
+
+            // VS Code
             if (pLower == "code" || pathLower.Contains(@"\microsoft vs code\"))
                 return ("VS Code", "Visual Studio Code");
 
+            // Visual Studio
             if (pLower == "devenv")
                 return ("Visual Studio", "Microsoft Visual Studio");
 
+            // PowerShell
             if (pLower == "powershell" || pLower == "pwsh")
                 return ("PowerShell", "Windows PowerShell");
 
-            if (pLower == "windowsterminal")
+            // Windows Terminal
+            if (pLower == "windowsterminal" || pLower == "wt")
                 return ("Windows Terminal", "Windows Terminal");
 
+            // Task Manager
             if (pLower == "taskmgr")
                 return ("Task Manager", "Task Manager");
 
-            // 2. Any process with an active top-level user window
-            if (hwnd != IntPtr.Zero && !string.IsNullOrWhiteSpace(title) && title.Length > 2)
-            {
-                string appName = pName;
-                if (!string.IsNullOrEmpty(path) && File.Exists(path))
-                {
-                    try
-                    {
-                        var vi = FileVersionInfo.GetVersionInfo(path);
-                        if (!string.IsNullOrWhiteSpace(vi.FileDescription))
-                            appName = vi.FileDescription;
-                    }
-                    catch (Exception ex) when (ex is not OutOfMemoryException)
-                    {
-                        Log($"IdentifyApplication version info read failed for {path}: {ex.Message}", "DEBUG");
-                    }
-                }
-                return (pName, appName);
-            }
+            // Calculator
+            if (pLower == "calc" || pLower == "calculatorapp")
+                return ("Calculator", "Windows Calculator");
 
-            // 3. User app installed in Program Files or AppData\Local\Programs with main exe
+            // Notepad
+            if (pLower == "notepad")
+                return ("Notepad", "Windows Notepad");
+
+            // KeePass
+            if (pLower.Contains("keepass"))
+                return ("KeePass", "KeePass Password Safe");
+
+            // App Market
+            if (pLower == "appmarket")
+                return ("App Market", "App Market");
+
+            // Intel Driver & Support Assistant
+            if (pLower == "dsatray" || pLower.Contains("intel driver"))
+                return ("Intel DSA", "Intel Driver & Support Assistant");
+
+            // NVIDIA Settings
+            if (pLower.Contains("nvdisplay") || pLower.Contains("nvwmi"))
+                return ("NVIDIA Settings", "NVIDIA Settings");
+
+            // 2. Filter out raw crashpad helpers to prevent unhelpful clutter
+            if (pLower == "crashpad_handler" || pLower.EndsWith("crashpadhandler"))
+                return null;
+
+            // 3. For all other interactive and background applications running in the user session:
+            // Extract a rich friendly display name from FileVersionInfo or ProductName if available
+            string displayName = pName;
             if (!string.IsNullOrEmpty(path) && File.Exists(path))
             {
-                bool isUserAppDir = pathLower.Contains(@"\program files\") || 
-                                   pathLower.Contains(@"\program files (x86)\") || 
-                                   pathLower.Contains(@"\appdata\local\programs\");
-
-                bool isSubHelper = pathLower.Contains(@"\resources\") || 
-                                   pathLower.Contains(@"\bin\") || 
-                                   pathLower.Contains(@"\helpers\") ||
-                                   pathLower.Contains(@"\extensions\");
-
-                if (isUserAppDir && !isSubHelper)
+                try
                 {
-                    string appName = pName;
-                    try
+                    var vi = FileVersionInfo.GetVersionInfo(path);
+                    if (!string.IsNullOrWhiteSpace(vi.FileDescription))
                     {
-                        var vi = FileVersionInfo.GetVersionInfo(path);
-                        if (!string.IsNullOrWhiteSpace(vi.FileDescription))
-                            appName = vi.FileDescription;
+                        displayName = vi.FileDescription.Trim();
                     }
-                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    else if (!string.IsNullOrWhiteSpace(vi.ProductName))
                     {
-                        Log($"IdentifyApplication program files version info read failed for {path}: {ex.Message}", "DEBUG");
+                        displayName = vi.ProductName.Trim();
                     }
-                    return (pName, appName);
+                }
+                catch
+                {
+                    // Fall back to clean process name
                 }
             }
 
-            // Non-primary background daemon / service -> skip
-            return null;
+            // If displayName is too short, empty, or generic fallback to pName
+            if (string.IsNullOrWhiteSpace(displayName) || displayName.Length < 2)
+            {
+                displayName = pName;
+            }
+
+            return (pName, displayName);
         }
 
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (ImageSource? icon, string displayName)> ProcessMetaCache = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string?> AppPathLookupCache = new(StringComparer.OrdinalIgnoreCase);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool CloseHandle(IntPtr hObject);
+
+        private const int PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+        // QueryFullProcessImageName works reliably with OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION) for user/elevated processes
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        private static extern bool QueryFullProcessImageName(
+            IntPtr hProcess,
+            int dwFlags,
+            System.Text.StringBuilder lpExeName,
+            ref int lpdwSize);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern uint PrivateExtractIcons(
+            string lpszFile,
+            int nIconIndex,
+            int cxIcon,
+            int cyIcon,
+            IntPtr[] phicon,
+            uint[] piconid,
+            uint nIcons,
+            uint flags);
+
+        [DllImport("user32.dll", EntryPoint = "GetClassLongPtrW")]
+        private static extern IntPtr GetClassLongPtr64(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "GetClassLongW")]
+        private static extern IntPtr GetClassLong32(IntPtr hWnd, int nIndex);
+
+        private static IntPtr GetClassLongPtr(IntPtr hWnd, int nIndex)
+        {
+            return IntPtr.Size == 8 ? GetClassLongPtr64(hWnd, nIndex) : GetClassLong32(hWnd, nIndex);
+        }
+
+        private const int GCLP_HICON = -14;
+        private const int GCLP_HICONSM = -34;
 
         private static string? GetProcessExePath(Process p)
         {
+            // 1. Try QueryFullProcessImageName with PROCESS_QUERY_LIMITED_INFORMATION first.
+            // Works for unelevated callers querying user-session processes without throwing Access Denied.
             try
             {
-                return p.MainModule?.FileName;
+                IntPtr hProc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, p.Id);
+                if (hProc != IntPtr.Zero)
+                {
+                    try
+                    {
+                        var sb = new System.Text.StringBuilder(1024);
+                        int size = sb.Capacity;
+                        if (QueryFullProcessImageName(hProc, 0, sb, ref size))
+                        {
+                            string result = sb.ToString(0, size);
+                            if (!string.IsNullOrEmpty(result))
+                                return result;
+                        }
+                    }
+                    finally
+                    {
+                        CloseHandle(hProc);
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or Win32Exception or UnauthorizedAccessException)
+            {
+                // Fall through to MainModule fallback
+            }
+
+            // 2. Fallback: MainModule (may throw for elevated processes)
+            try
+            {
+                string? mmPath = p.MainModule?.FileName;
+                if (!string.IsNullOrEmpty(mmPath))
+                    return mmPath;
             }
             catch (Exception ex) when (ex is InvalidOperationException or Win32Exception)
             {
-                return null;
             }
+
+            // 3. Fallback: Check Registry App Paths & known standard application paths
+            return TryResolveAppPathByName(p.ProcessName);
         }
 
-        private static (ImageSource? icon, string displayName) GetCachedProcessMetadata(string processName, string? exePath)
+        public static string? TryResolveAppPathByName(string? processName)
         {
-            if (ProcessMetaCache.TryGetValue(processName, out var cached))
+            if (string.IsNullOrWhiteSpace(processName))
+                return null;
+
+            if (AppPathLookupCache.TryGetValue(processName, out var cached))
+                return cached;
+
+            string? resolved = ResolveAppPathInternal(processName);
+            AppPathLookupCache[processName] = resolved;
+            return resolved;
+        }
+
+        private static string? ResolveAppPathInternal(string name)
+        {
+            string cleanName = Path.GetFileNameWithoutExtension(name.Trim('\"', ' '));
+            string exeName = cleanName + ".exe";
+
+            // 1. Check Registry App Paths (User scope first, then Machine scope)
+            try
+            {
+                string subKey = $@"SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{exeName}";
+                using var cuKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(subKey);
+                if (cuKey != null)
+                {
+                    var val = cuKey.GetValue("") as string;
+                    if (!string.IsNullOrEmpty(val))
+                    {
+                        string clean = Environment.ExpandEnvironmentVariables(val.Trim('\"', ' '));
+                        if (File.Exists(clean)) return clean;
+                    }
+                }
+
+                using var lmKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(subKey);
+                if (lmKey != null)
+                {
+                    var val = lmKey.GetValue("") as string;
+                    if (!string.IsNullOrEmpty(val))
+                    {
+                        string clean = Environment.ExpandEnvironmentVariables(val.Trim('\"', ' '));
+                        if (File.Exists(clean)) return clean;
+                    }
+                }
+            }
+            catch { }
+
+            // 2. Check WindowsApps (MSIX / Store Apps execution aliases)
+            try
+            {
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string winAppsExe = Path.Combine(localAppData, "Microsoft", "WindowsApps", exeName);
+                if (File.Exists(winAppsExe)) return winAppsExe;
+            }
+            catch { }
+
+            // 3. Known Standard Install Paths for Primary Applications
+            try
+            {
+                string progFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                string progFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+
+                string lower = cleanName.ToLowerInvariant();
+                if (lower.Contains("chrome"))
+                {
+                    string p = Path.Combine(progFiles, @"Google\Chrome\Application\chrome.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(progFilesX86, @"Google\Chrome\Application\chrome.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("edge") || lower == "msedge")
+                {
+                    string p = Path.Combine(progFilesX86, @"Microsoft\Edge\Application\msedge.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(progFiles, @"Microsoft\Edge\Application\msedge.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("brave"))
+                {
+                    string p = Path.Combine(progFiles, @"BraveSoftware\Brave-Browser\Application\brave.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower == "code" || lower.Contains("vscode"))
+                {
+                    string p = Path.Combine(localAppData, @"Programs\Microsoft VS Code\Code.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(progFiles, @"Microsoft VS Code\Code.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("discord"))
+                {
+                    string discordDir = Path.Combine(localAppData, "Discord");
+                    if (Directory.Exists(discordDir))
+                    {
+                        var appDirs = Directory.GetDirectories(discordDir, "app-*");
+                        if (appDirs.Length > 0)
+                        {
+                            Array.Sort(appDirs);
+                            string p = Path.Combine(appDirs[^1], "Discord.exe");
+                            if (File.Exists(p)) return p;
+                        }
+                        string updateExe = Path.Combine(discordDir, "Update.exe");
+                        if (File.Exists(updateExe)) return updateExe;
+                    }
+                }
+                else if (lower.Contains("spotify"))
+                {
+                    string p = Path.Combine(appData, @"Spotify\Spotify.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(localAppData, @"Microsoft\WindowsApps\Spotify.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("telegram"))
+                {
+                    string p = Path.Combine(appData, @"Telegram Desktop\Telegram.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("whatsapp"))
+                {
+                    string p = Path.Combine(localAppData, @"WhatsApp\WhatsApp.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(localAppData, @"Microsoft\WindowsApps\WhatsApp.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("antigravity"))
+                {
+                    string p = Path.Combine(localAppData, @"Programs\Antigravity\Antigravity.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("postman"))
+                {
+                    string p = Path.Combine(localAppData, @"Postman\Postman.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower == "vlc")
+                {
+                    string p = Path.Combine(progFiles, @"VideoLAN\VLC\vlc.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(progFilesX86, @"VideoLAN\VLC\vlc.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("steam"))
+                {
+                    string p = Path.Combine(progFilesX86, @"Steam\steam.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(progFiles, @"Steam\steam.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower.Contains("notepad++"))
+                {
+                    string p = Path.Combine(progFiles, @"Notepad++\notepad++.exe");
+                    if (File.Exists(p)) return p;
+                    p = Path.Combine(progFilesX86, @"Notepad++\notepad++.exe");
+                    if (File.Exists(p)) return p;
+                }
+                else if (lower == "wt" || lower.Contains("windowsterminal"))
+                {
+                    string p = Path.Combine(localAppData, @"Microsoft\WindowsApps\wt.exe");
+                    if (File.Exists(p)) return p;
+                }
+            }
+            catch { }
+
+            // 4. Check System32 for standard system tools (taskmgr, calc, notepad, cmd, powershell)
+            try
+            {
+                string sysDir = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                string sysPath = Path.Combine(sysDir, exeName);
+                if (File.Exists(sysPath)) return sysPath;
+            }
+            catch { }
+
+            // 5. Check PATH environment variable
+            try
+            {
+                string? pathEnv = Environment.GetEnvironmentVariable("PATH");
+                if (!string.IsNullOrEmpty(pathEnv))
+                {
+                    foreach (var dir in pathEnv.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        try
+                        {
+                            string candidate = Path.Combine(dir.Trim(), exeName);
+                            if (File.Exists(candidate)) return candidate;
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch { }
+
+            return null;
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SHGetFileInfo(string pszPath, uint dwFileAttributes, ref SHFILEINFO psfi, uint cbFileInfo, uint uFlags);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool DestroyIcon(IntPtr hIcon);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam, uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct SHFILEINFO
+        {
+            public IntPtr hIcon;
+            public int iIcon;
+            public uint dwAttributes;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
+            public string szDisplayName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
+            public string szTypeName;
+        }
+
+        private const uint SHGFI_ICON = 0x000000100;
+        private const uint SHGFI_LARGEICON = 0x000000000;
+        private const uint WM_GETICON = 0x007F;
+        private const int ICON_BIG = 1;
+        private const int ICON_SMALL = 0;
+        private const int ICON_SMALL2 = 2;
+        private const uint SMTO_ABORTIFHUNG = 0x0002;
+
+        public static ImageSource? ExtractAppIcon(string? commandOrPath, IntPtr hwnd = default)
+        {
+            try
+            {
+                string? cleanPath = null;
+                if (!string.IsNullOrWhiteSpace(commandOrPath))
+                {
+                    string c = commandOrPath.Trim();
+                    int exeIdx = c.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
+                    cleanPath = exeIdx > 0 ? c.Substring(0, exeIdx + 4).Trim('\"', ' ') : c.Trim('\"');
+                    cleanPath = Environment.ExpandEnvironmentVariables(cleanPath);
+
+                    if (!File.Exists(cleanPath))
+                    {
+                        cleanPath = TryResolveAppPathByName(Path.GetFileNameWithoutExtension(cleanPath));
+                    }
+                }
+
+                // 1. Try extracting high-res 48x48 icon via PrivateExtractIcons first
+                if (!string.IsNullOrEmpty(cleanPath) && File.Exists(cleanPath))
+                {
+                    try
+                    {
+                        var phicon = new IntPtr[1];
+                        var piconid = new uint[1];
+                        uint count = PrivateExtractIcons(cleanPath, 0, 48, 48, phicon, piconid, 1, 0);
+                        if (count > 0 && phicon[0] != IntPtr.Zero)
+                        {
+                            try
+                            {
+                                var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                                    phicon[0],
+                                    Int32Rect.Empty,
+                                    BitmapSizeOptions.FromEmptyOptions());
+                                bmp.Freeze();
+                                return bmp;
+                            }
+                            finally
+                            {
+                                DestroyIcon(phicon[0]);
+                            }
+                        }
+                    }
+                    catch { }
+
+                    // Fallback A: SHGetFileInfo (Standard 32x32 shell icon)
+                    try
+                    {
+                        var shinfo = new SHFILEINFO();
+                        IntPtr res = SHGetFileInfo(cleanPath, 0, ref shinfo, (uint)Marshal.SizeOf(shinfo), SHGFI_ICON | SHGFI_LARGEICON);
+                        if (res != IntPtr.Zero && shinfo.hIcon != IntPtr.Zero)
+                        {
+                            try
+                            {
+                                var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                                    shinfo.hIcon,
+                                    Int32Rect.Empty,
+                                    BitmapSizeOptions.FromEmptyOptions());
+                                bmp.Freeze();
+                                return bmp;
+                            }
+                            finally
+                            {
+                                DestroyIcon(shinfo.hIcon);
+                            }
+                        }
+                    }
+                    catch { }
+
+                    // Fallback B: Icon.ExtractAssociatedIcon
+                    try
+                    {
+                        using var sysIcon = System.Drawing.Icon.ExtractAssociatedIcon(cleanPath);
+                        if (sysIcon != null)
+                        {
+                            IntPtr hIcon = sysIcon.Handle;
+                            try
+                            {
+                                var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                                    hIcon,
+                                    Int32Rect.Empty,
+                                    BitmapSizeOptions.FromEmptyOptions());
+                                bmp.Freeze();
+                                return bmp;
+                            }
+                            finally
+                            {
+                                DestroyIcon(hIcon);
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // 2. If path didn't yield an icon and we have an active HWND, query WM_GETICON or Window Class
+                if (hwnd != IntPtr.Zero)
+                {
+                    IntPtr hIcon = IntPtr.Zero;
+                    if (SendMessageTimeout(hwnd, WM_GETICON, (IntPtr)ICON_BIG, IntPtr.Zero, SMTO_ABORTIFHUNG, 250, out IntPtr res) != IntPtr.Zero && res != IntPtr.Zero)
+                    {
+                        hIcon = res;
+                    }
+                    else if (SendMessageTimeout(hwnd, WM_GETICON, (IntPtr)ICON_SMALL2, IntPtr.Zero, SMTO_ABORTIFHUNG, 250, out res) != IntPtr.Zero && res != IntPtr.Zero)
+                    {
+                        hIcon = res;
+                    }
+                    else if (SendMessageTimeout(hwnd, WM_GETICON, (IntPtr)ICON_SMALL, IntPtr.Zero, SMTO_ABORTIFHUNG, 250, out res) != IntPtr.Zero && res != IntPtr.Zero)
+                    {
+                        hIcon = res;
+                    }
+                    else
+                    {
+                        // Check Window Class Icons
+                        IntPtr classIcon = GetClassLongPtr(hwnd, GCLP_HICON);
+                        if (classIcon != IntPtr.Zero)
+                        {
+                            hIcon = classIcon;
+                        }
+                        else
+                        {
+                            IntPtr classIconSm = GetClassLongPtr(hwnd, GCLP_HICONSM);
+                            if (classIconSm != IntPtr.Zero)
+                            {
+                                hIcon = classIconSm;
+                            }
+                        }
+                    }
+
+                    if (hIcon != IntPtr.Zero)
+                    {
+                        try
+                        {
+                            var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                                hIcon,
+                                Int32Rect.Empty,
+                                BitmapSizeOptions.FromEmptyOptions());
+                            bmp.Freeze();
+                            return bmp;
+                        }
+                        catch { }
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log($"ExtractAppIcon failed for '{commandOrPath}': {ex.Message}", "DEBUG");
+            }
+            return null;
+        }
+
+        public static ImageSource? ExtractIconFromCommand(string command)
+        {
+            return ExtractAppIcon(command, IntPtr.Zero);
+        }
+
+        public static (ImageSource? icon, string displayName) GetCachedProcessMetadata(string processName, string? exePath, IntPtr hwnd = default)
+        {
+            if (ProcessMetaCache.TryGetValue(processName, out var cached) && cached.icon != null)
             {
                 return cached;
             }
@@ -945,13 +1831,36 @@ namespace Tempo.Services
 
             try
             {
-                if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
+                if (string.IsNullOrEmpty(exePath))
                 {
-                    icon = ExtractIconFromCommand(exePath);
-                    var vi = FileVersionInfo.GetVersionInfo(exePath);
-                    if (!string.IsNullOrWhiteSpace(vi.FileDescription))
+                    exePath = TryResolveAppPathByName(processName);
+                }
+
+                icon = ExtractAppIcon(exePath, hwnd);
+
+                // Identify friendly application name first
+                var identified = IdentifyApplication(processName, exePath, hwnd, null);
+                if (identified.HasValue && !string.IsNullOrWhiteSpace(identified.Value.displayName))
+                {
+                    displayName = identified.Value.displayName;
+                }
+                else if (!string.IsNullOrEmpty(exePath) && File.Exists(exePath))
+                {
+                    try
                     {
-                        displayName = vi.FileDescription;
+                        var vi = FileVersionInfo.GetVersionInfo(exePath);
+                        if (!string.IsNullOrWhiteSpace(vi.FileDescription))
+                        {
+                            displayName = vi.FileDescription.Trim();
+                        }
+                        else if (!string.IsNullOrWhiteSpace(vi.ProductName))
+                        {
+                            displayName = vi.ProductName.Trim();
+                        }
+                    }
+                    catch
+                    {
+                        // FileVersionInfo may fail on certain sandboxed apps
                     }
                 }
             }
@@ -990,7 +1899,18 @@ namespace Tempo.Services
                 processes = Process.GetProcesses();
 
                 // Group by AppKey to aggregate all helper processes into the primary application
-                var appMap = new Dictionary<string, (string appKey, string displayName, string mainProc, double totalRam, int instances, HashSet<string> procs, string? mainPath, int mainPid)>(StringComparer.OrdinalIgnoreCase);
+                var appMap = new Dictionary<string, (
+                    string appKey, 
+                    string displayName, 
+                    string mainProc, 
+                    double totalRam, 
+                    int instances, 
+                    HashSet<string> procs, 
+                    string? mainPath, 
+                    int mainPid,
+                    bool hasActiveWindow,
+                    IntPtr hwnd
+                )>(StringComparer.OrdinalIgnoreCase);
 
                 foreach (var p in processes)
                 {
@@ -1000,29 +1920,43 @@ namespace Tempo.Services
                             continue;
 
                         string name = p.ProcessName;
-                        if (string.IsNullOrWhiteSpace(name) || ProtectedSystemProcesses.Contains(name))
-                            continue;
-
-                        double wsMb = p.WorkingSet64 / (1024.0 * 1024.0);
-                        if (wsMb < 1.0)
+                        if (string.IsNullOrWhiteSpace(name))
                             continue;
 
                         string? exePath = GetProcessExePath(p);
-                        var match = IdentifyApplication(name, exePath, p.MainWindowHandle, p.MainWindowTitle);
+                        IntPtr hwnd = IntPtr.Zero;
+                        string windowTitle = "";
+                        try
+                        {
+                            hwnd = p.MainWindowHandle;
+                            windowTitle = p.MainWindowTitle;
+                        }
+                        catch { }
+
+                        // Filter out Windows services and background system daemons
+                        if (IsSystemOrServiceProcess(name, exePath, hwnd, windowTitle))
+                            continue;
+
+                        double wsMb = p.WorkingSet64 / (1024.0 * 1024.0);
+
+                        var match = IdentifyApplication(name, exePath, hwnd, windowTitle);
                         if (match == null)
                             continue;
 
                         string appKey = match.Value.appKey;
                         string dispName = match.Value.displayName;
+                        bool hasWindow = hwnd != IntPtr.Zero && !string.IsNullOrWhiteSpace(windowTitle);
 
                         if (!appMap.TryGetValue(appKey, out var appData))
                         {
-                            appData = (appKey, dispName, name, 0.0, 0, new HashSet<string>(StringComparer.OrdinalIgnoreCase), exePath, p.Id);
+                            appData = (appKey, dispName, name, 0.0, 0, new HashSet<string>(StringComparer.OrdinalIgnoreCase), exePath, p.Id, hasWindow, hwnd);
                         }
 
                         appData.totalRam += wsMb;
                         appData.instances += 1;
                         appData.procs.Add(name);
+                        if (hasWindow) appData.hasActiveWindow = true;
+                        if (appData.hwnd == IntPtr.Zero && hwnd != IntPtr.Zero) appData.hwnd = hwnd;
                         if (string.IsNullOrEmpty(appData.mainPath) && !string.IsNullOrEmpty(exePath))
                         {
                             appData.mainPath = exePath;
@@ -1036,22 +1970,21 @@ namespace Tempo.Services
                 var result = new List<RunningProcessItem>();
                 foreach (var kvp in appMap.Values)
                 {
-                    // Focus on primary applications consuming at least 10 MB
-                    if (kvp.totalRam < 10.0)
-                        continue;
-
                     double ramMb = Math.Round(kvp.totalRam, 1);
                     double ramPct = totalRamMb > 0 ? Math.Round((ramMb / totalRamMb) * 100.0, 1) : 0;
                     string ramFormatted = ramMb >= 1024.0
                         ? $"{(ramMb / 1024.0):F2} GB"
                         : $"{ramMb:F1} MB";
 
-                    var (icon, _) = GetCachedProcessMetadata(kvp.mainProc, kvp.mainPath);
+                    var (icon, cachedDisplayName) = GetCachedProcessMetadata(kvp.mainProc, kvp.mainPath, kvp.hwnd);
+                    string displayName = !string.IsNullOrWhiteSpace(cachedDisplayName) && !cachedDisplayName.Equals(kvp.mainProc, StringComparison.OrdinalIgnoreCase)
+                        ? cachedDisplayName
+                        : kvp.displayName;
 
                     result.Add(new RunningProcessItem
                     {
                         AppKey = kvp.appKey,
-                        DisplayName = kvp.displayName,
+                        DisplayName = displayName,
                         MainProcessName = kvp.mainProc,
                         RamMb = ramMb,
                         RamFormatted = ramFormatted,
@@ -1060,7 +1993,8 @@ namespace Tempo.Services
                         AssociatedProcesses = kvp.procs.ToList(),
                         IconSource = icon,
                         MainPid = kvp.mainPid,
-                        MainPath = kvp.mainPath ?? ""
+                        MainPath = kvp.mainPath ?? "",
+                        HasActiveWindow = kvp.hasActiveWindow
                     });
                 }
 
@@ -1108,8 +2042,26 @@ namespace Tempo.Services
                         {
                             long memBefore = 0;
                             try { memBefore = p.WorkingSet64; } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
-                            p.Kill();
-                            p.WaitForExit(1000);
+
+                            // 1. Try graceful window close first if process has an open window
+                            bool closedGracefully = false;
+                            try
+                            {
+                                if (p.MainWindowHandle != IntPtr.Zero)
+                                {
+                                    p.CloseMainWindow();
+                                    closedGracefully = p.WaitForExit(350);
+                                }
+                            }
+                            catch { }
+
+                            // 2. If not closed gracefully or is background app, kill entire process tree
+                            if (!closedGracefully && !p.HasExited)
+                            {
+                                p.Kill(entireProcessTree: true);
+                                p.WaitForExit(500);
+                            }
+
                             freedMb += memBefore / (1024.0 * 1024.0);
                             killedCount++;
                         }
@@ -1146,39 +2098,6 @@ namespace Tempo.Services
                     : "Process is no longer running or access denied.";
                 return (false, 0, msg);
             }
-        }
-
-
-        public static ImageSource? ExtractIconFromCommand(string command)
-        {
-            try
-            {
-                if (string.IsNullOrWhiteSpace(command)) return null;
-                string c = command.Trim();
-                int exeIdx = c.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
-                string cleanPath = exeIdx > 0 ? c.Substring(0, exeIdx + 4).Trim('\"', ' ') : c.Trim('\"');
-                cleanPath = Environment.ExpandEnvironmentVariables(cleanPath);
-
-                if (File.Exists(cleanPath))
-                {
-                    using var sysIcon = System.Drawing.Icon.ExtractAssociatedIcon(cleanPath);
-                    if (sysIcon != null)
-                    {
-                        IntPtr hIcon = sysIcon.Handle;
-                        var bmp = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
-                            hIcon,
-                            Int32Rect.Empty,
-                            BitmapSizeOptions.FromEmptyOptions());
-                        bmp.Freeze();
-                        return bmp;
-                    }
-                }
-            }
-            catch (Exception ex) when (ex is not OutOfMemoryException)
-            {
-                Log($"ExtractIconFromCommand failed for '{command}': {ex.Message}", "DEBUG");
-            }
-            return null;
         }
 
         public static StartupImpactLevel ClassifyImpact(string name, string cmd)

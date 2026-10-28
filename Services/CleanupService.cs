@@ -89,12 +89,30 @@ namespace Tempo.Services
                     if (string.IsNullOrWhiteSpace(root)) continue;
                     string cleanRoot = root.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 
-                    // Explicitly permit C:\Windows\Temp under Windows
+                    // Explicitly permit safe temporary/junk subpaths under Windows directory
                     if (cleanRoot.Equals(winDir.TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase))
                     {
-                        string winTemp = Path.Combine(winDir, "Temp").TrimEnd('\\', '/');
-                        if (fullPath.StartsWith(winTemp + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
-                            fullPath.Equals(winTemp, StringComparison.OrdinalIgnoreCase))
+                        var allowedWinSubDirs = new[]
+                        {
+                            Path.Combine(winDir, "Temp").TrimEnd('\\', '/'),
+                            Path.Combine(winDir, "Prefetch").TrimEnd('\\', '/'),
+                            Path.Combine(winDir, "SoftwareDistribution", "Download").TrimEnd('\\', '/'),
+                            Path.Combine(winDir, "Logs", "CBS").TrimEnd('\\', '/'),
+                            Path.Combine(winDir, "Minidump").TrimEnd('\\', '/')
+                        };
+
+                        bool isPermittedWinSubpath = false;
+                        foreach (var allowed in allowedWinSubDirs)
+                        {
+                            if (fullPath.StartsWith(allowed + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) ||
+                                fullPath.Equals(allowed, StringComparison.OrdinalIgnoreCase))
+                            {
+                                isPermittedWinSubpath = true;
+                                break;
+                            }
+                        }
+
+                        if (isPermittedWinSubpath)
                         {
                             continue;
                         }
@@ -105,6 +123,12 @@ namespace Tempo.Services
                     {
                         return false;
                     }
+                }
+
+                // Protect ReadyBoot folder and its contents inside Prefetch from deletion
+                if (fullPath.IndexOf(@"\Prefetch\ReadyBoot", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return false;
                 }
 
                 // Forbidden source / project extensions
@@ -214,6 +238,9 @@ namespace Tempo.Services
                 {
                     try
                     {
+                        if (sub.Name.Equals("ReadyBoot", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
                         if ((sub.Attributes & FileAttributes.ReparsePoint) == 0)
                         {
                             stack.Push(sub);
@@ -235,6 +262,9 @@ namespace Tempo.Services
                 {
                     try
                     {
+                        if (sub.Name.Equals("ReadyBoot", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
                         if ((sub.Attributes & FileAttributes.ReparsePoint) != 0) continue;
                         SafeDeleteEmptySubdirectories(sub);
                         if (sub.GetFileSystemInfos().Length == 0 && IsSafePath(sub.FullName))
@@ -466,36 +496,89 @@ namespace Tempo.Services
             return result;
         }
 
-        public CleanupResult QuickCleanTemp()
+        public static List<string> GetUserTemporaryDirectories()
         {
-            var result = new CleanupResult { ActionName = "Quick Clean (Temp)" };
-            Log("Starting Quick Clean (Temp)...");
+            var list = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            var directoriesToClean = new List<string>
+            string tempPath = Path.GetTempPath();
+            if (!string.IsNullOrWhiteSpace(tempPath))
+                list.Add(Path.GetFullPath(tempPath));
+
+            string? envTemp = Environment.GetEnvironmentVariable("TEMP");
+            if (!string.IsNullOrWhiteSpace(envTemp))
+                list.Add(Path.GetFullPath(envTemp));
+
+            string? envTmp = Environment.GetEnvironmentVariable("TMP");
+            if (!string.IsNullOrWhiteSpace(envTmp))
+                list.Add(Path.GetFullPath(envTmp));
+
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            if (!string.IsNullOrWhiteSpace(localAppData))
             {
-                Path.GetTempPath(),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp")
-            };
+                list.Add(Path.Combine(localAppData, "CrashDumps"));
+                list.Add(Path.Combine(localAppData, "Microsoft", "Windows", "WER", "ReportArchive"));
+                list.Add(Path.Combine(localAppData, "Microsoft", "Windows", "WER", "ReportQueue"));
+                list.Add(Path.Combine(localAppData, "Microsoft", "Windows", "WER", "Temp"));
+                list.Add(Path.Combine(localAppData, "D3DSCache"));
+                list.Add(Path.Combine(localAppData, "NVIDIA", "DXCache"));
+                list.Add(Path.Combine(localAppData, "AMD", "DxCache"));
+                list.Add(Path.Combine(localAppData, "Intel", "ShaderCache"));
+            }
 
-            long totalFreedBytes = 0;
-            int deletedFiles = 0;
-            int skippedFiles = 0;
+            return new List<string>(list);
+        }
 
-            foreach (var dirPath in directoriesToClean)
+        public static List<string> GetSystemTemporaryDirectories()
+        {
+            var list = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+
+            if (!string.IsNullOrWhiteSpace(winDir))
             {
-                if (!Directory.Exists(dirPath))
+                list.Add(Path.Combine(winDir, "Temp"));
+                list.Add(Path.Combine(winDir, "Prefetch"));
+                list.Add(Path.Combine(winDir, "SoftwareDistribution", "Download"));
+                list.Add(Path.Combine(winDir, "Logs", "CBS"));
+                list.Add(Path.Combine(winDir, "Minidump"));
+            }
+
+            string commonAppData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            if (!string.IsNullOrWhiteSpace(commonAppData))
+            {
+                list.Add(Path.Combine(commonAppData, "Microsoft", "Windows", "WER", "ReportArchive"));
+                list.Add(Path.Combine(commonAppData, "Microsoft", "Windows", "WER", "ReportQueue"));
+                list.Add(Path.Combine(commonAppData, "Microsoft", "Windows", "WER", "Temp"));
+            }
+
+            return new List<string>(list);
+        }
+
+        public static List<string> GetAllTemporaryDirectories()
+        {
+            var set = new HashSet<string>(GetUserTemporaryDirectories(), StringComparer.OrdinalIgnoreCase);
+            foreach (var d in GetSystemTemporaryDirectories())
+            {
+                set.Add(d);
+            }
+            return new List<string>(set);
+        }
+
+        public static void CleanDirectoriesInternal(IEnumerable<string> directories, ref long totalFreedBytes, ref int deletedFiles, ref int skippedFiles)
+        {
+            foreach (var dirPath in directories)
+            {
+                if (string.IsNullOrWhiteSpace(dirPath) || !Directory.Exists(dirPath))
                     continue;
 
                 DirectoryInfo dirInfo = new DirectoryInfo(dirPath);
 
-                foreach (FileInfo file in SafeEnumerateFiles(dirInfo, apply24HourCutoff: true))
+                foreach (FileInfo file in SafeEnumerateFiles(dirInfo, apply24HourCutoff: false))
                 {
                     try
                     {
                         if (!IsSafePath(file.FullName))
                         {
                             skippedFiles++;
-                            Log($"[SKIP - PROTECTED] {file.FullName}");
                             continue;
                         }
 
@@ -513,6 +596,58 @@ namespace Tempo.Services
                 // Safely clean empty subdirectories without touching or traversing reparse points
                 SafeDeleteEmptySubdirectories(dirInfo);
             }
+        }
+
+        public CleanupResult QuickCleanTemp(bool elevateIfNeeded = false)
+        {
+            var result = new CleanupResult { ActionName = "Quick Clean (Temp)" };
+            Log("Starting Quick Clean (Temp)...");
+
+            long totalFreedBytes = 0;
+            int deletedFiles = 0;
+            int skippedFiles = 0;
+
+            bool isAdmin = App.IsAdministrator();
+
+            if (isAdmin)
+            {
+                // Full administrator privileges: clean both user and system temporary folders directly
+                var allDirs = GetAllTemporaryDirectories();
+                CleanDirectoriesInternal(allDirs, ref totalFreedBytes, ref deletedFiles, ref skippedFiles);
+            }
+            else
+            {
+                // Clean user-accessible temporary folders first
+                var userDirs = GetUserTemporaryDirectories();
+                CleanDirectoriesInternal(userDirs, ref totalFreedBytes, ref deletedFiles, ref skippedFiles);
+
+                // Also clean whatever is accessible in system temp
+                var sysDirs = GetSystemTemporaryDirectories();
+                CleanDirectoriesInternal(sysDirs, ref totalFreedBytes, ref deletedFiles, ref skippedFiles);
+
+                // If elevation requested and not admin, prompt UAC to clean protected system temp (Prefetch, Windows Temp, etc.)
+                if (elevateIfNeeded)
+                {
+                    var (elevatedOk, userCancelled, elevatedDeleted, elevatedFreed, elevatedError) = ExecuteSystemCleanElevated();
+                    if (elevatedOk)
+                    {
+                        deletedFiles += elevatedDeleted;
+                        totalFreedBytes += elevatedFreed;
+                        Log($"Elevated system clean succeeded: Deleted {elevatedDeleted} files, freed {elevatedFreed / (1024.0 * 1024.0):F1} MB.");
+                    }
+                    else if (userCancelled)
+                    {
+                        Log("Elevated system clean was cancelled by user (UAC).", "INFO");
+                        result.Warning = (LocalizationManager.CurrentLanguage == "ar")
+                            ? "تم إلغاء إذن المسؤول لتنظيف ملفات النظام (Prefetch/Windows Temp)."
+                            : "Administrator permission cancelled for system files (Prefetch/Windows Temp).";
+                    }
+                    else if (!string.IsNullOrEmpty(elevatedError))
+                    {
+                        Log($"Elevated system clean failed: {elevatedError}", "WARN");
+                    }
+                }
+            }
 
             result.Success = true;
             result.ReclaimedBytes = totalFreedBytes;
@@ -524,6 +659,67 @@ namespace Tempo.Services
             Log($"Quick Clean completed: Deleted {deletedFiles} files, freed {result.ReclaimedMb:F1} MB.");
 
             return result;
+        }
+
+        public static (bool Success, bool UserCancelled, int DeletedCount, long FreedBytes, string? Error) ExecuteSystemCleanElevated()
+        {
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string resultDir = Path.Combine(appData, "Tempo");
+            if (!Directory.Exists(resultDir))
+            {
+                try { Directory.CreateDirectory(resultDir); } catch { }
+            }
+            string resultFile = Path.Combine(resultDir, "system-clean-result.json");
+
+            try
+            {
+                if (File.Exists(resultFile))
+                {
+                    try { File.Delete(resultFile); } catch { }
+                }
+
+                string exePath = App.GetOwnExePath();
+                string b64Path = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(resultFile));
+                var psi = new ProcessStartInfo
+                {
+                    FileName = exePath,
+                    Arguments = $"--clean-system-temp {b64Path}",
+                    UseShellExecute = true,
+                    Verb = "runas"
+                };
+
+                using var proc = Process.Start(psi);
+                if (proc != null)
+                {
+                    bool exited = proc.WaitForExit(35000);
+                    if (!exited)
+                    {
+                        try { proc.Kill(entireProcessTree: true); } catch (Exception ex) when (ex is InvalidOperationException or Win32Exception) { }
+                        return (false, false, 0, 0, "Timed out");
+                    }
+
+                    if (proc.ExitCode == 0 && File.Exists(resultFile))
+                    {
+                        string json = File.ReadAllText(resultFile);
+                        using var doc = System.Text.Json.JsonDocument.Parse(json);
+                        int count = doc.RootElement.GetProperty("DeletedCount").GetInt32();
+                        long bytes = doc.RootElement.GetProperty("FreedBytes").GetInt64();
+                        try { File.Delete(resultFile); } catch { }
+                        return (true, false, count, bytes, null);
+                    }
+                    return (false, false, 0, 0, $"ExitCode: {proc.ExitCode}");
+                }
+            }
+            catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+            {
+                return (false, true, 0, 0, "Cancelled by user");
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                return (false, false, 0, 0, ex.Message);
+            }
+
+            return (false, false, 0, 0, "Unable to launch elevated process");
         }
 
         public RecycleBinInfo QueryRecycleBin()
@@ -1178,14 +1374,10 @@ namespace Tempo.Services
         {
             var summary = new CleanupScanSummary();
 
-            // 1. Temp Files Scan (using same safe 24-hour cutoff as QuickCleanTemp)
+            // 1. Temp Files Scan (including Temp, %Temp%, Prefetch, crash dumps, and system caches)
             try
             {
-                var dirs = new[]
-                {
-                    Path.GetTempPath(),
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Temp")
-                };
+                var dirs = GetAllTemporaryDirectories();
 
                 foreach (var dir in dirs)
                 {
@@ -1193,7 +1385,7 @@ namespace Tempo.Services
                     var di = new DirectoryInfo(dir);
                     try
                     {
-                        foreach (var fi in SafeEnumerateFiles(di, apply24HourCutoff: true))
+                        foreach (var fi in SafeEnumerateFiles(di, apply24HourCutoff: false))
                         {
                             try
                             {

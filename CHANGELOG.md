@@ -4,6 +4,16 @@ All notable changes to the **Tempo PC Optimizer** project will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.8] - 2026-10-28
+
+### Fixed & Improved
+- **Floating Companion Toolbar Fix**: Resolved a visual DWM window parking artifact where closing the borderless floating toolbar with the close button parked a transparent glitch stub in the bottom-left corner of the screen. Implemented full window hiding to System Tray with zero desktop residue and smooth instant restoration.
+- **Real Hardware Specifications & Telemetry**: Added genuine CPU model detection (Intel/AMD), device/chassis model lookup, detailed RAM hardware specs (capacity, DDR generation, clock frequency MHz, and slot count), precise live battery percentage with AC charging status, real system uptime, and asynchronous ICMP ping latency monitor.
+- **Active Process Hierarchy & Visual Identity**: Integrated high-fidelity executable icon extraction with elegant fallback monograms for all active user applications, combined multi-process grouping with process count indicators, and non-blocking asynchronous process termination.
+- **Deep Clean & Elevation Hardening**: Added non-admin user temp cleanup with explicit 24-hour safety cutoff, protected ReadyBoot cache exclusion, and hardened elevated system cleaning IPC with strict target file path validation preventing arbitrary file overwrite.
+
+---
+
 ## [2.2.7] - 2026-09-06
 
 ### Fixed & Improved

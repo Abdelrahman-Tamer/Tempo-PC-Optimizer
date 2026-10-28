@@ -233,8 +233,77 @@ namespace Tempo
                     Environment.Exit(13);
                 }
             }
+            else if (command.Equals("--clean-system-temp", StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    string? targetFile = null;
+                    if (args.Length >= 2)
+                    {
+                        targetFile = Encoding.UTF8.GetString(Convert.FromBase64String(args[1]));
+                    }
+
+                    ExecuteElevatedSystemClean(targetFile);
+                    Environment.Exit(0);
+                }
+                catch (Exception ex) when (ex is not OutOfMemoryException)
+                {
+                    Environment.Exit(30);
+                }
+            }
 
             Environment.Exit(1);
+        }
+
+        private static void ExecuteElevatedSystemClean(string? targetFile)
+        {
+            string appDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tempo");
+            if (!Directory.Exists(appDataDir)) Directory.CreateDirectory(appDataDir);
+            string safeResultFile = Path.Combine(appDataDir, "system-clean-result.json");
+
+            // Strict Security Guard: Prevent arbitrary file overwrite or DACL tampering via argument spoofing
+            if (!string.IsNullOrWhiteSpace(targetFile))
+            {
+                try
+                {
+                    string fullTarget = Path.GetFullPath(targetFile);
+                    string expectedFull = Path.GetFullPath(safeResultFile);
+                    if (!string.Equals(fullTarget, expectedFull, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Environment.Exit(12); // Unauthorized target path rejected
+                    }
+                }
+                catch
+                {
+                    Environment.Exit(12);
+                }
+            }
+            targetFile = safeResultFile;
+
+            long freedBytes = 0;
+            int deletedFiles = 0;
+            int skippedFiles = 0;
+
+            var sysDirs = CleanupService.GetSystemTemporaryDirectories();
+            CleanupService.CleanDirectoriesInternal(sysDirs, ref freedBytes, ref deletedFiles, ref skippedFiles);
+
+            string json = $"{{\"DeletedCount\":{deletedFiles},\"FreedBytes\":{freedBytes},\"SkippedCount\":{skippedFiles}}}";
+            File.WriteAllText(targetFile, json, Encoding.UTF8);
+
+            try
+            {
+                var fileInfo = new FileInfo(targetFile);
+                var fileSecurity = fileInfo.GetAccessControl();
+                var adminSid = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
+                var usersSid = new SecurityIdentifier(WellKnownSidType.BuiltinUsersSid, null);
+
+                fileSecurity.ResetAccessRule(new FileSystemAccessRule(adminSid, FileSystemRights.FullControl, AccessControlType.Allow));
+                fileSecurity.AddAccessRule(new FileSystemAccessRule(usersSid, FileSystemRights.ReadAndExecute, AccessControlType.Allow));
+                fileInfo.SetAccessControl(fileSecurity);
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+            }
         }
 
         private static string? ExtractXmlValue(string xml, string fieldName)
@@ -448,7 +517,8 @@ namespace Tempo
                 string firstArg = e.Args[0];
                 if (firstArg.Equals("--set-approved", StringComparison.OrdinalIgnoreCase) ||
                     firstArg.Equals("--measure-boot", StringComparison.OrdinalIgnoreCase) ||
-                    firstArg.Equals("--trim", StringComparison.OrdinalIgnoreCase))
+                    firstArg.Equals("--trim", StringComparison.OrdinalIgnoreCase) ||
+                    firstArg.Equals("--clean-system-temp", StringComparison.OrdinalIgnoreCase))
                 {
                     HandleElevatedChildCommand(e.Args);
                     return;

@@ -38,15 +38,17 @@ namespace Tempo.Tests
         }
 
         [Fact]
-        public void ProtectedSystemProcesses_HasExactly58Entries()
+        public void ProtectedSystemProcesses_ContainsCriticalSystemProcessesAndTempo()
         {
-            Assert.Equal(58, HardwareMonitorService.ProtectedSystemProcesses.Count);
+            Assert.Equal(41, HardwareMonitorService.ProtectedSystemProcesses.Count);
             Assert.Contains("system", HardwareMonitorService.ProtectedSystemProcesses);
             Assert.Contains("smss", HardwareMonitorService.ProtectedSystemProcesses);
             Assert.Contains("csrss", HardwareMonitorService.ProtectedSystemProcesses);
             Assert.Contains("lsass", HardwareMonitorService.ProtectedSystemProcesses);
             Assert.Contains("services", HardwareMonitorService.ProtectedSystemProcesses);
             Assert.Contains("wininit", HardwareMonitorService.ProtectedSystemProcesses);
+            // "tempo" is protected so the user cannot accidentally kill Tempo from within itself.
+            Assert.Contains("tempo", HardwareMonitorService.ProtectedSystemProcesses);
         }
 
         [Fact]

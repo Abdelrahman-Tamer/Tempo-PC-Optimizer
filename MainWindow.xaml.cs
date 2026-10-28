@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Media.Effects;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using System.Security;
@@ -93,8 +94,15 @@ namespace Tempo
     public class ProcessViewModel
     {
         public string ProcessName { get; set; } = "";
+        public string DisplayName { get; set; } = "";
         public double RamMb { get; set; }
         public string RamFormatted => LocalizationManager.FormatMb(RamMb);
+        public ImageSource? IconSource { get; set; }
+        public Visibility HasIconVisibility => IconSource != null ? Visibility.Visible : Visibility.Collapsed;
+        public Visibility FallbackIconVisibility => IconSource == null ? Visibility.Visible : Visibility.Collapsed;
+        public string Monogram => !string.IsNullOrEmpty(DisplayName)
+            ? DisplayName.Substring(0, 1).ToUpperInvariant()
+            : (!string.IsNullOrEmpty(ProcessName) ? ProcessName.Substring(0, 1).ToUpperInvariant() : "A");
     }
 
     public class AppSettings
@@ -152,11 +160,11 @@ namespace Tempo
 
         private const double DashboardWidth = 440.0;
         private const double DashboardHeight = 700.0;
-        // BarWidthH: Expanded to 630 (612px usable interior vs ~594px required when Temp + Update indicators are visible)
-        private const double BarWidthH = 630.0;
-        private const double BarHeightH = 42.0;
-        private const double BarWidthV = 34.0;
-        private const double BarHeightV = 315.0;
+        // Floating Companion Bar Dimensions (Clean Minimalist Pill with KPI Gauges)
+        private const double BarWidthH = 375.0;
+        private const double BarHeightH = 38.0;
+        private const double BarWidthV = 38.0;
+        private const double BarHeightV = 295.0;
 
         public MainWindow()
         {
@@ -345,6 +353,17 @@ namespace Tempo
 
         private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
 
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+
+        // Fix 7: Allows finding the monitor that contains a specific point (e.g. saved coordinates)
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+
         public (double left, double top, double right, double bottom, double width, double height) GetCurrentMonitorWorkArea()
         {
             try
@@ -427,7 +446,9 @@ namespace Tempo
                     var pos = JsonSerializer.Deserialize<Dictionary<string, double>>(json);
                     if (pos != null && pos.TryGetValue("X", out double x) && pos.TryGetValue("Y", out double y))
                     {
-                        var wa = GetCurrentMonitorWorkArea();
+                        // Fix 7: Use MonitorFromPoint on the SAVED coordinates so we clamp to
+                        // the correct monitor (not the primary which is the HWND default at startup).
+                        var wa = GetWorkAreaForPoint(x, y);
                         // Clamp coordinates so window is guaranteed to be fully on-screen
                         double clampedX = Math.Max(wa.left, Math.Min(x, wa.right - DashboardWidth));
                         double clampedY = Math.Max(wa.top, Math.Min(y, wa.bottom - DashboardHeight));
@@ -443,6 +464,44 @@ namespace Tempo
             }
 
             PositionAtBottomRight();
+        }
+
+        /// <summary>
+        /// Returns the work area of the monitor that contains (or is nearest to) the given WPF coordinates.
+        /// Falls back to GetCurrentMonitorWorkArea if the P/Invoke fails.
+        /// </summary>
+        private (double left, double top, double right, double bottom) GetWorkAreaForPoint(double wpfX, double wpfY)
+        {
+            try
+            {
+                var dpi = VisualTreeHelper.GetDpi(this);
+                double dpiX = dpi.DpiScaleX > 0 ? dpi.DpiScaleX : 1.0;
+                double dpiY = dpi.DpiScaleY > 0 ? dpi.DpiScaleY : 1.0;
+
+                var pt = new POINT { X = (int)(wpfX * dpiX), Y = (int)(wpfY * dpiY) };
+                IntPtr hMonitor = MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST);
+                if (hMonitor != IntPtr.Zero)
+                {
+                    var mi = new MONITORINFO();
+                    if (GetMonitorInfo(hMonitor, mi))
+                    {
+                        return (
+                            mi.rcWork.Left / dpiX,
+                            mi.rcWork.Top / dpiY,
+                            mi.rcWork.Right / dpiX,
+                            mi.rcWork.Bottom / dpiY
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogError("GetWorkAreaForPoint", ex);
+            }
+
+            // Fallback to primary work area via existing method
+            var wa = GetCurrentMonitorWorkArea();
+            return (wa.left, wa.top, wa.right, wa.bottom);
         }
 
         public void PositionAtBottomRight()
@@ -509,6 +568,9 @@ namespace Tempo
 
         public void ShowDashboardView()
         {
+            this.WindowState = WindowState.Normal;
+            this.Show();
+
             _currentView = AppViewMode.Dashboard;
             _autoHideTimer.Stop();
 
@@ -534,7 +596,8 @@ namespace Tempo
         {
             if (!_isToolbarEnabled)
             {
-                this.WindowState = WindowState.Minimized;
+                this.Hide();
+                this.WindowState = WindowState.Normal;
                 return;
             }
 
@@ -542,6 +605,9 @@ namespace Tempo
             {
                 SaveWindowPosition();
             }
+
+            this.WindowState = WindowState.Normal;
+            this.Show();
 
             this.BeginAnimation(LeftProperty, null);
             this.BeginAnimation(TopProperty, null);
@@ -571,10 +637,11 @@ namespace Tempo
             {
                 CompanionBarVertical.Visibility = Visibility.Collapsed;
                 CompanionBarHorizontal.Visibility = Visibility.Visible;
+
                 this.Width = BarWidthH;
                 this.Height = BarHeightH;
                 this.Left = wa.left + (wa.width - BarWidthH) / 2;
-                this.Top = wa.top + 4;
+                this.Top = wa.top + 8;
             }
 
             RevealFromPeek();
@@ -695,7 +762,7 @@ namespace Tempo
 
                     Dispatcher.InvokeAsync(() =>
                     {
-                        UpdateTelemetryUI(cpuPercent, cpuClock, cpuTemp, totalRam, usedRam, freeRam, ramPercent, gpuName, gpuTemp, downStr, upStr, topProcs);
+                        UpdateTelemetryUI(cpuPercent, cpuClock, cpuTemp, totalRam, usedRam, freeRam, ramPercent, gpuName, gpuTemp, gpuLoad, vramUsed, vramTotal, downStr, upStr, topProcs);
                         _isFetching = false;
                     }, DispatcherPriority.Render);
                 }
@@ -710,7 +777,7 @@ namespace Tempo
         private void UpdateTelemetryUI(
             float cpuPercent, float cpuClock, float? cpuTemp,
             double totalRam, double usedRam, double freeRam, double ramPercent,
-            string gpuName, float? gpuTemp,
+            string gpuName, float? gpuTemp, float? gpuLoad, float vramUsed, float vramTotal,
             string downStr, string upStr,
             (string processName, double ramMb)[] topProcs)
         {
@@ -794,76 +861,115 @@ namespace Tempo
                 TxtRamUsageFormatted.Text = LocalizationManager.FormatRamSummary(usedRam, totalRam);
             }
 
-            // Diagnostic Tab
-            PerfGpuInfo.Text = gpuTemp.HasValue ? $"{gpuName} ({gpuTemp.Value:F0}°C)" : gpuName;
-            PerfNetDown.Text = $"↓ {downStr.Replace(" ", "")}";
-            PerfNetUp.Text = $"↑ {upStr.Replace(" ", "")}";
+            // Diagnostic Tab - Extended Hardware & System Stats
+            if (TxtDeviceModel != null && (string.IsNullOrEmpty(TxtDeviceModel.Text) || TxtDeviceModel.Text == "Windows PC"))
+            {
+                TxtDeviceModel.Text = _hardwareMonitor.GetDeviceModel();
+            }
+
+            if (PerfCpuInfo != null)
+            {
+                string cpuName = _hardwareMonitor.GetCpuName();
+                string cpuTempStr = cpuTemp.HasValue ? $"{cpuTemp.Value:F0}°C • " : "";
+                PerfCpuInfo.Text = $"{cpuName} ({cpuTempStr}{cpuClock:F2} GHz • {cpuPercent:F0}%)";
+            }
+
+            if (PerfGpuInfo != null)
+            {
+                string gpuLoadStr = (gpuLoad.HasValue && gpuLoad.Value >= 0) ? $" • {gpuLoad.Value:F0}% Load" : "";
+                string gpuTempStr = gpuTemp.HasValue ? $" ({gpuTemp.Value:F0}°C{gpuLoadStr})" : (gpuLoadStr.Length > 0 ? $" ({gpuLoadStr.TrimStart(' ', '•')})" : "");
+                PerfGpuInfo.Text = $"{gpuName}{gpuTempStr}";
+            }
+
+            if (RowVram != null && PerfVramInfo != null)
+            {
+                if (vramTotal > 0)
+                {
+                    double usedGb = vramUsed / 1024.0;
+                    double totalGb = vramTotal / 1024.0;
+                    double pct = totalGb > 0 ? (usedGb / totalGb) * 100.0 : 0;
+                    PerfVramInfo.Text = $"{usedGb:F1} GB / {totalGb:F1} GB ({pct:F0}%)";
+                    RowVram.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    RowVram.Visibility = Visibility.Collapsed;
+                }
+            }
+
+            if (PerfRamSpecs != null && (string.IsNullOrEmpty(PerfRamSpecs.Text) || PerfRamSpecs.Text == "RAM"))
+            {
+                PerfRamSpecs.Text = _hardwareMonitor.GetRamHardwareSpecs();
+            }
+
+            if (PerfNetDown != null) PerfNetDown.Text = $"↓ {downStr.Replace(" ", "")}";
+            if (PerfNetUp != null) PerfNetUp.Text = $"↑ {upStr.Replace(" ", "")}";
+
+            if (PerfPingInfo != null)
+            {
+                long pingMs = _hardwareMonitor.GetNetworkPingMs();
+                PerfPingInfo.Text = pingMs >= 0 ? $"• {pingMs} ms" : "";
+            }
+
+            if (PerfUptimeInfo != null)
+            {
+                PerfUptimeInfo.Text = _hardwareMonitor.GetSystemUptimeFormatted();
+            }
+
+            if (PerfPowerInfo != null && RowPowerBattery != null)
+            {
+                var (_, powerStr) = _hardwareMonitor.GetPowerAndBatteryStatus();
+                PerfPowerInfo.Text = powerStr;
+            }
 
             if (topProcs.Length > 0 && ListTopProcesses != null)
             {
-                ListTopProcesses.ItemsSource = topProcs.Select(p => new ProcessViewModel { ProcessName = p.processName, RamMb = p.ramMb }).ToList();
+                ListTopProcesses.ItemsSource = topProcs.Select(p =>
+                {
+                    var (icon, friendlyName) = HardwareMonitorService.GetCachedProcessMetadata(p.processName, null);
+                    string disp = !string.IsNullOrWhiteSpace(friendlyName) && !friendlyName.Equals(p.processName, StringComparison.OrdinalIgnoreCase)
+                        ? friendlyName
+                        : p.processName;
+                    return new ProcessViewModel
+                    {
+                        ProcessName = p.processName,
+                        DisplayName = disp,
+                        RamMb = p.ramMb,
+                        IconSource = icon
+                    };
+                }).ToList();
             }
 
             // Companion Bar Telemetry (Horizontal & Vertical)
             if (BarRamTextH != null) { BarRamTextH.Text = $"{ramPercent:F0}%"; BarRamTextH.Foreground = ramBrush; }
-            if (BarRamIconH != null) BarRamIconH.Fill = ramBrush;
             if (BarCpuTextH != null) { BarCpuTextH.Text = $"{cpuPercent:F0}%"; BarCpuTextH.Foreground = cpuBrush; }
-            if (BarCpuIconH != null) BarCpuIconH.Fill = cpuBrush;
-            
-            string netDownShort = downStr.Contains("MB") ? $"{downStr.Split(' ')[0]}M" : $"{downStr.Split(' ')[0]}K";
-            string netUpShort = upStr.Contains("MB") ? $"{upStr.Split(' ')[0]}M" : $"{upStr.Split(' ')[0]}K";
 
-            if (BarNetDownH != null) BarNetDownH.Text = netDownShort;
-            if (BarNetUpH != null) BarNetUpH.Text = netUpShort;
+            // Update Circular KPI Gauges for Horizontal Pill
+            if (BarCpuKpiArcH != null)
+            {
+                BarCpuKpiArcH.Data = CreateArcGeometry(14.0, 14.0, 11.25, cpuPercent);
+                BarCpuKpiArcH.Stroke = cpuBrush;
+            }
+            if (BarRamKpiArcH != null)
+            {
+                BarRamKpiArcH.Data = CreateArcGeometry(14.0, 14.0, 11.25, ramPercent);
+                BarRamKpiArcH.Stroke = ramBrush;
+            }
+
+            // Update Circular KPI Gauges for Vertical Pill
+            if (BarCpuKpiArcV != null)
+            {
+                BarCpuKpiArcV.Data = CreateArcGeometry(14.0, 14.0, 11.25, cpuPercent);
+                BarCpuKpiArcV.Stroke = cpuBrush;
+            }
+            if (BarRamKpiArcV != null)
+            {
+                BarRamKpiArcV.Data = CreateArcGeometry(14.0, 14.0, 11.25, ramPercent);
+                BarRamKpiArcV.Stroke = ramBrush;
+            }
 
             if (BarRamTextV != null) { BarRamTextV.Text = $"{ramPercent:F0}%"; BarRamTextV.Foreground = ramBrush; }
-            if (BarRamIconV != null) BarRamIconV.Fill = ramBrush;
             if (BarCpuTextV != null) { BarCpuTextV.Text = $"{cpuPercent:F0}%"; BarCpuTextV.Foreground = cpuBrush; }
-            if (BarCpuIconV != null) BarCpuIconV.Fill = cpuBrush;
-            if (BarNetSpeedV != null) BarNetSpeedV.Text = netDownShort;
-
-            // Temperature Pods in Toolbar (Horizontal & Vertical)
-            if (ToolbarTempBorderH != null)
-            {
-                if (cpuTemp.HasValue && cpuTemp.Value > 0)
-                {
-                    ToolbarTempBorderH.Visibility = Visibility.Visible;
-                    var tempBrush = cpuTemp.Value >= 85 ? (SolidColorBrush)FindResource("RedAlert") :
-                                    cpuTemp.Value >= 70 ? (SolidColorBrush)FindResource("AmberWarn") :
-                                    (SolidColorBrush)FindResource("TealHealth");
-                    if (BarTempTextH != null)
-                    {
-                        BarTempTextH.Text = $"{cpuTemp.Value:F0}°C";
-                        BarTempTextH.Foreground = tempBrush;
-                    }
-                    if (BarTempIconH != null) BarTempIconH.Fill = tempBrush;
-                }
-                else
-                {
-                    ToolbarTempBorderH.Visibility = Visibility.Collapsed;
-                }
-            }
-
-            if (ToolbarTempBorderV != null)
-            {
-                if (cpuTemp.HasValue && cpuTemp.Value > 0)
-                {
-                    ToolbarTempBorderV.Visibility = Visibility.Visible;
-                    var tempBrush = cpuTemp.Value >= 85 ? (SolidColorBrush)FindResource("RedAlert") :
-                                    cpuTemp.Value >= 70 ? (SolidColorBrush)FindResource("AmberWarn") :
-                                    (SolidColorBrush)FindResource("TealHealth");
-                    if (BarTempTextV != null)
-                    {
-                        BarTempTextV.Text = $"{cpuTemp.Value:F0}°";
-                        BarTempTextV.Foreground = tempBrush;
-                    }
-                    if (BarTempIconV != null) BarTempIconV.Fill = tempBrush;
-                }
-                else
-                {
-                    ToolbarTempBorderV.Visibility = Visibility.Collapsed;
-                }
-            }
 
             // Real Resource Status calculation
             int loadPercent = (int)(ramPercent * 0.5 + cpuPercent * 0.5);
@@ -893,6 +999,47 @@ namespace Tempo
                     : "Resource Usage: High Load";
                 DotHealthGlow.Fill = (SolidColorBrush)FindResource("RedAlert");
             }
+
+            // Health status dot on companion pill (Horizontal & Vertical)
+            var pulseBrush = loadPercent >= 80 ? (SolidColorBrush)FindResource("RedAlert") :
+                             loadPercent >= 50 ? (SolidColorBrush)FindResource("AmberWarn") :
+                             (SolidColorBrush)FindResource("TealHealth");
+            if (ToolbarPulseDotH != null) ToolbarPulseDotH.Fill = pulseBrush;
+            if (ToolbarPulseDotV != null) ToolbarPulseDotV.Fill = pulseBrush;
+        }
+
+        private static PathGeometry CreateArcGeometry(double centerX, double centerY, double radius, double percent)
+        {
+            var geom = new PathGeometry();
+            if (percent <= 0.5) return geom;
+
+            double p = Math.Min(percent, 99.99);
+            double angle = (p / 100.0) * 360.0;
+            double startX = centerX;
+            double startY = centerY - radius;
+
+            double rad = (angle - 90.0) * Math.PI / 180.0;
+            double endX = centerX + radius * Math.Cos(rad);
+            double endY = centerY + radius * Math.Sin(rad);
+
+            var figure = new PathFigure
+            {
+                StartPoint = new Point(startX, startY),
+                IsClosed = false,
+                IsFilled = false
+            };
+
+            var arc = new ArcSegment
+            {
+                Point = new Point(endX, endY),
+                Size = new Size(radius, radius),
+                IsLargeArc = angle > 180.0,
+                SweepDirection = SweepDirection.Clockwise
+            };
+
+            figure.Segments.Add(arc);
+            geom.Figures.Add(figure);
+            return geom;
         }
 
         #endregion
@@ -1058,23 +1205,6 @@ namespace Tempo
                             ? $"\u200E{cDrive.FreeGb:F1} GB\u200E متاح"
                             : $"\u200E{cDrive.FreeGb:F1} GB\u200E Free";
                         ProgStorageUsed.Value = cDrive.UsedPercent;
-
-                        // Companion Bar Storage Pod
-                        var diskBrush = cDrive.UsedPercent >= 90 ? (SolidColorBrush)FindResource("RedAlert") :
-                                        cDrive.UsedPercent >= 80 ? (SolidColorBrush)FindResource("AmberWarn") :
-                                        (SolidColorBrush)FindResource("TealHealth");
-                        if (BarDiskTextH != null)
-                        {
-                            BarDiskTextH.Text = $"{cDrive.UsedPercent:F0}%";
-                            BarDiskTextH.Foreground = diskBrush;
-                        }
-                        if (BarDiskIconH != null) BarDiskIconH.Fill = diskBrush;
-                        if (BarDiskTextV != null)
-                        {
-                            BarDiskTextV.Text = $"{cDrive.UsedPercent:F0}%";
-                            BarDiskTextV.Foreground = diskBrush;
-                        }
-                        if (BarDiskIconV != null) BarDiskIconV.Fill = diskBrush;
                     }
                 });
             });
@@ -1292,7 +1422,7 @@ namespace Tempo
                     FetchTelemetryAsync();
                     LoadStorageDrivesFast();
                     LoadRecycleBinInfo();
-                    TxtRecTempSize.Text = "0 MB";
+                    TxtRecTempSize.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم التنظيف" : "Cleaned";
                 });
             });
         }
@@ -1342,10 +1472,10 @@ namespace Tempo
             if (btn != null) btn.IsEnabled = false;
             try
             {
-                var res = await Task.Run(() => _cleanupService.QuickCleanTemp());
+                var res = await Task.Run(() => _cleanupService.QuickCleanTemp(elevateIfNeeded: true));
                 ShowToast(res.Message, false);
                 LoadRecycleBinInfo();
-                if (TxtRecTempSize != null) TxtRecTempSize.Text = "0 MB";
+                if (TxtRecTempSize != null) TxtRecTempSize.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم التنظيف" : "Cleaned";
                 if (TxtTempDetails != null)
                 {
                     TxtTempDetails.Text = LocalizationManager.GetString(
@@ -1698,14 +1828,7 @@ namespace Tempo
                     animatedBrush.BeginAnimation(SolidColorBrush.ColorProperty, borderAnim);
                 }
 
-                // 4. RAM Telemetry Pod: Spin RAM icon and soft shimmer text
-                var ramRotAnim = new DoubleAnimation(0, 360, TimeSpan.FromMilliseconds(600))
-                {
-                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-                };
-                if (BarRamRotateH != null) BarRamRotateH.BeginAnimation(RotateTransform.AngleProperty, ramRotAnim);
-                if (BarRamRotateV != null) BarRamRotateV.BeginAnimation(RotateTransform.AngleProperty, ramRotAnim);
-
+                // 4. RAM Telemetry Pod: Soft shimmer text
                 var textFade = new DoubleAnimation(1.0, 0.35, TimeSpan.FromMilliseconds(220))
                 {
                     AutoReverse = true,
@@ -1714,16 +1837,21 @@ namespace Tempo
                 if (BarRamTextH != null) BarRamTextH.BeginAnimation(OpacityProperty, textFade);
                 if (BarRamTextV != null) BarRamTextV.BeginAnimation(OpacityProperty, textFade);
 
-                // 5. Status Dot Pulse
+                // 5. Status Dot Pulse (Horizontal & Vertical)
+                var dotAnim = new DoubleAnimation(1.0, 1.8, TimeSpan.FromMilliseconds(250))
+                {
+                    AutoReverse = true,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                };
                 if (ToolbarPulseScaleH != null)
                 {
-                    var dotAnim = new DoubleAnimation(1.0, 1.8, TimeSpan.FromMilliseconds(250))
-                    {
-                        AutoReverse = true,
-                        EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
-                    };
                     ToolbarPulseScaleH.BeginAnimation(ScaleTransform.ScaleXProperty, dotAnim);
                     ToolbarPulseScaleH.BeginAnimation(ScaleTransform.ScaleYProperty, dotAnim);
+                }
+                if (ToolbarPulseScaleV != null)
+                {
+                    ToolbarPulseScaleV.BeginAnimation(ScaleTransform.ScaleXProperty, dotAnim);
+                    ToolbarPulseScaleV.BeginAnimation(ScaleTransform.ScaleYProperty, dotAnim);
                 }
             }
             catch (Exception ex)
@@ -1752,10 +1880,26 @@ namespace Tempo
             }
         }
 
+        public void SetIslandExpanded(bool expand)
+        {
+            // Retained as empty no-op for backward compatibility
+        }
+
         public void BtnToolbarBoost_Click(object sender, RoutedEventArgs e)
         {
             var btn = sender as Button;
             if (btn != null) btn.IsEnabled = false;
+
+            // Flash Electric Blue on Floating Pill Glow
+            if (ToolbarGlowH != null)
+            {
+                var flashAnim = new ColorAnimation(Color.FromRgb(0x00, 0xE5, 0xFF), TimeSpan.FromMilliseconds(180))
+                {
+                    AutoReverse = true,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                };
+                ToolbarGlowH.BeginAnimation(DropShadowEffect.ColorProperty, flashAnim);
+            }
 
             // Trigger smooth, rich in-bar motions (no notification popups/banners)
             TriggerToolbarBoostMotions();
@@ -1776,7 +1920,7 @@ namespace Tempo
                     FetchTelemetryAsync();
                     LoadStorageDrivesFast();
                     LoadRecycleBinInfo();
-                    TxtRecTempSize.Text = "0 MB";
+                    TxtRecTempSize.Text = (LocalizationManager.CurrentLanguage == "ar") ? "تم التنظيف" : "Cleaned";
 
                     // Trigger completion ripple motion
                     TriggerToolbarCompletionMotions();
@@ -1789,7 +1933,7 @@ namespace Tempo
             _isPinned = !_isPinned;
             var pinBrush = _isPinned 
                 ? (SolidColorBrush)FindResource("TealHealth") 
-                : (SolidColorBrush)FindResource("PrimaryAccent");
+                : (SolidColorBrush)FindResource("TextSecondary");
 
             if (ToolbarPinIconH != null) ToolbarPinIconH.Fill = pinBrush;
             if (ToolbarPinIconV != null) ToolbarPinIconV.Fill = pinBrush;
@@ -1807,7 +1951,12 @@ namespace Tempo
 
         public void BtnToolbarClose_Click(object sender, RoutedEventArgs e)
         {
-            this.WindowState = WindowState.Minimized;
+            _autoHideTimer?.Stop();
+            this.BeginAnimation(LeftProperty, null);
+            this.BeginAnimation(TopProperty, null);
+            this.BeginAnimation(OpacityProperty, null);
+            this.Hide();
+            this.WindowState = WindowState.Normal;
         }
 
         private void CompanionBar_MouseEnter(object sender, MouseEventArgs e)
@@ -1818,8 +1967,9 @@ namespace Tempo
 
         private void CompanionBar_MouseLeave(object sender, MouseEventArgs e)
         {
-            if (_currentView == AppViewMode.Toolbar && !_isPeeked && !_isPinned)
+            if (_currentView == AppViewMode.Toolbar && !_isPinned && !_isPeeked)
             {
+                _autoHideTimer.Stop();
                 _autoHideTimer.Start();
             }
         }
@@ -1945,9 +2095,9 @@ namespace Tempo
                 this.Activate();
             });
             menu.Items.Add(isAr ? "إظهار / إخفاء شريط سطح المكتب" : "Toggle Desktop Companion Toolbar", null, (s, e) => {
-                if (_currentView == AppViewMode.Toolbar)
+                if (_currentView == AppViewMode.Toolbar && this.IsVisible)
                 {
-                    ShowDashboardView();
+                    BtnToolbarClose_Click(this, new RoutedEventArgs());
                 }
                 else
                 {
@@ -2134,7 +2284,7 @@ namespace Tempo
         }
 
         private static readonly Regex DenylistRegex = new(
-            @"(\.exe\b|SHA-?256|https?://|runas|--set-approved|--measure-boot|--trim|watchdog|AllowUnsafeBlocks|0x06|IsSafePath|\bUAC\b|\bTRIM\b|\bWCAG\b)",
+            @"(\.exe\b|SHA-?256|https?://|runas|--set-approved|--measure-boot|--trim|--clean-system-temp|watchdog|AllowUnsafeBlocks|0x06|IsSafePath|\bUAC\b|\bTRIM\b|\bWCAG\b)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         private enum UpdateCategory { Changes, Improvements, Fixes }
@@ -2573,19 +2723,25 @@ namespace Tempo
                     var procs = _hardwareMonitor.GetAllRunningProcesses();
                     Dispatcher.InvokeAsync(() =>
                     {
-                        _allProcesses = procs;
-                        bool isAr = LocalizationManager.CurrentLanguage == "ar";
-                        double totalRamConsumed = procs.Sum(p => p.RamMb);
-                        string ramSummary = totalRamConsumed >= 1024.0
-                            ? $"{(totalRamConsumed / 1024.0):F2} GB"
-                            : $"{totalRamConsumed:F1} MB";
+                        try
+                        {
+                            _allProcesses = procs;
+                            bool isAr = LocalizationManager.CurrentLanguage == "ar";
+                            double totalRamConsumed = procs.Sum(p => p.RamMb);
+                            string ramSummary = totalRamConsumed >= 1024.0
+                                ? $"{(totalRamConsumed / 1024.0):F2} GB"
+                                : $"{totalRamConsumed:F1} MB";
 
-                        TxtProcessesSummary.Text = isAr
-                            ? $"التطبيقات الأساسية: {procs.Count} تطبيقات • إجمالي الاستهلاك: {ramSummary}"
-                            : $"Active Applications: {procs.Count} apps • Total RAM: {ramSummary}";
+                            TxtProcessesSummary.Text = isAr
+                                ? $"البرامج والتطبيقات الشغالة: {procs.Count} برنامج • إجمالي الاستهلاك: {ramSummary}"
+                                : $"Running Applications: {procs.Count} apps • Total RAM: {ramSummary}";
 
-                        ApplyProcessFilter();
-                        _isLoadingProcesses = false;
+                            ApplyProcessFilter();
+                        }
+                        finally
+                        {
+                            _isLoadingProcesses = false;
+                        }
                     });
                 }
                 catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -2630,8 +2786,15 @@ namespace Tempo
 
         private void BtnEndTask_Click(object sender, RoutedEventArgs e)
         {
+            var btn = sender as Button;
+            if (btn != null) btn.IsEnabled = false;
+
             string? procNames = (sender as FrameworkElement)?.Tag?.ToString();
-            if (string.IsNullOrWhiteSpace(procNames)) return;
+            if (string.IsNullOrWhiteSpace(procNames))
+            {
+                if (btn != null) btn.IsEnabled = true;
+                return;
+            }
 
             bool isAr = LocalizationManager.CurrentLanguage == "ar";
 
@@ -2642,20 +2805,27 @@ namespace Tempo
 
             string appDisplay = appItem?.DisplayName ?? procNames;
 
-            var (success, freedMb, message) = _hardwareMonitor.TerminateProcessGroup(procNames);
-            if (success)
+            Task.Run(() =>
             {
-                string toast = isAr
-                    ? $"تم إغلاق {appDisplay} • تم توفير {freedMb:F1} ميجابايت"
-                    : $"Closed {appDisplay} • Freed {freedMb:F1} MB";
-                ShowToast(toast, false);
-                LoadRunningProcessesFast();
-                FetchTelemetryAsync();
-            }
-            else
-            {
-                ShowToast(message, true);
-            }
+                var (success, freedMb, message) = _hardwareMonitor.TerminateProcessGroup(procNames);
+                Dispatcher.InvokeAsync(() =>
+                {
+                    if (success)
+                    {
+                        string toast = isAr
+                            ? $"تم إغلاق {appDisplay} • تم توفير {freedMb:F1} ميجابايت"
+                            : $"Closed {appDisplay} • Freed {freedMb:F1} MB";
+                        ShowToast(toast, false);
+                        LoadRunningProcessesFast();
+                        FetchTelemetryAsync();
+                    }
+                    else
+                    {
+                        ShowToast(message, true);
+                        if (btn != null) btn.IsEnabled = true;
+                    }
+                });
+            });
         }
 
         #endregion

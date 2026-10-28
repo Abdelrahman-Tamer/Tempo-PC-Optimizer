@@ -387,67 +387,28 @@
             </Style.Triggers>
         </Style>
 
-        <!-- TOOLBAR TURBO BOOST ICON BUTTON (COMPACT CIRCLE) -->
+        <!-- TOOLBAR TURBO BOOST ICON BUTTON (SLEEK PILL BUTTON) -->
         <Style x:Key="ToolbarBoostBtn" TargetType="Button">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Width" Value="24"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Foreground" Value="#FFFFFF"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" CornerRadius="16" BorderThickness="1" BorderBrush="#802563EB">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                    <GradientStop Color="#2563EB" Offset="0"/>
-                                    <GradientStop Color="#1D4ED8" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
+                        <Border x:Name="bd" CornerRadius="12" BorderThickness="1" BorderBrush="#1E3A5F" Background="#0F1E36">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background">
-                                    <Setter.Value>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="#3B82F6" Offset="0"/>
-                                            <GradientStop Color="#2563EB" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Setter.Value>
-                                </Setter>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#60A5FA"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- TOOLBAR UPDATE BADGE BUTTON (CLEAN GREEN CIRCLE, NO BLUE OVERLAY/BORDER) -->
-        <Style x:Key="ToolbarUpdateBtn" TargetType="Button">
-            <Setter Property="Height" Value="28"/>
-            <Setter Property="Width" Value="28"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" CornerRadius="14" BorderThickness="1" BorderBrush="#30FFFFFF" Background="#10B981">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#059669"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#6EE7B7"/>
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#3B82F6"/>
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#047857"/>
+                                <Setter TargetName="bd" Property="Background" Value="#1E40AF"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="bd" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -455,24 +416,56 @@
             </Setter>
         </Style>
 
-        <!-- TOOLBAR ICON BUTTON -->
+        <!-- TOOLBAR UPDATE BADGE BUTTON (CLEAN GREEN CIRCLE) -->
+        <Style x:Key="ToolbarUpdateBtn" TargetType="Button">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" CornerRadius="12" BorderThickness="1" BorderBrush="#059669" Background="#10B981">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#047857"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#34D399"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#065F46"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- TOOLBAR ICON BUTTON (MINIMALIST SMOOTH PILL BUTTON) -->
         <Style x:Key="ToolbarIconBtn" TargetType="Button">
-            <Setter Property="Height" Value="30"/>
-            <Setter Property="Width" Value="30"/>
-            <Setter Property="Background" Value="#141924"/>
-            <Setter Property="BorderBrush" Value="#1E2638"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="15">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="12">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1C2433"/>
-                                <Setter TargetName="bd" Property="BorderBrush" Value="#2563EB"/>
+                                <Setter TargetName="bd" Property="Background" Value="#1E283A"/>
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#2A3850"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#151D2A"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
@@ -490,10 +483,12 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Column 0: Real Extracted App Icon -->
-                    <Border Grid.Column="0" Width="28" Height="28" Background="#11141C" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="5" Margin="0,0,8,0" VerticalAlignment="Center">
+                    <Border Grid.Column="0" Width="30" Height="30" Background="#11141C" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="6" Margin="0,0,8,0" VerticalAlignment="Center">
                         <Grid>
-                            <Path FlowDirection="LeftToRight" Data="M4,6 L20,6 L20,18 L4,18 Z M6,8 L18,8 L18,16 L6,16 Z" Fill="{StaticResource TextMuted}" Width="10" Height="10" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            <Image FlowDirection="LeftToRight" Source="{Binding IconSource}" Width="18" Height="18" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality"/>
+                            <!-- Elegant Fallback Monogram Badge -->
+                            <TextBlock Text="{Binding Monogram}" Foreground="{StaticResource PrimaryAccent}" FontSize="11" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding FallbackIconVisibility}"/>
+                            <!-- Real icon -->
+                            <Image FlowDirection="LeftToRight" Source="{Binding IconSource}" Width="20" Height="20" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasIconVisibility}"/>
                         </Grid>
                     </Border>
 
@@ -993,17 +988,79 @@
                                 <!-- Telemetry Details Card -->
                                 <Border Background="{StaticResource SurfaceContainer}" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
                                     <StackPanel>
-                                        <TextBlock Text="{DynamicResource TxtDiagnosticsTitle}" Foreground="{StaticResource TextPrimary}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                        <Grid Margin="0,2">
-                                            <TextBlock Text="{DynamicResource TxtGpuLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" HorizontalAlignment="Left"/>
-                                            <TextBlock x:Name="PerfGpuInfo" Text="NVIDIA GPU" Foreground="{StaticResource TextPrimary}" FontSize="11" HorizontalAlignment="Right"/>
+                                        <!-- Card Header: Title & Device Model Badge -->
+                                        <DockPanel Margin="0,0,0,8" LastChildFill="False">
+                                            <TextBlock DockPanel.Dock="Left" Text="{DynamicResource TxtDiagnosticsTitle}" Foreground="{StaticResource TextPrimary}" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                            <Border DockPanel.Dock="Right" Background="#161B26" BorderBrush="{StaticResource BorderMuted}" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                                <TextBlock x:Name="TxtDeviceModel" Text="Windows PC" Foreground="{StaticResource TextSecondary}" FontSize="10" FontWeight="Medium"/>
+                                            </Border>
+                                        </DockPanel>
+
+                                        <!-- 1. Processor (CPU) -->
+                                        <Grid Margin="0,2.5">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Path FlowDirection="LeftToRight" Data="M4,4 L20,4 L20,20 L4,20 Z M8,8 L16,8 L16,16 L8,16 Z M1,9 L4,9 M1,12 L4,12 M1,15 L4,15 M20,9 L23,9 M20,12 L23,12 M20,15 L23,15 M9,1 L9,4 M12,1 L12,4 M15,1 L15,4 M9,20 L9,23 M12,20 L12,23 M15,20 L15,23" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource TxtCpuLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="PerfCpuInfo" Text="CPU" Foreground="{StaticResource TextPrimary}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         </Grid>
-                                        <Grid Margin="0,2">
-                                            <TextBlock Text="{DynamicResource TxtNetLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" HorizontalAlignment="Left"/>
-                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+
+                                        <!-- 2. Graphics (GPU) -->
+                                        <Grid Margin="0,2.5">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Path FlowDirection="LeftToRight" Data="M2,6 L22,6 L22,18 L2,18 Z M6,10 L10,10 M8,8 L8,12 M15,10 A1,1 0 1,0 15,10.01 M18,12 A1,1 0 1,0 18,12.01" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource TxtGpuLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="PerfGpuInfo" Text="NVIDIA GPU" Foreground="{StaticResource TextPrimary}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- 3. Video RAM (VRAM) -->
+                                        <Grid x:Name="RowVram" Margin="0,2.5">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Path FlowDirection="LeftToRight" Data="M3,5 L21,5 L21,19 L3,19 Z M3,9 L21,9 M7,13 L11,13 M7,15 L11,15 M15,13 L17,13" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource TxtVramLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="PerfVramInfo" Text="VRAM" Foreground="{StaticResource TextPrimary}" FontSize="11" FontFamily="Consolas, monospace" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- 4. RAM Hardware Specs -->
+                                        <Grid Margin="0,2.5">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Path FlowDirection="LeftToRight" Data="M2,7 L22,7 L22,17 L2,17 Z M5,10 L5,14 M8,10 L8,14 M11,10 L11,14 M14,10 L14,14 M17,10 L17,14" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource TxtRamSpecsLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="PerfRamSpecs" Text="RAM" Foreground="{StaticResource TextPrimary}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- 5. Network Speed & Ping -->
+                                        <Grid Margin="0,2.5">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Path FlowDirection="LeftToRight" Data="M12,2 C6.5,2 2,6.5 2,12 C2,17.5 6.5,22 12,22 C17.5,22 22,17.5 22,12 C22,6.5 17.5,2 12,2 Z M2,12 L22,12 M12,2 C14.5,5 16,8.5 16,12 C16,15.5 14.5,19 12,22 C9.5,19 8,15.5 8,12 C8,8.5 9.5,5 12,2 Z" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource TxtNetLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="PerfPingInfo" Text="" Foreground="{StaticResource TextMuted}" FontSize="10" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                                 <TextBlock x:Name="PerfNetDown" Text="↓ 0.0 KB/s" Foreground="{StaticResource TealHealth}" FontSize="11" FontFamily="Consolas, monospace" Margin="0,0,6,0"/>
                                                 <TextBlock x:Name="PerfNetUp" Text="↑ 0.0 KB/s" Foreground="{StaticResource PrimaryAccent}" FontSize="11" FontFamily="Consolas, monospace"/>
                                             </StackPanel>
+                                        </Grid>
+
+                                        <!-- 6. System Uptime -->
+                                        <Grid Margin="0,2.5">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Path FlowDirection="LeftToRight" Data="M12,2 A10,10 0 1,0 22,12 A10,10 0 1,0 12,2 Z M12,6 L12,12 L16,14" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource TxtUptimeLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="PerfUptimeInfo" Text="Uptime" Foreground="{StaticResource TextPrimary}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- 7. Power / Battery -->
+                                        <Grid x:Name="RowPowerBattery" Margin="0,2.5">
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                                <Path FlowDirection="LeftToRight" Data="M4,6 L18,6 L18,18 L4,18 Z M20,10 L20,14" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" Width="11" Height="11" Stretch="Uniform" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{DynamicResource TxtPowerBatteryLabel}" Foreground="{StaticResource TextSecondary}" FontSize="11" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock x:Name="PerfPowerInfo" Text="Battery" Foreground="{StaticResource TextPrimary}" FontSize="11" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                                         </Grid>
                                     </StackPanel>
                                 </Border>
@@ -1015,10 +1072,31 @@
                                         <ItemsControl x:Name="ListTopProcesses">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Grid Margin="0,3">
-                                                        <TextBlock Text="{Binding ProcessName}" Foreground="{StaticResource TextSecondary}" FontSize="11" HorizontalAlignment="Left"/>
-                                                        <TextBlock Text="{Binding RamFormatted}" Foreground="{StaticResource PrimaryAccent}" FontSize="11" FontFamily="Consolas, monospace" HorizontalAlignment="Right"/>
-                                                    </Grid>
+                                                    <Border Background="#141722" BorderBrush="#222738" BorderThickness="1" CornerRadius="6" Padding="8,5" Margin="0,0,0,5">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <!-- Real App Icon or Monogram Fallback Badge -->
+                                                            <Border Grid.Column="0" Width="24" Height="24" CornerRadius="5" Background="#1B202D" BorderBrush="#282F42" BorderThickness="1" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                                <Grid>
+                                                                    <!-- Real Extracted High-Res Icon -->
+                                                                    <Image FlowDirection="LeftToRight" Source="{Binding IconSource}" Width="16" Height="16" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasIconVisibility}"/>
+                                                                    <!-- Elegant Fallback Monogram Badge -->
+                                                                    <TextBlock Text="{Binding Monogram}" Foreground="{StaticResource PrimaryAccent}" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding FallbackIconVisibility}"/>
+                                                                </Grid>
+                                                            </Border>
+
+                                                            <!-- Friendly Display Name -->
+                                                            <TextBlock Grid.Column="1" Text="{Binding DisplayName}" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="Medium" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+
+                                                            <!-- RAM Usage Badge -->
+                                                            <TextBlock Grid.Column="2" Text="{Binding RamFormatted}" Foreground="#93C5FD" FontSize="11" FontWeight="SemiBold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
+                                                        </Grid>
+                                                    </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -1174,13 +1252,13 @@
                                                         </Grid.ColumnDefinitions>
 
                                                         <!-- App Icon (real or fallback) -->
-                                                        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8" Background="#1B202D" BorderBrush="#282F42" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
-                                                            <!-- Real icon -->
-                                                            <Image FlowDirection="LeftToRight" Source="{Binding IconSource}" Width="22" Height="22" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasIconVisibility}"/>
-                                                        </Border>
-                                                        <!-- Fallback icon -->
-                                                        <Border Grid.Column="0" Width="34" Height="34" CornerRadius="8" Background="#1B202D" BorderBrush="#282F42" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center" Visibility="{Binding FallbackIconVisibility}">
-                                                            <Path FlowDirection="LeftToRight" Data="M4,2 L16,2 C17.1,2 18,2.9 18,4 L18,16 C18,17.1 17.1,18 16,18 L4,18 C2.9,18 2,17.1 2,16 L2,4 C2,2.9 2.9,2 4,2 Z M6,6 L14,6 M6,9 L14,9 M6,12 L10,12" Stroke="#4B5563" StrokeThickness="1.4" Width="14" Height="14" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        <Border Grid.Column="0" Width="36" Height="36" CornerRadius="8" Background="#1B202D" BorderBrush="#282F42" BorderThickness="1" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                            <Grid>
+                                                                <!-- Real icon -->
+                                                                <Image FlowDirection="LeftToRight" Source="{Binding IconSource}" Width="24" Height="24" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasIconVisibility}"/>
+                                                                <!-- Fallback Monogram Badge -->
+                                                                <TextBlock Text="{Binding Monogram}" Foreground="{StaticResource PrimaryAccent}" FontSize="13" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding FallbackIconVisibility}"/>
+                                                            </Grid>
                                                         </Border>
 
                                                         <!-- Display Name + Subtitle (Process names + instances) -->
@@ -1522,112 +1600,98 @@
             </Grid>
         </Border>
 
-        <!-- 2A. HORIZONTAL COMPANION BAR (أعلى الشاشة - كبسولة أفقية نحيفة) -->
-        <!-- Usable interior width at 610px is 592px (after 8px padding + 1px border on each side). Accommodates Brand (~103px) + Metrics (~340-360px) + Actions (~140-150px) = ~594px without horizontal clipping when Temp and Update are visible -->
+        <!-- 2A. FLOATING PILL COMPANION BAR (كبسولة عائمة فائقة البساطة والسلاسة) -->
         <Border x:Name="CompanionBarHorizontal"
                 Visibility="Collapsed"
-                Background="#F20B0E14"
-                BorderBrush="#2E3A52"
+                Background="#EE0B0E14"
+                BorderBrush="#222D3E"
                 BorderThickness="1"
-                CornerRadius="21"
-                Padding="8,4"
-                Height="42"
-                FlowDirection="RightToLeft">
+                CornerRadius="19"
+                Padding="12,0"
+                Height="38"
+                Cursor="SizeAll"
+                FlowDirection="LeftToRight">
             <Border.Effect>
-                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.45"/>
+                <DropShadowEffect x:Name="ToolbarGlowH" Color="#000000" BlurRadius="18" ShadowDepth="2" Opacity="0.45"/>
             </Border.Effect>
-            <Grid>
+            <Grid VerticalAlignment="Center">
                 <Grid.ColumnDefinitions>
+                    <!-- Brand & Pulse -->
                     <ColumnDefinition Width="Auto"/>
+                    <!-- Separator -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Metrics: CPU & RAM -->
                     <ColumnDefinition Width="*"/>
+                    <!-- Separator -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Actions -->
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Brand & Logo -->
+                <!-- 1. Brand & Health Pulse -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <StackPanel Orientation="Vertical" VerticalAlignment="Center" Margin="0,0,5,0" Opacity="0.4" Cursor="SizeAll">
-                        <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource TextSecondary}" Margin="0,0,0,2"/>
-                        <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource TextSecondary}" Margin="0,0,0,2"/>
-                        <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource TextSecondary}"/>
-                    </StackPanel>
-
-                    <Grid Width="24" Height="24" Margin="0,0,5,0">
+                    <Grid Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center">
                         <Image FlowDirection="LeftToRight" x:Name="ImgToolbarLogoH" RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Grid>
-
-                    <Ellipse x:Name="ToolbarPulseDotH" Width="6" Height="6" Fill="{StaticResource TealHealth}" Margin="0,0,5,0" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse x:Name="ToolbarPulseDotH" Width="6" Height="6" Fill="{StaticResource TealHealth}" Margin="0,0,6,0" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                         <Ellipse.RenderTransform>
                             <ScaleTransform x:Name="ToolbarPulseScaleH" ScaleX="1" ScaleY="1"/>
                         </Ellipse.RenderTransform>
                     </Ellipse>
                     <TextBlock Text="Tempo" Foreground="{StaticResource TextPrimary}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Rectangle Width="1" Height="16" Fill="#2D343F" Margin="8,0"/>
                 </StackPanel>
 
-                <!-- Metric Pods Container (LTR for numeric metrics so % and arrows don't reverse) -->
-                <StackPanel x:Name="ToolbarMetricsContainerH" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" FlowDirection="LeftToRight">
-                    <!-- RAM Pod -->
-                    <Border Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" ToolTip="{DynamicResource ToolbarTooltipRam}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarRamIconH" Data="M12,2 A10,10 0 1,0 22,12 A10,10 0 0,0 12,2 Z M12,4 A8,8 0 1,1 4,12 A8,8 0 0,1 12,4 Z" Fill="{StaticResource TealHealth}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
-                                <Path.RenderTransform>
-                                    <RotateTransform x:Name="BarRamRotateH" Angle="0"/>
-                                </Path.RenderTransform>
-                            </Path>
-                            <TextBlock Text="RAM " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="BarRamTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" MinWidth="24" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                <!-- Separator -->
+                <Rectangle Grid.Column="1" Width="1" Height="14" Fill="#232D3F" Margin="10,0"/>
 
-                    <!-- CPU Pod -->
-                    <Border Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" ToolTip="{DynamicResource ToolbarTooltipCpu}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarCpuIconH" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z M13,17 L11,17 L11,7 L13,7 L13,17 Z M17,17 L15,17 L15,13 L17,13 L17,17 Z" Fill="{StaticResource TealHealth}" Width="10" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="CPU " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="BarCpuTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" MinWidth="24" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                <!-- 2. Circular KPI Gauges: CPU & RAM -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <!-- CPU KPI Dial -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{DynamicResource ToolbarTooltipCpu}">
+                        <TextBlock Text="CPU" Foreground="#94A3B8" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Grid Width="28" Height="28" VerticalAlignment="Center">
+                            <!-- Background Track Ring -->
+                            <Ellipse Width="25" Height="25" Stroke="#1E283A" StrokeThickness="2.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <!-- Active Arc -->
+                            <Path x:Name="BarCpuKpiArcH" Stroke="{StaticResource TealHealth}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <!-- Percentage in Center -->
+                            <TextBlock x:Name="BarCpuTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="7.5" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
 
-                    <!-- CPU TEMP Pod -->
-                    <Border x:Name="ToolbarTempBorderH" Style="{StaticResource ToolbarPodStyle}" Height="28" MinWidth="58" Padding="6,2" Visibility="Hidden" ToolTip="{DynamicResource ToolbarTooltipTemp}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarTempIconH" Data="M12,2 C10.9,2 10,2.9 10,4 L10,13.2 C8.8,14.1 8,15.5 8,17 C8,19.2 9.8,21 12,21 C14.2,21 16,19.2 16,17 C16,15.5 15.2,14.1 14,13.2 L14,4 C14,2.9 13.1,2 12,2 Z" Fill="{StaticResource TealHealth}" Width="9" Height="10" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="BarTempTextH" Text="--°C" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" MinWidth="30" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- Separator -->
+                    <Rectangle Width="1" Height="14" Fill="#232D3F" Margin="10,0"/>
 
-                    <!-- SSD / Disk Pod (Always 100% available without admin) -->
-                    <Border x:Name="ToolbarDiskBorderH" Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" ToolTip="{DynamicResource ToolbarTooltipDisk}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarDiskIconH" Data="M4,4 L20,4 C21.1,4 22,4.9 22,6 L22,18 C22,19.1 21.1,20 20,20 L4,20 C2.9,20 2,19.1 2,18 L2,6 C2,4.9 2.9,4 4,4 Z M5,14 A1.5,1.5 0 1,0 8,14 A1.5,1.5 0 0,0 5,14 Z M18,15 L11,15 L11,13 L18,13 Z" Fill="{StaticResource TealHealth}" Width="10" Height="9" Stretch="Uniform" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="SSD " Foreground="{StaticResource TextMuted}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" VerticalAlignment="Center"/>
-                            <TextBlock x:Name="BarDiskTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="10" FontWeight="Bold" FontFamily="Consolas, monospace" MinWidth="24" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- NET Speed Pod (Dual: Down ↓ & Up ↑) -->
-                    <Border Style="{StaticResource ToolbarPodStyle}" Height="28" Padding="6,2" ToolTip="{DynamicResource ToolbarTooltipNet}">
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="↓" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,2,0"/>
-                            <TextBlock x:Name="BarNetDownH" Text="0K" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" MinWidth="26" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,5,0"/>
-                            <TextBlock Text="↑" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,2,0"/>
-                            <TextBlock x:Name="BarNetUpH" Text="0K" Foreground="{StaticResource TealHealth}" FontSize="9" FontWeight="Bold" FontFamily="Consolas, monospace" MinWidth="26" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- RAM KPI Dial -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{DynamicResource ToolbarTooltipRam}">
+                        <TextBlock Text="RAM" Foreground="#94A3B8" FontSize="9" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <Grid Width="28" Height="28" VerticalAlignment="Center">
+                            <!-- Background Track Ring -->
+                            <Ellipse Width="25" Height="25" Stroke="#1E283A" StrokeThickness="2.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <!-- Active Arc -->
+                            <Path x:Name="BarRamKpiArcH" Stroke="{StaticResource TealHealth}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                            <!-- Percentage in Center -->
+                            <TextBlock x:Name="BarRamTextH" Text="--" Foreground="{StaticResource TealHealth}" FontSize="7.5" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
                 </StackPanel>
 
-                <!-- Actions -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Toolbar Update Badge Button -->
-                    <Button x:Name="BtnToolbarUpdateH" Style="{StaticResource ToolbarUpdateBtn}" Width="28" MinWidth="28" Height="28" Margin="0,0,6,0" Click="BtnUpdateBadge_Click" Visibility="Hidden" ToolTip="{DynamicResource BtnTooltipUpdate}">
-                        <Path FlowDirection="LeftToRight" Data="M4,15 L12,23 L20,15 M12,3 L12,22" Stroke="#FFFFFF" StrokeThickness="2" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="11" Height="11" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <!-- Separator -->
+                <Rectangle Grid.Column="3" Width="1" Height="14" Fill="#232D3F" Margin="10,0"/>
+
+                <!-- 3. Minimalist Actions -->
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Update Badge Button (Shown only when update available) -->
+                    <Button x:Name="BtnToolbarUpdateH" Style="{StaticResource ToolbarUpdateBtn}" Width="24" Height="24" Margin="0,0,3,0" Click="BtnUpdateBadge_Click" Visibility="Collapsed" ToolTip="{DynamicResource BtnTooltipUpdate}">
+                        <Path FlowDirection="LeftToRight" Data="M4,15 L12,23 L20,15 M12,3 L12,22" Stroke="#FFFFFF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="9" Height="9" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Button>
 
-                    <Button x:Name="BtnToolbarBoostH" Style="{StaticResource ToolbarBoostBtn}" Width="28" Height="28" Margin="0,0,5,0" Click="BtnToolbarBoost_Click" ToolTip="{DynamicResource ToolbarTooltipBoost}" RenderTransformOrigin="0.5,0.5">
+                    <!-- Turbo Boost Button -->
+                    <Button x:Name="BtnToolbarBoostH" Style="{StaticResource ToolbarBoostBtn}" Width="24" Height="24" Margin="0,0,3,0" Click="BtnToolbarBoost_Click" ToolTip="{DynamicResource ToolbarTooltipBoost}" RenderTransformOrigin="0.5,0.5">
                         <Button.RenderTransform>
                             <ScaleTransform x:Name="BtnToolbarBoostScaleH" ScaleX="1" ScaleY="1"/>
                         </Button.RenderTransform>
-                        <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconH" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="#FFFFFF" Width="11" Height="12" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                        <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconH" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="#38BDF8" Width="10" Height="11" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                             <Path.RenderTransform>
                                 <TransformGroup>
                                     <ScaleTransform x:Name="ToolbarBoostScaleH" ScaleX="1" ScaleY="1"/>
@@ -1637,15 +1701,18 @@
                         </Path>
                     </Button>
 
-                    <Button Style="{StaticResource ToolbarIconBtn}" Width="26" Height="26" Margin="0,0,3,0" Click="BtnOpenDashboard_Click" ToolTip="{DynamicResource ToolbarTooltipOpenDashboard}">
-                        <Path FlowDirection="LeftToRight" Data="M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M3,14 L10,14 L10,21 L3,21 Z M14,14 L21,14 L21,21 L14,21 Z" Fill="{StaticResource PrimaryAccent}" Width="10" Height="10" Stretch="Uniform"/>
+                    <!-- Open Dashboard Button -->
+                    <Button Style="{StaticResource ToolbarIconBtn}" Width="24" Height="24" Margin="0,0,2,0" Click="BtnOpenDashboard_Click" ToolTip="{DynamicResource ToolbarTooltipOpenDashboard}">
+                        <Path FlowDirection="LeftToRight" Data="M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M3,14 L10,14 L10,21 L3,21 Z M14,14 L21,14 L21,21 L14,21 Z" Fill="{StaticResource TextSecondary}" Width="9" Height="9" Stretch="Uniform"/>
                     </Button>
 
-                    <Button Style="{StaticResource ToolbarIconBtn}" Width="26" Height="26" Margin="0,0,3,0" Click="BtnToolbarPin_Click" ToolTip="{DynamicResource ToolbarTooltipPin}">
-                        <Path FlowDirection="LeftToRight" x:Name="ToolbarPinIconH" Data="M16,12 L16,4 L17,4 L17,2 L7,2 L7,4 L8,4 L8,12 L6,14 L6,16 L11,16 L11,22 L13,22 L13,16 L18,16 L18,14 L16,12 Z" Fill="{StaticResource PrimaryAccent}" Width="10" Height="10" Stretch="Uniform"/>
+                    <!-- Pin Button -->
+                    <Button Style="{StaticResource ToolbarIconBtn}" Width="24" Height="24" Margin="0,0,2,0" Click="BtnToolbarPin_Click" ToolTip="{DynamicResource ToolbarTooltipPin}">
+                        <Path FlowDirection="LeftToRight" x:Name="ToolbarPinIconH" Data="M16,12 L16,4 L17,4 L17,2 L7,2 L7,4 L8,4 L8,12 L6,14 L6,16 L11,16 L11,22 L13,22 L13,16 L18,16 L18,14 L16,12 Z" Fill="{StaticResource TextSecondary}" Width="9" Height="9" Stretch="Uniform"/>
                     </Button>
 
-                    <Button Style="{StaticResource ToolbarIconBtn}" Width="26" Height="26" Click="BtnToolbarClose_Click" ToolTip="{DynamicResource ToolbarTooltipHide}">
+                    <!-- Close / Hide Button -->
+                    <Button Style="{StaticResource ToolbarIconBtn}" Width="24" Height="24" Click="BtnToolbarClose_Click" ToolTip="{DynamicResource ToolbarTooltipHide}">
                         <Path FlowDirection="LeftToRight" Data="M0,0 L8,8 M8,0 L0,8" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" SnapsToDevicePixels="True" Width="8" Height="8" Stretch="Uniform"/>
                     </Button>
                 </StackPanel>
@@ -1740,131 +1807,96 @@
         </Grid>
 
         <!-- 2B. VERTICAL COMPANION BAR (الجانب - كبسولة عمودية فائقة النحافة 34px وبدون زخارف زائدة) -->
+        <!-- 2B. VERTICAL FLOATING PILL (كبسولة عائمة عمودية فائقة البساطة والسلاسة بـ KPI Dials) -->
         <Border x:Name="CompanionBarVertical"
                 Visibility="Collapsed"
-                Background="#F20B0E14"
-                BorderBrush="#2E3A52"
+                Background="#EE0B0E14"
+                BorderBrush="#252F42"
                 BorderThickness="1"
-                CornerRadius="17"
-                Padding="2,6"
-                Width="34"
-                Height="315"
+                CornerRadius="19"
+                Padding="0,10"
+                Width="38"
+                Height="295"
+                Cursor="SizeAll"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
             <Border.Effect>
-                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="3" Opacity="0.45"/>
+                <DropShadowEffect Color="#000000" BlurRadius="16" ShadowDepth="2" Opacity="0.45"/>
             </Border.Effect>
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <!-- Compact Grip Dots -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,4" Opacity="0.4" Cursor="SizeAll">
-                    <Ellipse Width="2" Height="2" Fill="{StaticResource TextSecondary}" Margin="0,0,1.5,0"/>
-                    <Ellipse Width="2" Height="2" Fill="{StaticResource TextSecondary}" Margin="0,0,1.5,0"/>
-                    <Ellipse Width="2" Height="2" Fill="{StaticResource TextSecondary}"/>
-                </StackPanel>
-
-                <!-- Clean 3D Logo (بدون نقطة خضراء أو إطارات زخرفية) -->
-                <Grid Width="20" Height="20" Margin="0,0,0,5">
+                <!-- 1. Brand Logo & Status Pulse Dot -->
+                <Grid Width="16" Height="16" Margin="0,0,0,4" HorizontalAlignment="Center">
                     <Image FlowDirection="LeftToRight" x:Name="ImgToolbarLogoV" RenderOptions.BitmapScalingMode="HighQuality"/>
                 </Grid>
+                <Ellipse x:Name="ToolbarPulseDotV" Width="6" Height="6" Fill="{StaticResource TealHealth}" HorizontalAlignment="Center" Margin="0,0,0,2" RenderTransformOrigin="0.5,0.5">
+                    <Ellipse.RenderTransform>
+                        <ScaleTransform x:Name="ToolbarPulseScaleV" ScaleX="1" ScaleY="1"/>
+                    </Ellipse.RenderTransform>
+                </Ellipse>
 
-                <!-- Vertical Toolbar Update Badge Button -->
-                <Button x:Name="BtnToolbarUpdateV" Style="{StaticResource ToolbarUpdateBtn}" Width="22" MinWidth="22" Height="22" Margin="0,0,0,4" Click="BtnUpdateBadge_Click" Visibility="Hidden" ToolTip="{DynamicResource BtnTooltipUpdate}">
-                    <Button.Template>
-                        <ControlTemplate TargetType="Button">
-                            <Border x:Name="bd" CornerRadius="11" BorderThickness="1" BorderBrush="#30FFFFFF" Background="#10B981">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter TargetName="bd" Property="Background" Value="#059669"/>
-                                    <Setter TargetName="bd" Property="BorderBrush" Value="#6EE7B7"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Button.Template>
-                    <Path FlowDirection="LeftToRight" Data="M4,15 L12,23 L20,15 M12,3 L12,22" Stroke="#FFFFFF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="9" Height="9" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Button>
+                <Rectangle Height="1" Width="18" Fill="#232D3F" Margin="0,6,0,6"/>
 
-                <Rectangle Height="1" Width="18" Fill="#242B38" Margin="0,0,0,4"/>
-
-                <!-- Telemetry Pods Container (FlowDirection=LTR so % is cleanly positioned) -->
-                <StackPanel Orientation="Vertical" HorizontalAlignment="Center" FlowDirection="LeftToRight">
-                    <!-- RAM Vertical Pod -->
-                    <Border Style="{StaticResource ToolbarPodStyle}" Width="28" Height="30" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipRam}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarRamIconV" Data="M12,2 A10,10 0 1,0 22,12 A10,10 0 0,0 12,2 Z M12,4 A8,8 0 1,1 4,12 A8,8 0 0,1 12,4 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8.5" Stretch="Uniform" Margin="0,0,0,1" RenderTransformOrigin="0.5,0.5">
-                                <Path.RenderTransform>
-                                    <RotateTransform x:Name="BarRamRotateV" Angle="0"/>
-                                </Path.RenderTransform>
-                            </Path>
-                            <TextBlock x:Name="BarRamTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- CPU Vertical Pod -->
-                    <Border Style="{StaticResource ToolbarPodStyle}" Width="28" Height="30" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipCpu}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarCpuIconV" Data="M19,3 L5,3 C3.9,3 3,3.9 3,5 L3,19 C3,20.1 3.9,21 5,21 L19,21 C20.1,21 21,20.1 21,19 L21,5 C21,3.9 20.1,3 19,3 Z M9,17 L7,17 L7,10 L9,10 L9,17 Z M13,17 L11,17 L11,7 L13,7 L13,17 Z M17,17 L15,17 L15,13 L17,13 L17,17 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8.5" Stretch="Uniform" Margin="0,0,0,1"/>
-                            <TextBlock x:Name="BarCpuTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- DISK Vertical Pod -->
-                    <Border x:Name="ToolbarDiskBorderV" Style="{StaticResource ToolbarPodStyle}" Width="28" Height="28" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipDisk}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarDiskIconV" Data="M4,4 L20,4 C21.1,4 22,4.9 22,6 L22,18 C22,19.1 21.1,20 20,20 L4,20 C2.9,20 2,19.1 2,18 L2,6 C2,4.9 2.9,4 4,4 Z M5,14 A1.5,1.5 0 1,0 8,14 A1.5,1.5 0 0,0 5,14 Z M18,15 L11,15 L11,13 L18,13 Z" Fill="{StaticResource TealHealth}" Width="8.5" Height="8" Stretch="Uniform" Margin="0,0,0,1"/>
-                            <TextBlock x:Name="BarDiskTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- TEMP Vertical Pod -->
-                    <Border x:Name="ToolbarTempBorderV" Style="{StaticResource ToolbarPodStyle}" Width="28" MinWidth="28" Height="28" Padding="1,2" Margin="0,0,0,3" CornerRadius="6" Visibility="Hidden" ToolTip="{DynamicResource ToolbarTooltipTemp}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Path FlowDirection="LeftToRight" x:Name="BarTempIconV" Data="M12,2 C10.9,2 10,2.9 10,4 L10,13.2 C8.8,14.1 8,15.5 8,17 C8,19.2 9.8,21 12,21 C14.2,21 16,19.2 16,17 C16,15.5 15.2,14.1 14,13.2 L14,4 C14,2.9 13.1,2 12,2 Z" Fill="{StaticResource TealHealth}" Width="8" Height="8.5" Stretch="Uniform" Margin="0,0,0,1"/>
-                            <TextBlock x:Name="BarTempTextV" Text="--°" Foreground="{StaticResource TealHealth}" FontSize="8" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- NET Vertical Speed -->
-                    <Border Style="{StaticResource ToolbarPodStyle}" Width="28" Height="26" Padding="1,1" Margin="0,0,0,4" CornerRadius="6" ToolTip="{DynamicResource ToolbarTooltipNet}">
-                        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="↓" Foreground="{StaticResource TealHealth}" FontSize="7.5" FontWeight="Bold" HorizontalAlignment="Center"/>
-                            <TextBlock x:Name="BarNetSpeedV" Text="0K" Foreground="{StaticResource TealHealth}" FontSize="7.5" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
+                <!-- 2. CPU Circular KPI Dial -->
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="{DynamicResource ToolbarTooltipCpu}">
+                    <TextBlock Text="CPU" Foreground="#94A3B8" FontSize="8.5" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,3"/>
+                    <Grid Width="28" Height="28" HorizontalAlignment="Center">
+                        <Ellipse Width="25" Height="25" Stroke="#1E283A" StrokeThickness="2.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Path x:Name="BarCpuKpiArcV" Stroke="{StaticResource TealHealth}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <TextBlock x:Name="BarCpuTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="7.5" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
                 </StackPanel>
 
-                <Rectangle Height="1" Width="18" Fill="#242B38" Margin="0,0,0,4"/>
+                <Rectangle Height="1" Width="18" Fill="#232D3F" Margin="0,6,0,6"/>
 
-                <!-- Turbo Boost Button -->
-                <Button x:Name="BtnToolbarBoostV" Style="{StaticResource ToolbarBoostBtn}" Width="22" Height="22" Margin="0,0,0,4" Click="BtnToolbarBoost_Click" ToolTip="{DynamicResource ToolbarTooltipBoost}" RenderTransformOrigin="0.5,0.5">
-                    <Button.RenderTransform>
-                        <ScaleTransform x:Name="BtnToolbarBoostScaleV" ScaleX="1" ScaleY="1"/>
-                    </Button.RenderTransform>
-                    <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconV" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="#FFFFFF" Width="9" Height="10" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
-                        <Path.RenderTransform>
-                            <TransformGroup>
-                                <ScaleTransform x:Name="ToolbarBoostScaleV" ScaleX="1" ScaleY="1"/>
-                                <RotateTransform x:Name="ToolbarBoostRotateV" Angle="0"/>
-                            </TransformGroup>
-                        </Path.RenderTransform>
-                    </Path>
-                </Button>
+                <!-- 3. RAM Circular KPI Dial -->
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center" ToolTip="{DynamicResource ToolbarTooltipRam}">
+                    <TextBlock Text="RAM" Foreground="#94A3B8" FontSize="8.5" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,3"/>
+                    <Grid Width="28" Height="28" HorizontalAlignment="Center">
+                        <Ellipse Width="25" Height="25" Stroke="#1E283A" StrokeThickness="2.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Path x:Name="BarRamKpiArcV" Stroke="{StaticResource TealHealth}" StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                        <TextBlock x:Name="BarRamTextV" Text="--" Foreground="{StaticResource TealHealth}" FontSize="7.5" FontWeight="Bold" FontFamily="Consolas, monospace" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </StackPanel>
 
-                <!-- Open Dashboard Button -->
-                <Button Style="{StaticResource ToolbarIconBtn}" Width="20" Height="20" Margin="0,0,0,3" Click="BtnOpenDashboard_Click" ToolTip="{DynamicResource ToolbarTooltipOpenDashboard}">
-                    <Path FlowDirection="LeftToRight" Data="M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M3,14 L10,14 L10,21 L3,21 Z M14,14 L21,14 L21,21 L14,21 Z" Fill="{StaticResource PrimaryAccent}" Width="8" Height="8" Stretch="Uniform"/>
-                </Button>
+                <Rectangle Height="1" Width="18" Fill="#232D3F" Margin="0,6,0,6"/>
 
-                <!-- Auto-Hide / Pin Toggle -->
-                <Button Style="{StaticResource ToolbarIconBtn}" Width="20" Height="20" Margin="0,0,0,3" Click="BtnToolbarPin_Click" ToolTip="{DynamicResource ToolbarTooltipPin}">
-                    <Path FlowDirection="LeftToRight" x:Name="ToolbarPinIconV" Data="M16,12 L16,4 L17,4 L17,2 L7,2 L7,4 L8,4 L8,12 L6,14 L6,16 L11,16 L11,22 L13,22 L13,16 L18,16 L18,14 L16,12 Z" Fill="{StaticResource PrimaryAccent}" Width="8" Height="8" Stretch="Uniform"/>
-                </Button>
+                <!-- 4. Action Buttons -->
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
+                    <!-- Update Badge Button (Shown only when update available) -->
+                    <Button x:Name="BtnToolbarUpdateV" Style="{StaticResource ToolbarUpdateBtn}" Width="24" Height="24" Margin="0,0,0,4" Click="BtnUpdateBadge_Click" Visibility="Collapsed" ToolTip="{DynamicResource BtnTooltipUpdate}">
+                        <Path FlowDirection="LeftToRight" Data="M4,15 L12,23 L20,15 M12,3 L12,22" Stroke="#FFFFFF" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="9" Height="9" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
 
-                <!-- Close / Minimize -->
-                <Button Style="{StaticResource ToolbarIconBtn}" Width="20" Height="20" Click="BtnToolbarClose_Click" ToolTip="{DynamicResource ToolbarTooltipHide}">
-                    <Path FlowDirection="LeftToRight" Data="M0,0 L8,8 M8,0 L0,8" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" SnapsToDevicePixels="True" Width="7" Height="7" Stretch="Uniform"/>
-                </Button>
+                    <!-- Turbo Boost Button -->
+                    <Button x:Name="BtnToolbarBoostV" Style="{StaticResource ToolbarBoostBtn}" Width="24" Height="24" Margin="0,0,0,4" Click="BtnToolbarBoost_Click" ToolTip="{DynamicResource ToolbarTooltipBoost}" RenderTransformOrigin="0.5,0.5">
+                        <Button.RenderTransform>
+                            <ScaleTransform x:Name="BtnToolbarBoostScaleV" ScaleX="1" ScaleY="1"/>
+                        </Button.RenderTransform>
+                        <Path FlowDirection="LeftToRight" x:Name="ToolbarBoostIconV" Data="M13,2 L3,14 L12,14 L11,22 L21,10 L12,10 Z" Fill="#38BDF8" Width="10" Height="11" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                            <Path.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform x:Name="ToolbarBoostScaleV" ScaleX="1" ScaleY="1"/>
+                                    <RotateTransform x:Name="ToolbarBoostRotateV" Angle="0"/>
+                                </TransformGroup>
+                            </Path.RenderTransform>
+                        </Path>
+                    </Button>
+
+                    <!-- Open Dashboard Button -->
+                    <Button Style="{StaticResource ToolbarIconBtn}" Width="24" Height="24" Margin="0,0,0,3" Click="BtnOpenDashboard_Click" ToolTip="{DynamicResource ToolbarTooltipOpenDashboard}">
+                        <Path FlowDirection="LeftToRight" Data="M3,3 L10,3 L10,10 L3,10 Z M14,3 L21,3 L21,10 L14,10 Z M3,14 L10,14 L10,21 L3,21 Z M14,14 L21,14 L21,21 L14,21 Z" Fill="{StaticResource TextSecondary}" Width="9" Height="9" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- Auto-Hide / Pin Toggle -->
+                    <Button Style="{StaticResource ToolbarIconBtn}" Width="24" Height="24" Margin="0,0,0,3" Click="BtnToolbarPin_Click" ToolTip="{DynamicResource ToolbarTooltipPin}">
+                        <Path FlowDirection="LeftToRight" x:Name="ToolbarPinIconV" Data="M16,12 L16,4 L17,4 L17,2 L7,2 L7,4 L8,4 L8,12 L6,14 L6,16 L11,16 L11,22 L13,22 L13,16 L18,16 L18,14 L16,12 Z" Fill="{StaticResource TextSecondary}" Width="9" Height="9" Stretch="Uniform"/>
+                    </Button>
+
+                    <!-- Close / Minimize -->
+                    <Button Style="{StaticResource ToolbarIconBtn}" Width="24" Height="24" Click="BtnToolbarClose_Click" ToolTip="{DynamicResource ToolbarTooltipHide}">
+                        <Path FlowDirection="LeftToRight" Data="M0,0 L8,8 M8,0 L0,8" Stroke="{StaticResource TextSecondary}" StrokeThickness="1.2" SnapsToDevicePixels="True" Width="8" Height="8" Stretch="Uniform"/>
+                    </Button>
+                </StackPanel>
             </StackPanel>
         </Border>
     </Grid>

@@ -44,7 +44,7 @@
     <system:String x:Key="TxtFreeDiskSpace">المساحة المتوفرة في قرص C:</system:String>
     <system:String x:Key="TxtRecommendations">إجراءات سريعة</system:String>
     <system:String x:Key="TxtTempTitleShort">الملفات المؤقتة</system:String>
-    <system:String x:Key="TxtTempDescShort">تنظيف كاش البرامج والملفات المؤقتة</system:String>
+    <system:String x:Key="TxtTempDescShort">تنظيف Temp و %Temp% و Prefetch ومخلفات النظام</system:String>
     <system:String x:Key="TxtStartupTitleShort">برامج بدء التشغيل</system:String>
     <system:String x:Key="TxtStartupDescShort">إيقاف البرامج غير الضرورية لتسريع فتح الجهاز</system:String>
     <system:String x:Key="TxtRecycleTitleShort">سلة المحذوفات</system:String>
@@ -59,7 +59,7 @@
     <system:String x:Key="BtnScanAllText">فحص الجهاز</system:String>
     <system:String x:Key="TileTempTitle">الملفات المؤقتة</system:String>
     <system:String x:Key="TxtTempCleanFast">✔ آمن للحذف</system:String>
-    <system:String x:Key="TxtTempDetailsDefault">ملفات ويندوز والبرامج المؤقتة</system:String>
+    <system:String x:Key="TxtTempDetailsDefault">ملفات Temp و %Temp% و Prefetch ومخلفات النظام</system:String>
     <system:String x:Key="BtnCleanSafe">تنظيف</system:String>
     <system:String x:Key="TileRecycleTitle">سلة المحذوفات</system:String>
     <system:String x:Key="TxtRecycleWarn">⚠️ حذف نهائي</system:String>
@@ -74,9 +74,14 @@
     <system:String x:Key="TxtWorkingSetDetailsDefault">تحرير الذاكرة من البرامج الخاملة</system:String>
 
     <!-- Diagnostics Tab -->
-    <system:String x:Key="TxtDiagnosticsTitle">بيانات الجهاز</system:String>
+    <system:String x:Key="TxtDiagnosticsTitle">بيانات العتاد والنظام</system:String>
+    <system:String x:Key="TxtCpuLabel">المعالج (CPU):</system:String>
     <system:String x:Key="TxtGpuLabel">كارت الشاشة (GPU):</system:String>
-    <system:String x:Key="TxtNetLabel">سرعة الشبكة:</system:String>
+    <system:String x:Key="TxtVramLabel">ذاكرة الفيديو (VRAM):</system:String>
+    <system:String x:Key="TxtRamSpecsLabel">الذاكرة (RAM):</system:String>
+    <system:String x:Key="TxtNetLabel">الشبكة والاستجابة:</system:String>
+    <system:String x:Key="TxtUptimeLabel">مدة تشغيل النظام:</system:String>
+    <system:String x:Key="TxtPowerBatteryLabel">الطاقة والبطارية:</system:String>
     <system:String x:Key="TxtStorageDrivesTitle">الأقراص وسرعة SSD</system:String>
     <system:String x:Key="NativeToolsTitle">أدوات ويندوز</system:String>
     <system:String x:Key="ToolTaskMgr">مدير المهام</system:String>

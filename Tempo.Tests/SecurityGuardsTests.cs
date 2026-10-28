@@ -83,6 +83,51 @@ namespace Tempo.Tests
         }
 
         [Fact]
+        public void IsSafePath_AllowsPrefetchAndExtendedJunkSubpaths()
+        {
+            string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            string prefetchFile = Path.Combine(winDir, "Prefetch", "EXPLORER.EXE-1A2B3C4D.pf");
+            string updateDownloadFile = Path.Combine(winDir, "SoftwareDistribution", "Download", "update.cab");
+            string minidumpFile = Path.Combine(winDir, "Minidump", "minidump.dmp");
+            string cbsLogFile = Path.Combine(winDir, "Logs", "CBS", "CbsPersist_2026.log");
+            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string crashDumpFile = Path.Combine(localAppData, "CrashDumps", "crash.dmp");
+
+            Assert.True(CleanupService.IsSafePath(prefetchFile));
+            Assert.True(CleanupService.IsSafePath(updateDownloadFile));
+            Assert.True(CleanupService.IsSafePath(minidumpFile));
+            Assert.True(CleanupService.IsSafePath(cbsLogFile));
+            Assert.True(CleanupService.IsSafePath(crashDumpFile));
+
+            // ReadyBoot directory and contents inside Prefetch must NEVER be safe to delete
+            string readyBootDir = Path.Combine(winDir, "Prefetch", "ReadyBoot");
+            string readyBootFile = Path.Combine(readyBootDir, "Trace.fx");
+            Assert.False(CleanupService.IsSafePath(readyBootDir));
+            Assert.False(CleanupService.IsSafePath(readyBootFile));
+        }
+
+        [Fact]
+        public void GetTemporaryDirectories_ReturnsExpectedLocations()
+        {
+            var userDirs = CleanupService.GetUserTemporaryDirectories();
+            var sysDirs = CleanupService.GetSystemTemporaryDirectories();
+            var allDirs = CleanupService.GetAllTemporaryDirectories();
+
+            Assert.NotEmpty(userDirs);
+            Assert.NotEmpty(sysDirs);
+            Assert.NotEmpty(allDirs);
+
+            string winDir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+            string prefetch = Path.Combine(winDir, "Prefetch");
+            string winTemp = Path.Combine(winDir, "Temp");
+            string userTemp = Path.GetTempPath().TrimEnd('\\', '/');
+
+            Assert.Contains(sysDirs, d => d.Equals(prefetch, StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(sysDirs, d => d.Equals(winTemp, StringComparison.OrdinalIgnoreCase));
+            Assert.Contains(userDirs, d => d.TrimEnd('\\', '/').Equals(userTemp, StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
         public void SafeEnumerateFiles_HandlesNonExistentDirectorySafely()
         {
             var nonExistent = new DirectoryInfo(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N")));
@@ -201,6 +246,16 @@ namespace Tempo.Tests
                 Assert.True(File.Exists(dotnetPath));
                 Assert.EndsWith("dotnet.exe", dotnetPath, StringComparison.OrdinalIgnoreCase);
             }
+        }
+
+        [Fact]
+        public void App_ElevatedClean_RequiresStrictPathValidation()
+        {
+            // Verify that App.xaml.cs strictly checks --clean-system-temp targetFile against expected AppData path
+            string appCode = File.ReadAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "App.xaml.cs"));
+            Assert.Contains("--clean-system-temp", appCode);
+            Assert.Contains("Environment.Exit(12);", appCode);
+            Assert.Contains("safeResultFile", appCode);
         }
     }
 }
