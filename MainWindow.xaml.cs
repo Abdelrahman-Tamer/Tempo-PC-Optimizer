@@ -153,6 +153,7 @@ namespace Tempo
         public bool _isToolbarEnabled { get; set; } = true;
         public DockPosition _toolbarDock { get; set; } = DockPosition.TopToolbar;
         public string _selectedLanguage { get; set; } = "en";
+        public bool IsShowcaseMode { get; set; } = false;
         private bool _isPeeked = false;
         private bool _isFetching = false;
         private bool _isPinned = false;
@@ -712,7 +713,7 @@ namespace Tempo
                     PanelOptimize.Visibility = Visibility.Visible;
                     IndOptimize.Visibility = Visibility.Visible;
                     IconNavOptimize.Fill = accent; TxtNavOptimize.Foreground = accent;
-                    LoadRecycleBinInfo();
+                    if (!IsShowcaseMode) LoadRecycleBinInfo();
                     break;
 
                 case "Diagnostic":
@@ -720,7 +721,7 @@ namespace Tempo
                     PanelDiagnostic.Visibility = Visibility.Visible;
                     IndDiagnostic.Visibility = Visibility.Visible;
                     IconNavDiagnostic.Fill = accent; TxtNavDiagnostic.Foreground = accent;
-                    LoadStorageDrivesFast();
+                    if (!IsShowcaseMode) LoadStorageDrivesFast();
                     break;
 
                 case "Processes":
@@ -728,15 +729,18 @@ namespace Tempo
                     PanelProcesses.Visibility = Visibility.Visible;
                     IndProcesses.Visibility = Visibility.Visible;
                     IconNavProcesses.Fill = accent; TxtNavProcesses.Foreground = accent;
-                    LoadRunningProcessesFast();
-                    _processesRefreshTimer?.Start();
+                    if (!IsShowcaseMode)
+                    {
+                        LoadRunningProcessesFast();
+                        _processesRefreshTimer?.Start();
+                    }
                     break;
 
                 case "Settings":
                     PanelSettings.Visibility = Visibility.Visible;
                     IndSettings.Visibility = Visibility.Visible;
                     IconNavSettings.Fill = accent; TxtNavSettings.Foreground = accent;
-                    LoadStartupApps();
+                    if (!IsShowcaseMode) LoadStartupApps();
                     break;
 
                 case "Feedback":
@@ -2719,13 +2723,16 @@ namespace Tempo
             }
 
             // Refresh data views to re-evaluate formatted text in current language
-            FetchTelemetryAsync();
-            LoadStorageDrivesFast();
-            LoadRecycleBinInfo();
-            LoadStartupApps();
-            if (PanelProcesses.Visibility == Visibility.Visible)
+            if (!IsShowcaseMode)
             {
-                LoadRunningProcessesFast();
+                FetchTelemetryAsync();
+                LoadStorageDrivesFast();
+                LoadRecycleBinInfo();
+                LoadStartupApps();
+                if (PanelProcesses.Visibility == Visibility.Visible)
+                {
+                    LoadRunningProcessesFast();
+                }
             }
         }
 

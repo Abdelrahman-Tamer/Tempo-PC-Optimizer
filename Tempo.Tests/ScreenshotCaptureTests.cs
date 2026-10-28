@@ -33,6 +33,7 @@ namespace Tempo.Tests
                     Directory.CreateDirectory(arDir);
 
                     var win = new MainWindow();
+                    win.IsShowcaseMode = true;
                     win.PauseBackgroundTimers();
                     win.ShowInTaskbar = false;
                     win.Left = -3000;
@@ -41,7 +42,7 @@ namespace Tempo.Tests
 
                     WaitDispatcher(800);
 
-                    // 1. Capture English Suite
+                    // 1. Capture English Suite (also populates root fallback dir as English default)
                     CaptureSuiteForWindow(win, "en", enDir, assetsDir);
 
                     // 2. Capture Arabic Suite
@@ -72,33 +73,31 @@ namespace Tempo.Tests
             LocalizationManager.SetLanguage(lang);
             win.ApplyLanguageUi(lang);
 
-            WaitDispatcher(500);
-            PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(500);
+            WaitDispatcher(400);
 
             // 1. Overview
             win.ShowDashboardView();
             win.SelectTab("Overview");
             PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(600);
+            WaitDispatcher(500);
             CaptureAndSave(win.MainDashboardView, "screen_overview.png", 880, 1400, targetDir, fallbackDir);
 
             // 2. Processes (Apps & RAM)
             win.SelectTab("Processes");
             PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(600);
+            WaitDispatcher(500);
             CaptureAndSave(win.MainDashboardView, "screen_processes.png", 880, 1400, targetDir, fallbackDir);
 
             // 3. Optimize (Clean & Boost)
             win.SelectTab("Optimize");
             PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(600);
+            WaitDispatcher(500);
             CaptureAndSave(win.MainDashboardView, "screen_optimize.png", 880, 1400, targetDir, fallbackDir);
 
             // 4. Diagnostic (Hardware Sensors)
             win.SelectTab("Diagnostic");
             PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(600);
+            WaitDispatcher(500);
             CaptureAndSave(win.MainDashboardView, "screen_diagnostic.png", 880, 1400, targetDir, fallbackDir);
 
             // 5. Feedback
@@ -110,7 +109,7 @@ namespace Tempo.Tests
             // 6. Startup Apps / Settings
             win.SelectTab("Settings");
             PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(600);
+            WaitDispatcher(500);
             CaptureAndSave(win.MainDashboardView, "screen_startup.png", 880, 1400, targetDir, fallbackDir);
 
             // 7. Horizontal Companion Toolbar (375px Pill)
@@ -120,7 +119,7 @@ namespace Tempo.Tests
             win.CompanionBarVertical.Visibility = Visibility.Collapsed;
             win.MainDashboardView.Visibility = Visibility.Collapsed;
             PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(600);
+            WaitDispatcher(500);
             CaptureAndSave(win.CompanionBarHorizontal, "screen_toolbar_top.png", 750, 76, targetDir, fallbackDir);
 
             // 8. Vertical Companion Toolbar (38px Sidebar)
@@ -130,7 +129,7 @@ namespace Tempo.Tests
             win.CompanionBarVertical.Visibility = Visibility.Visible;
             win.MainDashboardView.Visibility = Visibility.Collapsed;
             PopulateRichShowcaseData(win, lang);
-            WaitDispatcher(600);
+            WaitDispatcher(500);
             CaptureAndSave(win.CompanionBarVertical, "screen_toolbar_side.png", 76, 590, targetDir, fallbackDir);
         }
 
@@ -146,7 +145,10 @@ namespace Tempo.Tests
                 win.TxtHealthStatus.Text = isAr ? "استهلاك الموارد: منخفض ومستقر" : "Resource Usage: Low & Optimal";
 
             if (win.TxtHealthPercent != null)
-                win.TxtHealthPercent.Text = "96%";
+                win.TxtHealthPercent.Text = "26%";
+
+            if (win.DotHealthGlow != null)
+                win.DotHealthGlow.Fill = teal;
 
             // CPU
             if (win.TxtCpuPercent != null) win.TxtCpuPercent.Text = "14%";
@@ -187,13 +189,13 @@ namespace Tempo.Tests
             if (win.TxtTempDetails != null)
                 win.TxtTempDetails.Text = isAr ? "ملفات مؤقتة وكاش نظام (1.42 GB)" : "Temp files & system cache (1.42 GB)";
             if (win.TxtRecycleBinDetails != null)
-                win.TxtRecycleBinDetails.Text = isAr ? "سلة المحذوفات (380 MB • 12 عنصر)" : "Recycle Bin (380 MB • 12 items)";
+                win.TxtRecycleBinDetails.Text = isAr ? "12 عنصر (380 MB)" : "12 items (380 MB)";
             if (win.TxtBrowserDetails != null)
                 win.TxtBrowserDetails.Text = isAr ? "كاش المتصفحات المؤقت (320 MB)" : "Browser cache files (320 MB)";
             if (win.TxtDevDetails != null)
                 win.TxtDevDetails.Text = isAr ? "مخلفات بيئات التطوير (65 MB)" : "Developer cache files (65 MB)";
 
-            // Overview Top 5 Processes
+            // Overview Top 4 Processes
             if (win.ListTopProcesses != null)
             {
                 win.ListTopProcesses.ItemsSource = new List<ProcessViewModel>
@@ -202,16 +204,15 @@ namespace Tempo.Tests
                     new ProcessViewModel { ProcessName = "code", DisplayName = "Visual Studio Code", RamMb = 620 },
                     new ProcessViewModel { ProcessName = "Discord", DisplayName = "Discord", RamMb = 380 },
                     new ProcessViewModel { ProcessName = "Telegram", DisplayName = "Telegram Desktop", RamMb = 290 },
-                    new ProcessViewModel { ProcessName = "Spotify", DisplayName = "Spotify Music", RamMb = 210 },
                 };
             }
 
-            // Processes Tab (Full List)
+            // Processes Tab (Full List - 5 clean apps)
             if (win.TxtProcessesSummary != null)
             {
                 win.TxtProcessesSummary.Text = isAr
-                    ? "البرامج والتطبيقات الشغالة: 8 برامج • إجمالي الاستهلاك: 2.85 GB"
-                    : "Running Applications: 8 apps • Total RAM: 2.85 GB";
+                    ? "البرامج والتطبيقات الشغالة: 5 برامج • إجمالي الاستهلاك: 2.34 GB"
+                    : "Running Applications: 5 apps • Total RAM: 2.34 GB";
             }
 
             if (win.ListAllProcesses != null)
@@ -221,21 +222,17 @@ namespace Tempo.Tests
                     new RunningProcessItem { AppKey = "chrome", DisplayName = "Google Chrome", MainProcessName = "chrome", RamMb = 840, InstanceCount = 8, HasActiveWindow = true },
                     new RunningProcessItem { AppKey = "code", DisplayName = "Visual Studio Code", MainProcessName = "code", RamMb = 620, InstanceCount = 4, HasActiveWindow = true },
                     new RunningProcessItem { AppKey = "discord", DisplayName = "Discord", MainProcessName = "Discord", RamMb = 380, InstanceCount = 3, HasActiveWindow = false },
-                    new RunningProcessItem { AppKey = "telegram", DisplayName = "Telegram", MainProcessName = "Telegram", RamMb = 290, InstanceCount = 1, HasActiveWindow = true },
-                    new RunningProcessItem { AppKey = "spotify", DisplayName = "Spotify", MainProcessName = "Spotify", RamMb = 215, InstanceCount = 2, HasActiveWindow = false },
-                    new RunningProcessItem { AppKey = "slack", DisplayName = "Slack", MainProcessName = "slack", RamMb = 195, InstanceCount = 3, HasActiveWindow = false },
-                    new RunningProcessItem { AppKey = "terminal", DisplayName = "Windows Terminal", MainProcessName = "WindowsTerminal", RamMb = 125, InstanceCount = 1, HasActiveWindow = true },
-                    new RunningProcessItem { AppKey = "notion", DisplayName = "Notion", MainProcessName = "Notion", RamMb = 110, InstanceCount = 2, HasActiveWindow = false },
+                    new RunningProcessItem { AppKey = "telegram", DisplayName = "Telegram Desktop", MainProcessName = "Telegram", RamMb = 290, InstanceCount = 1, HasActiveWindow = true },
+                    new RunningProcessItem { AppKey = "spotify", DisplayName = "Spotify Music", MainProcessName = "Spotify", RamMb = 215, InstanceCount = 2, HasActiveWindow = false },
                 };
             }
 
-            // Storage Drives
+            // Storage Drives (Single C: SSD to fit cleanly without cutoff)
             if (win.ListStorageDrives != null)
             {
                 win.ListStorageDrives.ItemsSource = new List<StorageDriveViewModel>
                 {
-                    new StorageDriveViewModel { DriveLetter = "C:", VolumeLabel = "Windows (OS)", TotalGb = 512, FreeGb = 245, UsedPercent = 52, MediaType = "SSD" },
-                    new StorageDriveViewModel { DriveLetter = "D:", VolumeLabel = "Data & Projects", TotalGb = 1024, FreeGb = 680, UsedPercent = 34, MediaType = "SSD" }
+                    new StorageDriveViewModel { DriveLetter = "C:", VolumeLabel = "Windows (OS)", TotalGb = 512, FreeGb = 245, UsedPercent = 52, MediaType = "SSD" }
                 };
             }
 
@@ -294,7 +291,18 @@ namespace Tempo.Tests
             if (!string.IsNullOrEmpty(fallbackDir))
             {
                 string fallbackPath = Path.Combine(fallbackDir, filename);
-                File.Copy(primaryPath, fallbackPath, true);
+                for (int retry = 0; retry < 5; retry++)
+                {
+                    try
+                    {
+                        File.Copy(primaryPath, fallbackPath, true);
+                        break;
+                    }
+                    catch (IOException) when (retry < 4)
+                    {
+                        Thread.Sleep(200);
+                    }
+                }
             }
         }
 
@@ -328,8 +336,22 @@ namespace Tempo.Tests
 
             var enc = new PngBitmapEncoder();
             enc.Frames.Add(BitmapFrame.Create(rtb));
-            using var fs = File.Create(outFile);
-            enc.Save(fs);
+            using var ms = new MemoryStream();
+            enc.Save(ms);
+            byte[] bytes = ms.ToArray();
+
+            for (int retry = 0; retry < 5; retry++)
+            {
+                try
+                {
+                    File.WriteAllBytes(outFile, bytes);
+                    break;
+                }
+                catch (IOException) when (retry < 4)
+                {
+                    Thread.Sleep(200);
+                }
+            }
         }
     }
 }
