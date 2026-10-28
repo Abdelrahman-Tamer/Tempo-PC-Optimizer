@@ -174,7 +174,7 @@ const i18nData = {
   }
 };
 
-let currentLang = localStorage.getItem('tempo_lang') || 'ar';
+let currentLang = localStorage.getItem('tempo_lang') || 'en';
 let currentShowcaseScreen = 'overview';
 
 const showcaseTitles = {
