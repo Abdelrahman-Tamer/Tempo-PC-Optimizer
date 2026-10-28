@@ -1,0 +1,1631 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tempo PC Optimizer â€” Ø¥Ø¹Ù„Ø§Ù† Ù…ÙˆØ´Ù† Ø¬Ø±Ø§ÙÙŠÙƒ ÙˆØªØ¬Ø±Ø¨Ø© ØªÙØ§Ø¹Ù„ÙŠØ© Ø­ÙŠØ©</title>
+  <meta name="description" content="Ø¥Ø¹Ù„Ø§Ù† Ù…ÙˆØ´Ù† Ø¬Ø±Ø§ÙÙŠÙƒ Ø±Ø³Ù…ÙŠ ÙˆØªØ¬Ø±Ø¨Ø© ØªÙØ§Ø¹Ù„ÙŠØ© Ù…ØªØ·ÙˆØ±Ø© Ù„Ø¨Ø±Ù†Ø§Ù…Ø¬ Tempo PC Optimizer Ù„ÙˆÙŠÙ†Ø¯ÙˆØ² 10 Ùˆ 11. Ù‚Ø±Ø§Ø¡Ø§Øª Ø­Ù‚ÙŠÙ‚ÙŠØ© 100%ØŒ Ù…ÙŠØ²Ø© Turbo RAM Boost ÙÙŠ 150msØŒ ÙˆØ´Ø±ÙŠØ· Ù…ØµØ§Ø­Ø¨ Ø®ÙÙŠÙ.">
+  <link rel="icon" type="image/x-icon" href="../app.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg-subtle: #0c101a;
+      --surface: #111625;
+      --surface-hi: #171f33;
+      --surface-hover: #1e2842;
+      --border: #1e263d;
+      --border-glow: #2b3858;
+      --blue: #3b82f6;
+      --blue-glow: #60a5fa;
+      --blue-dim: rgba(59, 130, 246, 0.12);
+      --green: #10b981;
+      --green-glow: #34d399;
+      --green-dim: rgba(16, 185, 129, 0.12);
+      --red: #ef4444;
+      --red-glow: #f87171;
+      --text: #f8fafc;
+      --text-2: #94a3b8;
+      --text-3: #64748b;
+      --ff-ar: 'Cairo', system-ui, sans-serif;
+      --ff-en: 'Inter', system-ui, sans-serif;
+      --ff-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--ff-ar);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    body[dir="ltr"] { font-family: var(--ff-en); }
+
+    /* Ambient Background Glow */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background: 
+        radial-gradient(circle at 50% 5%, rgba(59, 130, 246, 0.18) 0%, transparent 60%),
+        radial-gradient(circle at 10% 40%, rgba(16, 185, 129, 0.09) 0%, transparent 50%),
+        radial-gradient(circle at 90% 70%, rgba(59, 130, 246, 0.12) 0%, transparent 50%);
+    }
+
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header Navigation */
+    header {
+      padding: 18px 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(7, 9, 14, 0.85);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .brand img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.45);
+    }
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.3rem;
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      font-family: var(--ff-mono);
+      font-size: 0.72rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 3px 8px;
+      border-radius: 6px;
+      color: var(--blue-glow);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .nav-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .nav-btn:hover {
+      border-color: var(--blue);
+      box-shadow: 0 0 16px var(--blue-dim);
+    }
+    .nav-btn.primary {
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      border-color: rgba(147, 197, 253, 0.4);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+    }
+    .nav-btn.primary:hover {
+      background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+    }
+
+    /* Hero Section */
+    .hero {
+      text-align: center;
+      padding: 50px 0 32px;
+    }
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border-glow);
+      border-radius: 100px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--blue-glow);
+      margin-bottom: 22px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .badge-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.8rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 18px;
+    }
+    .hero h1 span.grad {
+      background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: var(--text-2);
+      max-width: 820px;
+      margin: 0 auto 36px;
+    }
+
+    /* Main Section Tabs */
+    .section-tabs {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+    }
+    .section-tab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 12px 26px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.96rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+    }
+    .section-tab:hover {
+      color: #ffffff;
+      border-color: var(--border-glow);
+    }
+    .section-tab.active {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border-color: var(--blue);
+      color: #ffffff;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+    }
+
+    /* Panel View */
+    .panel-view {
+      display: none;
+      animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .panel-view.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SECTION 1: VIDEO SHOWCASE & CHAPTERS
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .video-showcase-box {
+      background: #090c16;
+      border: 1px solid var(--border-glow);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(59, 130, 246, 0.18);
+      margin-bottom: 40px;
+    }
+    .video-viewport {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-viewport video {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    /* Video Sync HUD Overlay */
+    .video-hud-overlay {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      pointer-events: none;
+      background: rgba(13, 17, 30, 0.85);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      padding: 8px 18px;
+      border-radius: 100px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--ff-mono);
+      font-size: 0.82rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    body[dir="ltr"] .video-hud-overlay { right: auto; left: 24px; }
+
+    /* Interactive Chapter Navigator */
+    .chapter-nav-row {
+      background: #0e1322;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .chapter-nav-row::-webkit-scrollbar { display: none; }
+    .chapter-chip {
+      flex: 1;
+      min-width: 180px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.2s ease;
+      text-align: right;
+    }
+    body[dir="ltr"] .chapter-chip { text-align: left; }
+    .chapter-chip:hover {
+      border-color: var(--blue);
+      background: var(--surface-hi);
+    }
+    .chapter-chip.active {
+      border-color: var(--blue);
+      background: rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    }
+    .chapter-time {
+      font-family: var(--ff-mono);
+      font-size: 0.74rem;
+      color: var(--blue-glow);
+      font-weight: 700;
+    }
+    .chapter-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Video Control & Meta Footer */
+    .video-footer-bar {
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 18px;
+      background: #090c16;
+    }
+    .video-info h3 {
+      font-size: 1.25rem;
+      margin-bottom: 4px;
+    }
+    .video-info p {
+      font-size: 0.88rem;
+      color: var(--text-2);
+    }
+    .video-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SECTION 2: LIVE SIMULATOR & INTERACTION
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .simulator-window {
+      background: var(--surface);
+      border: 1px solid var(--border-glow);
+      border-radius: 20px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 40px rgba(59, 130, 246, 0.15);
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .sim-header {
+      background: #0c101c;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sim-controls {
+      display: flex;
+      gap: 8px;
+    }
+    .sim-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .sim-dot.red { background: #ef4444; }
+    .sim-dot.yellow { background: #f59e0b; }
+    .sim-dot.green { background: #10b981; }
+
+    .sim-title {
+      font-family: var(--ff-mono);
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sim-body {
+      padding: 32px;
+    }
+
+    /* Meters Grid */
+    .meters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+    .meter-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .meter-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-2px);
+    }
+    .meter-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .meter-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .meter-badge {
+      font-size: 0.72rem;
+      font-family: var(--ff-mono);
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--blue-dim);
+      color: var(--blue-glow);
+    }
+    .meter-val {
+      font-family: var(--ff-mono);
+      font-size: 2.3rem;
+      font-weight: 900;
+      color: #ffffff;
+      margin-bottom: 12px;
+      transition: color 0.3s ease;
+    }
+    .meter-bar-track {
+      height: 8px;
+      background: #171e30;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .meter-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+      border-radius: 10px;
+      transition: width 0.45s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease;
+    }
+    .meter-bar-fill.warning {
+      background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%);
+    }
+    .meter-bar-fill.green {
+      background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+    }
+
+    /* Turbo Boost Interactive Area */
+    .boost-showcase {
+      background: linear-gradient(180deg, rgba(24, 31, 51, 0.8) 0%, rgba(18, 22, 36, 0.98) 100%);
+      border: 1px solid var(--border-glow);
+      border-radius: 18px;
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 32px;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    .boost-actions-row {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 20px 0;
+    }
+    .boost-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      border: 1px solid rgba(147, 197, 253, 0.4);
+      color: #ffffff;
+      font-size: 1.25rem;
+      font-weight: 800;
+      padding: 16px 42px;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), 0 10px 30px rgba(37, 99, 235, 0.45);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+    }
+    .boost-btn:hover {
+      background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 14px 36px rgba(37, 99, 235, 0.6);
+    }
+    .boost-btn:active {
+      transform: scale(0.97);
+    }
+    .sim-stress-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 16px 26px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .sim-stress-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #ffffff;
+    }
+
+    .boost-status-banner {
+      min-height: 32px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--green-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Protected Services Pills */
+    .protected-services {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+    .prot-pill {
+      font-family: var(--ff-mono);
+      font-size: 0.78rem;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--green-glow);
+      padding: 4px 12px;
+      border-radius: 6px;
+    }
+
+    /* Active Processes Mini Table */
+    .proc-table-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px;
+    }
+    .proc-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .proc-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-radius: 10px;
+      transition: background 0.15s;
+    }
+    .proc-item:hover { background: rgba(255, 255, 255, 0.035); }
+    .proc-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .proc-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+    }
+    .proc-name {
+      font-weight: 700;
+      font-size: 0.96rem;
+    }
+    .proc-stats {
+      font-family: var(--ff-mono);
+      font-size: 0.85rem;
+      color: var(--text-2);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .proc-kill-btn {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      color: #f87171;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-weight: 700;
+      transition: all 0.15s;
+    }
+    .proc-kill-btn:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SECTION 3: COMPANION MINI BAR DEMO
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .companion-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .companion-capsule-demo {
+      display: inline-flex;
+      align-items: center;
+      gap: 28px;
+      padding: 14px 36px;
+      background: rgba(13, 17, 31, 0.96);
+      border: 1px solid rgba(59, 130, 246, 0.5);
+      border-radius: 100px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(59, 130, 246, 0.3);
+      margin: 32px 0;
+      flex-wrap: wrap;
+      justify-content: center;
+      cursor: grab;
+      user-select: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .companion-capsule-demo:active {
+      cursor: grabbing;
+      transform: scale(0.98);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.9), 0 0 40px rgba(59, 130, 246, 0.5);
+    }
+    .comp-metric {
+      font-family: var(--ff-mono);
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SECTION 4: FEATURE TOUR & SCREENSHOT GALLERY
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .gallery-showcase {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px;
+      margin-bottom: 40px;
+    }
+    .gallery-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .gallery-nav::-webkit-scrollbar { display: none; }
+    .gallery-btn {
+      background: var(--surface-hi);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .gallery-btn:hover { color: #ffffff; border-color: var(--border-glow); }
+    .gallery-btn.active {
+      background: var(--blue);
+      color: #ffffff;
+      border-color: var(--blue-glow);
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+    }
+    .gallery-viewport {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border-glow);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7);
+      background: #08090f;
+    }
+    .gallery-viewport img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: opacity 0.3s ease;
+    }
+    .gallery-caption {
+      margin-top: 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+       SECTION 5: DOWNLOADS & VERIFICATION
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin: 40px 0;
+    }
+    .dl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+    }
+    .dl-card:hover {
+      border-color: var(--blue);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+    .dl-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 15px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 1rem;
+      margin-top: 24px;
+      transition: all 0.2s ease;
+    }
+    .dl-primary {
+      background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    }
+    .dl-primary:hover {
+      background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+    }
+    .dl-secondary {
+      background: var(--surface-hi);
+      border: 1px solid var(--border-glow);
+      color: var(--text);
+    }
+    .dl-secondary:hover {
+      background: var(--surface-hover);
+      border-color: var(--blue);
+    }
+
+    .hash-verifier {
+      background: #05070b;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 24px;
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .copy-chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--blue-glow);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .copy-chip:hover {
+      background: var(--surface-hi);
+      border-color: var(--blue);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 44px 0;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body dir="rtl">
+  <div class="ambient-bg"></div>
+  <div class="grid-overlay"></div>
+
+  <!-- Audio SFX for Fallback -->
+  <audio id="sfxClick" src="../brag-output/composition/assets/sfx/interface/click_001.ogg" preload="auto"></audio>
+  <audio id="sfxSwitch" src="../brag-output/composition/assets/sfx/interface/switch_001.ogg" preload="auto"></audio>
+  <audio id="sfxChime" src="../brag-output/composition/assets/sfx/interface/bong_001.ogg" preload="auto"></audio>
+  <audio id="sfxDrop" src="../brag-output/composition/assets/sfx/interface/drop_001.ogg" preload="auto"></audio>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="container nav-row">
+      <a href="#" class="brand">
+        <img src="assets/app.png" alt="Tempo Logo">
+        <div>
+          <span class="brand-title">Tempo PC Optimizer</span>
+          <span class="brand-badge">v2.2.8</span>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <button class="nav-btn" id="langBtn" onclick="toggleLanguage()">
+          ðŸŒ <span id="langTxt">English (LTR)</span>
+        </button>
+        <a href="#downloads" onclick="switchSection('downloads')" class="nav-btn primary">
+          âš¡ <span id="navDlTxt">ØªØ­Ù…ÙŠÙ„ Ù…Ø¬Ø§Ù†ÙŠ</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Header -->
+    <section class="hero">
+      <div class="badge-pill">
+        <span class="badge-dot"></span>
+        <span id="txtPill">Ø¥Ø¹Ù„Ø§Ù† Ù…ÙˆØ´Ù† Ø¬Ø±Ø§ÙÙŠÙƒ Ø±Ø³Ù…ÙŠ â€¢ ØªØ¬Ø±Ø¨Ø© ØªÙØ§Ø¹Ù„ÙŠØ© Ø­ÙŠØ© v2.2.8</span>
+      </div>
+      <h1 id="txtHeroTitle">
+        Ø£Ø¯Ø§Ø© Ù‡Ù†Ø¯Ø³ÙŠØ© Ø­Ù‚ÙŠÙ‚ÙŠØ© <span class="grad">Ù„ØªØ´Ø®ÙŠØµ ÙˆØªØ³Ø±ÙŠØ¹ ÙˆÙŠÙ†Ø¯ÙˆØ²</span>
+      </h1>
+      <p id="txtHeroDesc">
+        ÙˆØ¯Ø§Ø¹Ø§Ù‹ Ù„Ù„Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„ÙˆÙ‡Ù…ÙŠØ© ÙˆØ§Ù„Ø¥Ø¹Ù„Ø§Ù†Ø§Øª Ø§Ù„Ù…Ø²Ø¹Ø¬Ø©. Ø´Ø§Ù‡Ø¯ Ø§Ù„Ø¢Ù† ÙÙŠØ¯ÙŠÙˆ Ø§Ù„Ù…ÙˆØ´Ù† Ø§Ù„Ø¥Ø¹Ù„Ø§Ù†ÙŠ Ø¨Ø¬ÙˆØ¯Ø© 1080pØŒ ÙˆØ§Ø®ØªØ¨Ø± Ù…ÙŠØ²Ø© Turbo RAM Boost Ø§Ù„Ø­ÙŠØ© ÙÙŠ Ø§Ù„Ù…Ø­Ø§ÙƒÙŠ Ø§Ù„ØªÙØ§Ø¹Ù„ÙŠ!
+      </p>
+
+      <!-- Section Switcher Tabs -->
+      <div class="section-tabs">
+        <button class="section-tab active" onclick="switchSection('video')">
+          ðŸŽ¬ <span id="tabVid">ÙÙŠØ¯ÙŠÙˆ Ø§Ù„Ù…ÙˆØ´Ù† Ø§Ù„Ø¥Ø¹Ù„Ø§Ù†ÙŠ (1080p)</span>
+        </button>
+        <button class="section-tab" onclick="switchSection('simulator')">
+          âš¡ <span id="tabSim">Ø§Ù„Ù…Ø­Ø§ÙƒÙŠ Ø§Ù„ØªÙØ§Ø¹Ù„ÙŠ Ø§Ù„Ø­ÙŠ</span>
+        </button>
+        <button class="section-tab" onclick="switchSection('companion')">
+          ðŸ“Œ <span id="tabComp">Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ù…ØµØ§Ø­Ø¨ (Mini Bar)</span>
+        </button>
+        <button class="section-tab" onclick="switchSection('gallery')">
+          ðŸ–¼ï¸ <span id="tabGall">Ù…Ø¹Ø±Ø¶ Ø§Ù„Ø´Ø§Ø´Ø§Øª ÙˆØ§Ù„Ù…ÙŠØ²Ø§Øª</span>
+        </button>
+        <button class="section-tab" onclick="switchSection('downloads')">
+          ðŸ“¦ <span id="tabDown">Ø§Ù„ØªØ­Ù…ÙŠÙ„ ÙˆØ¨ØµÙ…Ø© SHA256</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+         PANEL 1: MOTION VIDEO & CHAPTER NAVIGATOR
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <section id="view-video" class="panel-view active">
+      <div class="video-showcase-box">
+        <div class="video-viewport">
+          <video id="promoVideo" controls poster="assets/tempo-promo-poster.jpg" playsinline preload="metadata">
+            <source src="assets/tempo-promo.mp4" type="video/mp4">
+            <source src="assets/tempo-promo.mp4" type="video/mp4">
+            Ù…ØªØµÙØ­Ùƒ Ù„Ø§ ÙŠØ¯Ø¹Ù… ØªØ´ØºÙŠÙ„ Ø§Ù„ÙÙŠØ¯ÙŠÙˆ Ø§Ù„Ù…Ø¨Ø§Ø´Ø±.
+          </video>
+
+          <div class="video-hud-overlay" id="videoHud">
+            <span style="color: #34d399;">â— LIVE SYNC</span>
+            <span id="hudSceneTxt" style="color: #ffffff;">00:00 â€¢ Ø§Ù„Ø§ÙØªØªØ§Ø­ÙŠØ©</span>
+          </div>
+        </div>
+
+        <!-- Interactive Chapter Navigator -->
+        <div class="chapter-nav-row">
+          <div class="chapter-chip active" onclick="seekVideo(0, this)">
+            <span class="chapter-time">00:00 - 00:03</span>
+            <span class="chapter-title" id="ch1Title">1. Ø§Ù„ØµØ¯Ù…Ø© ÙˆØ§Ù„Ø®Ø·Ø§Ù</span>
+          </div>
+          <div class="chapter-chip" onclick="seekVideo(3.5, this)">
+            <span class="chapter-time">00:03 - 00:08</span>
+            <span class="chapter-title" id="ch2Title">2. Ù…Ø­Ø±Ùƒ Ø§Ù„ØªØ´Ø®ÙŠØµ Ø§Ù„Ø­Ù‚ÙŠÙ‚ÙŠ</span>
+          </div>
+          <div class="chapter-chip" onclick="seekVideo(8.0, this)">
+            <span class="chapter-time">00:08 - 00:12</span>
+            <span class="chapter-title" id="ch3Title">3. ØªÙˆØ±Ø¨Ùˆ ØªÙØ±ÙŠØº Ø§Ù„Ø°Ø§ÙƒØ±Ø©</span>
+          </div>
+          <div class="chapter-chip" onclick="seekVideo(12.5, this)">
+            <span class="chapter-time">00:12 - 00:16</span>
+            <span class="chapter-title" id="ch4Title">4. Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ù…ØµØ§Ø­Ø¨ 42px</span>
+          </div>
+          <div class="chapter-chip" onclick="seekVideo(16.5, this)">
+            <span class="chapter-time">00:16 - 00:20</span>
+            <span class="chapter-title" id="ch5Title">5. Ø§Ù„Ù…ÙˆØ§ØµÙØ§Øª ÙˆØ§Ù„ØªØ­Ù…ÙŠÙ„</span>
+          </div>
+        </div>
+
+        <div class="video-footer-bar">
+          <div class="video-info">
+            <h3 id="txtVidFooterTitle">ÙÙŠØ¯ÙŠÙˆ Ù…ÙˆØ´Ù† Ø¥Ø¹Ù„Ø§Ù†ÙŠ Ø±Ø³Ù…ÙŠ Ø¹Ø§Ù„ÙŠ Ø§Ù„Ø¬ÙˆØ¯Ø© (1080p Full HD)</h3>
+            <p id="txtVidFooterMeta">Ø§Ù„Ù…Ø¯Ø©: 20 Ø«Ø§Ù†ÙŠØ© â€¢ Ø®Ø· Cairo Ø§Ù„Ø¹Ø±Ø¨ÙŠ Ø§Ù„Ø³ÙŠÙ†Ù…Ø§Ø¦ÙŠ â€¢ ØµÙˆØª ÙˆÙ…ÙˆØ³ÙŠÙ‚Ù‰ Ù…Ø¯Ù…Ø¬Ø© â€¢ Ù…ØªØ²Ø§Ù…Ù† 100% Ù…Ø¹ Ù…ÙŠØ²Ø§Øª Ø§Ù„ØªØ·Ø¨ÙŠÙ‚</p>
+          </div>
+          <div class="video-actions">
+            <button class="nav-btn" onclick="togglePlayVideo()" id="btnPlayPause">
+              â–¶ï¸ <span id="txtBtnPlay">ØªØ´ØºÙŠÙ„ / Ø¥ÙŠÙ‚Ø§Ù</span>
+            </button>
+            <a href="assets/tempo-promo.mp4" download="Tempo-Promo-1080p.mp4" class="nav-btn primary">
+              â¬‡ï¸ <span id="txtBtnDlVid">ØªØ­Ù…ÙŠÙ„ Ø§Ù„ÙÙŠØ¯ÙŠÙˆ (MP4)</span>
+            </a>
+            <a href="assets/tempo-promo-poster.jpg" download="Tempo-Poster.jpg" class="nav-btn">
+              ðŸ–¼ï¸ <span id="txtBtnDlPost">ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¨ÙˆØ³ØªØ±</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+         PANEL 2: LIVE SIMULATOR
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <section id="view-simulator" class="panel-view">
+      <div class="simulator-window">
+        <div class="sim-header">
+          <div class="sim-controls">
+            <span class="sim-dot red"></span>
+            <span class="sim-dot yellow"></span>
+            <span class="sim-dot green"></span>
+          </div>
+          <div class="sim-title">
+            <img src="assets/app.png" width="18" height="18" alt="Tempo">
+            <span id="simWindowTitle">Tempo PC Optimizer â€” Diagnostic & Telemetry Engine (Live Demo)</span>
+          </div>
+          <div style="font-size: 0.78rem; color: var(--green-glow); font-weight: 700; font-family: var(--ff-mono);">
+            â— LIVE ACTIVE
+          </div>
+        </div>
+
+        <div class="sim-body">
+          <!-- Meters Grid -->
+          <div class="meters-grid">
+            <div class="meter-card">
+              <div class="meter-top">
+                <span class="meter-name" id="lblCpu">Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬ (CPU)</span>
+                <span class="meter-badge">Win32 API</span>
+              </div>
+              <div class="meter-val" id="valCpu">14%</div>
+              <div class="meter-bar-track">
+                <div class="meter-bar-fill" id="barCpu" style="width: 14%;"></div>
+              </div>
+            </div>
+
+            <div class="meter-card">
+              <div class="meter-top">
+                <span class="meter-name" id="lblRam">Ø§Ù„Ø°Ø§ÙƒØ±Ø© Ø§Ù„Ø¹Ø´ÙˆØ§Ø¦ÙŠØ© (RAM)</span>
+                <span class="meter-badge" id="badgeRamStatus" style="color: #f87171; background: rgba(239, 68, 68, 0.15);">High Load</span>
+              </div>
+              <div class="meter-val" id="valRam" style="color: #f87171;">82%</div>
+              <div class="meter-bar-track">
+                <div class="meter-bar-fill warning" id="barRam" style="width: 82%;"></div>
+              </div>
+            </div>
+
+            <div class="meter-card">
+              <div class="meter-top">
+                <span class="meter-name" id="lblNet">Ø´Ø¨ÙƒØ© Ø§Ù„Ø§ØªØµØ§Ù„ (Network I/O)</span>
+                <span class="meter-badge">Live Throughput</span>
+              </div>
+              <div class="meter-val" id="valNet" style="font-size: 1.55rem; color: #60a5fa;">â–² 1.4 MB/s â–¼ 12.8 MB/s</div>
+              <div class="meter-bar-track">
+                <div class="meter-bar-fill green" style="width: 50%;"></div>
+              </div>
+            </div>
+
+            <div class="meter-card">
+              <div class="meter-top">
+                <span class="meter-name" id="lblSsd">Ù…Ø­Ø±Ùƒ Ø§Ù„ØªØ®Ø²ÙŠÙ† (SSD TRIM)</span>
+                <span class="meter-badge">Elevated</span>
+              </div>
+              <div class="meter-val green" style="font-size: 1.6rem; color: #34d399;">100% HEALTHY</div>
+              <div class="meter-bar-track">
+                <div class="meter-bar-fill green" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Turbo RAM Boost Interactive Area -->
+          <div class="boost-showcase">
+            <h3 style="font-size: 1.5rem; margin-bottom: 8px;" id="txtBoostHead">Ø¬Ø±Ù‘Ø¨ ØªÙØ±ÙŠØº Ø§Ù„Ø°Ø§ÙƒØ±Ø© ÙØ§Ø¦Ù‚ Ø§Ù„Ø³Ø±Ø¹Ø© (Sub-150ms Turbo RAM Boost)</h3>
+            <p style="color: var(--text-2); font-size: 0.98rem; max-width: 760px; margin: 0 auto;" id="txtBoostSub">
+              Ø§Ø¶ØºØ· Ø¹Ù„Ù‰ Ø§Ù„Ø²Ø± Ø£Ø¯Ù†Ø§Ù‡ Ù„ØªÙØ±ÙŠØº Working Sets Ù„Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª Ø§Ù„Ø®Ø§Ù…Ù„Ø© ÙÙˆØ±Ø§Ù‹ØŒ Ù…Ø¹ Ø¶Ù…Ø§Ù† Ø­Ù…Ø§ÙŠØ© ÙƒØ§Ù…Ù„Ø© Ù„Ù†ÙˆØ§Ø© ÙˆÙŠÙ†Ø¯ÙˆØ² ÙˆØ§Ù„Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ù€ 37 Ø§Ù„Ø­ÙŠÙˆÙŠØ©.
+            </p>
+
+            <div class="boost-actions-row">
+              <button class="boost-btn" id="btnDoBoost" onclick="executeTurboBoost()">
+                âš¡ <span id="txtBtnBoost">Turbo RAM Boost (ØªÙØ±ÙŠØº ÙÙˆØ±ÙŠ)</span>
+              </button>
+              <button class="sim-stress-btn" onclick="simulateHighStress()">
+                ðŸ”¥ <span id="txtBtnStress">Ù…Ø­Ø§ÙƒØ§Ø© Ø¶ØºØ· Ø¹Ù„Ù‰ Ø§Ù„Ø¬Ù‡Ø§Ø² (88%)</span>
+              </button>
+            </div>
+
+            <div class="boost-status-banner" id="boostStatusBanner">
+              <span id="txtBoostReady">Ø§Ø¶ØºØ· Ø§Ù„Ø²Ø± Ù„ØªØ¬Ø±Ø¨Ø© ØªØ­Ø±ÙŠØ± Ø§Ù„Ø°Ø§ÙƒØ±Ø© Ø§Ù„ÙØ¹Ù„ÙŠ ÙˆØ³Ù…Ø§Ø¹ Ø§Ù„Ù†Ø¨Ø¶Ø©</span>
+            </div>
+
+            <div class="protected-services">
+              <span style="font-size: 0.85rem; color: var(--text-2); margin-left: 6px;" id="txtProtLabel">Ø§Ù„Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ù…Ø­Ù…ÙŠØ© ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹:</span>
+              <span class="prot-pill">System</span>
+              <span class="prot-pill">dwm.exe</span>
+              <span class="prot-pill">explorer.exe</span>
+              <span class="prot-pill">svchost.exe</span>
+              <span class="prot-pill">MsMpEng.exe</span>
+              <span class="prot-pill">services.exe</span>
+              <span class="prot-pill">+31 Windows NT Services</span>
+            </div>
+          </div>
+
+          <!-- Active Applications Mini Table -->
+          <div class="proc-table-box">
+            <div class="proc-title-row">
+              <h4 style="font-size: 1.15rem;" id="txtProcTitle">Ø§Ù„Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„Ù†Ø´Ø·Ø© ÙˆÙ…Ø¬Ù…Ù‘Ø¹ Ø§Ù„Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø°ÙƒÙŠ (Child-Process Rollup)</h4>
+              <span style="font-size: 0.82rem; color: var(--text-2);" id="txtProcRefresh">ØªØ­Ø¯ÙŠØ« ØªÙ„Ù‚Ø§Ø¦ÙŠ ÙƒÙ„ 4 Ø«ÙˆØ§Ù†Ù</span>
+            </div>
+
+            <div id="procList">
+              <div class="proc-item">
+                <div class="proc-info">
+                  <div class="proc-icon">ðŸŒ</div>
+                  <div>
+                    <div class="proc-name">Google Chrome (18 Helper Processes)</div>
+                    <div style="font-size: 0.74rem; color: var(--text-3);">Active Browser Session â€¢ GPU Accelerated</div>
+                  </div>
+                </div>
+                <div class="proc-stats">
+                  <span>RAM: <strong>2,450 MB</strong></span>
+                  <button class="proc-kill-btn" onclick="killProcess(this, 2450)">Ø¥Ù†Ù‡Ø§Ø¡ Ø§Ù„Ù…Ù‡Ù…Ø©</button>
+                </div>
+              </div>
+
+              <div class="proc-item">
+                <div class="proc-info">
+                  <div class="proc-icon">ðŸ’»</div>
+                  <div>
+                    <div class="proc-name">Visual Studio Code (7 Helpers)</div>
+                    <div style="font-size: 0.74rem; color: var(--text-3);">IDE Workspace â€¢ Language Servers</div>
+                  </div>
+                </div>
+                <div class="proc-stats">
+                  <span>RAM: <strong>1,120 MB</strong></span>
+                  <button class="proc-kill-btn" onclick="killProcess(this, 1120)">Ø¥Ù†Ù‡Ø§Ø¡ Ø§Ù„Ù…Ù‡Ù…Ø©</button>
+                </div>
+              </div>
+
+              <div class="proc-item">
+                <div class="proc-info">
+                  <div class="proc-icon">ðŸ’¬</div>
+                  <div>
+                    <div class="proc-name">Discord / Slack (Background)</div>
+                    <div style="font-size: 0.74rem; color: var(--text-3);">Electron Messaging Client</div>
+                  </div>
+                </div>
+                <div class="proc-stats">
+                  <span>RAM: <strong>680 MB</strong></span>
+                  <button class="proc-kill-btn" onclick="killProcess(this, 680)">Ø¥Ù†Ù‡Ø§Ø¡ Ø§Ù„Ù…Ù‡Ù…Ø©</button>
+                </div>
+              </div>
+
+              <div class="proc-item">
+                <div class="proc-info">
+                  <div class="proc-icon">ðŸŽµ</div>
+                  <div>
+                    <div class="proc-name">Spotify Music Player</div>
+                    <div style="font-size: 0.74rem; color: var(--text-3);">Audio Streaming Service</div>
+                  </div>
+                </div>
+                <div class="proc-stats">
+                  <span>RAM: <strong>480 MB</strong></span>
+                  <button class="proc-kill-btn" onclick="killProcess(this, 480)">Ø¥Ù†Ù‡Ø§Ø¡ Ø§Ù„Ù…Ù‡Ù…Ø©</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+         PANEL 3: COMPANION MINI BAR
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <section id="view-companion" class="panel-view">
+      <div class="companion-box">
+        <h2 style="font-size: 2.2rem; margin-bottom: 12px;" id="txtCompTitle">Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ù…ØµØ§Ø­Ø¨ Ø§Ù„Ø¹Ø§Ø¦Ù… Ù„Ø³Ø·Ø­ Ø§Ù„Ù…ÙƒØªØ¨ (Companion Mini Bar)</h2>
+        <p style="color: var(--text-2); max-width: 740px; margin: 0 auto;" id="txtCompDesc">
+          ØµØºÙ‘Ø± Ø§Ù„ØªØ·Ø¨ÙŠÙ‚ Ø¨Ø¶ØºØ·Ø© Ø²Ø± Ø¥Ù„Ù‰ ÙƒØ¨Ø³ÙˆÙ„Ø© Ø£ÙÙ‚ÙŠØ© Ø£Ù†ÙŠÙ‚Ø© (42px) Ø£Ùˆ Ø´Ø±ÙŠØ· Ø¬Ø§Ù†Ø¨ÙŠ Ù†Ø­ÙŠÙ (34px) ÙŠÙ„ØªØµÙ‚ Ø¨Ø­Ø§ÙØ© Ø§Ù„Ø´Ø§Ø´Ø© ÙˆÙŠØ¹Ø±Ø¶ Ù‚ÙŠØ§Ø³Ø§Øª Ø§Ù„Ø¹ØªØ§Ø¯ Ø¯ÙˆÙ† Ø­Ø¬Ø¨ Ù…Ø³Ø§Ø­Ø© Ø§Ù„Ø¹Ù…Ù„ Ø£Ùˆ Ø³Ø±Ù‚Ø© ØªØ±ÙƒÙŠØ² Ø§Ù„ÙØ£Ø±Ø©.
+        </p>
+
+        <!-- Interactive Draggable / Tweakable Capsule -->
+        <div class="companion-capsule-demo" id="demoCapsule" title="Ø§Ø³Ø­Ø¨ Ø§Ù„ÙƒØ¨Ø³ÙˆÙ„Ø© Ù„ØªØ¬Ø±Ø¨Ø© Ù…ÙˆÙ‚Ø¹Ù‡Ø§">
+          <img src="assets/app.png" width="32" height="32" alt="Tempo Logo" style="border-radius: 8px;">
+          <div class="comp-metric"><span style="color: var(--text-3); font-size: 0.85rem;">CPU:</span> <span style="color: #60a5fa;" id="compCpu">12%</span></div>
+          <div class="comp-metric"><span style="color: var(--text-3); font-size: 0.85rem;">RAM:</span> <span style="color: #34d399;" id="compRam">28%</span></div>
+          <div class="comp-metric"><span style="color: var(--text-3); font-size: 0.85rem;">NET:</span> <span style="color: #93c5fd;">â–² 1.1 MB/s â–¼ 8.4 MB/s</span></div>
+          <div class="comp-metric" style="color: #34d399; font-size: 0.9rem; border-right: 1px solid var(--border); padding-right: 16px;">â— OPTIMAL</div>
+        </div>
+
+        <div style="margin: 20px 0; display: flex; justify-content: center; gap: 14px;">
+          <button class="nav-btn" onclick="toggleCapsuleMode('top')">ðŸ“Œ ÙˆØ¶Ø¹ Ø§Ù„ÙƒØ¨Ø³ÙˆÙ„Ø© Ø§Ù„Ø¹Ù„ÙˆÙŠØ© (42px Top)</button>
+          <button class="nav-btn" onclick="toggleCapsuleMode('side')">ðŸ“ ÙˆØ¶Ø¹ Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ø¬Ø§Ù†Ø¨ÙŠ (34px Side Dock)</button>
+        </div>
+
+        <div style="max-width: 960px; margin: 30px auto 0; border-radius: 16px; overflow: hidden; border: 1px solid var(--border-glow); box-shadow: 0 20px 50px rgba(0,0,0,0.7);">
+          <img id="compPreviewImg" src="assets/screen_toolbar_top.png" alt="Companion Bar Screenshot" style="width: 100%; display: block;">
+        </div>
+      </div>
+    </section>
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+         PANEL 4: SCREENSHOTS & FEATURE TOUR
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <section id="view-gallery" class="panel-view">
+      <div class="gallery-showcase">
+        <h2 style="font-size: 2rem; margin-bottom: 8px;" id="txtGallTitle">Ù…Ø¹Ø±Ø¶ Ø§Ù„Ø´Ø§Ø´Ø§Øª ÙˆØ§Ù„Ù…ÙŠØ²Ø§Øª Ø§Ù„Ù‡Ù†Ø¯Ø³ÙŠØ©</h2>
+        <p style="color: var(--text-2); margin-bottom: 24px;" id="txtGallDesc">
+          Ø§Ø³ØªÙƒØ´Ù Ø§Ù„Ø´Ø§Ø´Ø§Øª Ø§Ù„Ø­Ù‚ÙŠÙ‚ÙŠØ© Ù„ØªØ·Ø¨ÙŠÙ‚ Tempo Ø§Ù„Ù…ØµÙ…Ù…Ø© Ø¨Ø£Ø­Ø¯Ø« Ù…Ø¹Ø§ÙŠÙŠØ± ÙˆØ§Ø¬Ù‡Ø§Øª .NET 10.0 WPF.
+        </p>
+
+        <div class="gallery-nav">
+          <button class="gallery-btn active" onclick="switchGallery('overview', this)">ðŸ“Š Ù„ÙˆØ­Ø© Ø§Ù„ØªØ´Ø®ÙŠØµ Ø§Ù„Ø¹Ø§Ù…Ø©</button>
+          <button class="gallery-btn" onclick="switchGallery('processes', this)">ðŸš€ Ø¥Ø¯Ø§Ø±Ø© Ø§Ù„Ø¹Ù…Ù„ÙŠØ§Øª ÙˆØ§Ù„Ø±Ø§Ù…</button>
+          <button class="gallery-btn" onclick="switchGallery('optimize', this)">ðŸ§¹ Ø£Ø¯ÙˆØ§Øª Ø§Ù„ØªÙ†Ø¸ÙŠÙ Ø§Ù„Ø°ÙƒÙŠØ©</button>
+          <button class="gallery-btn" onclick="switchGallery('diagnostic', this)">ðŸ’½ ØªØ´Ø®ÙŠØµ Ø§Ù„Ù‡Ø§Ø±Ø¯ÙˆÙŠØ± Ùˆ TRIM</button>
+          <button class="gallery-btn" onclick="switchGallery('startup', this)">âš™ï¸ Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„Ø¥Ù‚Ù„Ø§Ø¹ ÙˆØ§Ù„Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª</button>
+          <button class="gallery-btn" onclick="switchGallery('feedback', this)">ðŸ’¬ Ø§Ù„Ù…Ù‚ØªØ±Ø­Ø§Øª ÙˆØ§Ù„Ø¯Ø¹Ù… Ø§Ù„Ù…Ø¨Ø§Ø´Ø±</button>
+        </div>
+
+        <div class="gallery-viewport">
+          <img id="galleryImg" src="assets/screen_overview.png" alt="Tempo Feature Screenshot">
+        </div>
+
+        <div class="gallery-caption">
+          <div id="galleryDesc" style="font-weight: 700; font-size: 1.05rem; color: var(--text);">
+            Ù„ÙˆØ­Ø© Ø§Ù„ØªØ´Ø®ÙŠØµ Ø§Ù„Ø´Ø§Ù…Ù„Ø©: Ù‚Ø±Ø§Ø¡Ø§Øª Ù„Ø­Ø¸ÙŠØ© Ù„Ù„Ù…Ø¹Ø§Ù„Ø¬ØŒ ÙˆØ§Ù„Ø°Ø§ÙƒØ±Ø©ØŒ ÙˆÙ…Ø¹Ø¯Ù„Ø§Øª Ù†Ù‚Ù„ Ø§Ù„Ø´Ø¨ÙƒØ©ØŒ ÙˆØ­Ø§Ù„Ø© Ø§Ù„Ù‚Ø±Øµ Ø¨Ø¯ÙˆÙ† Ø£ÙŠ Ù…Ø­Ø§ÙƒØ§Ø© ÙˆÙ‡Ù…ÙŠØ©.
+          </div>
+          <span class="brand-badge" id="galleryBadge">Direct Win32 Telemetry</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+         PANEL 5: DOWNLOADS & VERIFICATION
+    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <section id="view-downloads" class="panel-view">
+      <div class="download-grid">
+        <!-- Installer -->
+        <div class="dl-card" style="border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 10px 30px rgba(37, 99, 235, 0.2);">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <span style="font-size: 2.2rem;">ðŸš€</span>
+              <span class="brand-badge" style="background: rgba(37,99,235,0.2); color: #93c5fd;">Ù…ÙˆØµÙ‰ Ø¨Ù‡ Ù„Ø¬Ù…ÙŠØ¹ Ø§Ù„Ù…Ø³ØªØ®Ø¯Ù…ÙŠÙ†</span>
+            </div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Tempo-Setup-v2.2.8.exe</h3>
+            <p style="color: var(--text-2); font-size: 0.95rem;">
+              Ø¨Ø±Ù†Ø§Ù…Ø¬ Ø§Ù„ØªØ«Ø¨ÙŠØª Ø§Ù„Ø±Ø³Ù…ÙŠ Ø§Ù„ØµØ§Ù…ØªØŒ ÙŠÙ†Ø´Ø¦ Ø§Ø®ØªØµØ§Ø±Ø§Øª Ø³Ø·Ø­ Ø§Ù„Ù…ÙƒØªØ¨ ÙˆÙ‚Ø§Ø¦Ù…Ø© Ø§Ø¨Ø¯Ø£ Ø¨Ù†Ù‚Ø±Ø© ÙˆØ§Ø­Ø¯Ø© Ù…Ø¹ Ø¯Ø¹Ù… Ø§Ù„ØªØ­Ø¯ÙŠØ« Ø§Ù„ØªÙ„Ù‚Ø§Ø¦ÙŠ.
+            </p>
+            <div style="font-family: var(--ff-mono); font-size: 0.85rem; color: var(--text-3); margin-top: 16px;">
+              Ø§Ù„Ø­Ø¬Ù…: <strong>4.15 MB</strong> â€¢ Ø§Ù„Ù…Ø¹Ù…Ø§Ø±ÙŠØ©: <strong>Windows x64 Native</strong>
+            </div>
+          </div>
+          <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.8/Tempo-Setup-v2.2.8.exe" class="dl-btn dl-primary">
+            â¬‡ï¸ ØªØ­Ù…ÙŠÙ„ Ø¨Ø±Ù†Ø§Ù…Ø¬ Ø§Ù„ØªØ«Ø¨ÙŠØª (.exe)
+          </a>
+        </div>
+
+        <!-- Portable ZIP -->
+        <div class="dl-card">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <span style="font-size: 2.2rem;">ðŸª¶</span>
+              <span class="brand-badge">Standalone Portable</span>
+            </div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 8px;">Tempo-v2.2.8-win-x64.zip</h3>
+            <p style="color: var(--text-2); font-size: 0.95rem;">
+              Ù†Ø³Ø®Ø© Ù…Ø­Ù…ÙˆÙ„Ø© Ø¨Ø§Ù„ÙƒØ§Ù…Ù„ Ø¨Ø¯ÙˆÙ† ØªØ«Ø¨ÙŠØªØŒ ÙÙƒ Ø§Ù„Ø¶ØºØ· ÙˆØ´ØºÙ„ Ù…Ø¨Ø§Ø´Ø±Ø© Ù…Ù† Ø£ÙŠ ÙÙ„Ø§Ø´ Ù…ÙŠÙ…ÙˆØ±ÙŠ (USB) Ø¯ÙˆÙ† Ù„Ù…Ø³ Ø³Ø¬Ù„ Ø§Ù„Ù†Ø¸Ø§Ù… (Registry).
+            </p>
+            <div style="font-family: var(--ff-mono); font-size: 0.85rem; color: var(--text-3); margin-top: 16px;">
+              Ø§Ù„Ø­Ø¬Ù…: <strong>2.85 MB</strong> â€¢ Ø§Ù„Ù…Ø¹Ù…Ø§Ø±ÙŠØ©: <strong>x64 Standalone</strong>
+            </div>
+          </div>
+          <a href="https://github.com/Abdelrahman-Tamer/Tempo-PC-Optimizer/releases/download/v2.2.8/Tempo-v2.2.8-win-x64.zip" class="dl-btn dl-secondary">
+            ðŸ“¦ ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ù†Ø³Ø®Ø© Ø§Ù„Ù…Ø­Ù…ÙˆÙ„Ø© (.zip)
+          </a>
+        </div>
+      </div>
+
+      <!-- Hash Verifier -->
+      <div class="hash-verifier">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+          <span style="font-size: 0.9rem; color: var(--text-2); font-weight: 700;">Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø¨ØµÙ…Ø© Ø§Ù„Ø£Ù…Ø§Ù† ÙˆØ§Ù„ØªØ´ÙÙŠØ± (SHA-256 via PowerShell):</span>
+          <code style="font-family: var(--ff-mono); font-size: 0.82rem; color: var(--green-glow); word-break: break-all; direction: ltr; text-align: left;">
+            Get-FileHash .\Tempo-Setup-v2.2.8.exe -Algorithm SHA256
+          </code>
+        </div>
+        <button class="copy-chip" onclick="copyCommand()">
+          ðŸ“‹ <span id="copyTxt">Ù†Ø³Ø® Ø§Ù„Ø£Ù…Ø±</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p style="margin-bottom: 8px; font-weight: 700; color: var(--text);">Tempo PC Optimizer â€¢ Developed with precision by Abdelrahman Tamer</p>
+      <p style="font-size: 0.84rem; color: var(--text-3);">100% Honest Telemetry â€¢ Open Source (MIT) â€¢ Windows 10 & 11 â€¢ Zero Ads or Telemetry Harvesting</p>
+    </div>
+  </footer>
+
+  <script>
+    let isArabic = true;
+    let ramPercentage = 82;
+    let audioCtx = null;
+
+    // Web Audio Synthesizer for 100% reliable click feedback
+    function triggerTone(freq, type = 'sine', duration = 0.08) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSound(id, fallbackFreq = 600) {
+      triggerTone(fallbackFreq);
+      try {
+        const audio = document.getElementById(id);
+        if (audio) {
+          audio.currentTime = 0;
+          audio.volume = 0.5;
+          audio.play().catch(() => {});
+        }
+      } catch (e) {}
+    }
+
+    // Section Switching
+    function switchSection(sectionId) {
+      playSound('sfxClick', 750);
+      document.querySelectorAll('.section-tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel-view').forEach(p => p.classList.remove('active'));
+
+      const activeTab = Array.from(document.querySelectorAll('.section-tab')).find(t => 
+        (sectionId === 'video' && t.contains(document.getElementById('tabVid'))) ||
+        (sectionId === 'simulator' && t.contains(document.getElementById('tabSim'))) ||
+        (sectionId === 'companion' && t.contains(document.getElementById('tabComp'))) ||
+        (sectionId === 'gallery' && t.contains(document.getElementById('tabGall'))) ||
+        (sectionId === 'downloads' && t.contains(document.getElementById('tabDown')))
+      );
+      if (activeTab) activeTab.classList.add('active');
+
+      const panel = document.getElementById('view-' + sectionId);
+      if (panel) panel.classList.add('active');
+
+      const v = document.getElementById('promoVideo');
+      if (sectionId === 'video') {
+        if (v && v.paused) v.play().catch(() => {});
+      } else {
+        if (v && !v.paused) v.pause();
+      }
+    }
+
+    // Video Playback & HUD Synchronization
+    const vid = document.getElementById('promoVideo');
+    if (vid) {
+      vid.addEventListener('timeupdate', () => {
+        const t = vid.currentTime;
+        const hud = document.getElementById('hudSceneTxt');
+        const chips = document.querySelectorAll('.chapter-chip');
+
+        let chapterIdx = 0;
+        let sceneName = isArabic ? '00:00 â€¢ Ø§Ù„Ø§ÙØªØªØ§Ø­ÙŠØ© ÙˆØ§Ù„ØµØ¯Ù…Ø©' : '00:00 â€¢ The Hook';
+
+        if (t >= 16.5) {
+          chapterIdx = 4;
+          sceneName = isArabic ? '16:50 â€¢ Ø§Ù„Ù…ÙˆØ§ØµÙØ§Øª ÙˆØ§Ù„ØªØ­Ù…ÙŠÙ„' : '16:50 â€¢ Outro & Specs';
+        } else if (t >= 12.5) {
+          chapterIdx = 3;
+          sceneName = isArabic ? '12:50 â€¢ Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ù…ØµØ§Ø­Ø¨ 42px' : '12:50 â€¢ Companion Mini Bar';
+        } else if (t >= 8.0) {
+          chapterIdx = 2;
+          sceneName = isArabic ? '08:00 â€¢ Turbo RAM Boost' : '08:00 â€¢ Turbo RAM Boost';
+        } else if (t >= 3.5) {
+          chapterIdx = 1;
+          sceneName = isArabic ? '03:50 â€¢ Ù…Ø­Ø±Ùƒ Ø§Ù„ØªØ´Ø®ÙŠØµ Ø§Ù„ØµØ§Ø¯Ù‚' : '03:50 â€¢ Honest Diagnostics';
+        }
+
+        chips.forEach((c, idx) => {
+          if (idx === chapterIdx) c.classList.add('active');
+          else c.classList.remove('active');
+        });
+
+        if (hud) hud.innerText = sceneName;
+      });
+    }
+
+    function seekVideo(time, chipEl) {
+      playSound('sfxClick', 800);
+      if (vid) {
+        vid.currentTime = time;
+        vid.play().catch(() => {});
+      }
+      document.querySelectorAll('.chapter-chip').forEach(c => c.classList.remove('active'));
+      if (chipEl) chipEl.classList.add('active');
+    }
+
+    function togglePlayVideo() {
+      if (!vid) return;
+      if (vid.paused) {
+        playSound('sfxClick', 900);
+        vid.play();
+      } else {
+        playSound('sfxClick', 500);
+        vid.pause();
+      }
+    }
+
+    // Turbo Boost Execution in Live Simulator
+    function executeTurboBoost() {
+      playSound('sfxSwitch', 520);
+      triggerTone(880, 'triangle', 0.2);
+
+      const btn = document.getElementById('btnDoBoost');
+      const banner = document.getElementById('boostStatusBanner');
+      const barRam = document.getElementById('barRam');
+      const valRam = document.getElementById('valRam');
+      const badge = document.getElementById('badgeRamStatus');
+      const compRam = document.getElementById('compRam');
+
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      banner.innerHTML = isArabic ? 'â³ Ø¬Ø§Ø±ÙŠ Ø§Ø³ØªØ¯Ø¹Ø§Ø¡ EmptyWorkingSet ÙˆØ­Ù…Ø§ÙŠØ© Ø§Ù„Ø®Ø¯Ù…Ø§Øª...' : 'â³ Flushing working sets & safeguarding kernels...';
+
+      setTimeout(() => {
+        playSound('sfxChime', 1046);
+        ramPercentage = 28;
+        valRam.innerText = '28%';
+        valRam.style.color = '#34d399';
+        barRam.style.width = '28%';
+        barRam.className = 'meter-bar-fill green';
+        badge.innerText = isArabic ? 'Ù…Ù…ØªØ§Ø²' : 'Optimal';
+        badge.style.color = '#34d399';
+        badge.style.background = 'rgba(16, 185, 129, 0.12)';
+
+        if (compRam) compRam.innerText = '28%';
+
+        banner.innerHTML = isArabic 
+          ? 'ðŸŽ‰ ØªÙ… ØªØ­Ø±ÙŠØ± 8,420 Ù…ÙŠØ¬Ø§Ø¨Ø§ÙŠØª Ø¨Ù†Ø¬Ø§Ø­ ÙÙŠ 118ms! (37+ Ø®Ø¯Ù…Ø© Ù†Ø¸Ø§Ù… Ø£Ø³Ø§Ø³ÙŠØ© Ù…Ø­Ù…ÙŠØ©)'
+          : 'ðŸŽ‰ Successfully freed 8,420 MB in 118ms! (37+ core system services protected)';
+
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }, 450);
+    }
+
+    // Simulate High Load
+    function simulateHighStress() {
+      playSound('sfxDrop', 400);
+      ramPercentage = 88;
+      const barRam = document.getElementById('barRam');
+      const valRam = document.getElementById('valRam');
+      const badge = document.getElementById('badgeRamStatus');
+      const banner = document.getElementById('boostStatusBanner');
+      const compRam = document.getElementById('compRam');
+
+      valRam.innerText = '88%';
+      valRam.style.color = '#f87171';
+      barRam.style.width = '88%';
+      barRam.className = 'meter-bar-fill warning';
+      badge.innerText = isArabic ? 'Ø§Ø³ØªÙ‡Ù„Ø§Ùƒ Ù…Ø±ØªÙØ¹' : 'Critical Load';
+      badge.style.color = '#f87171';
+      badge.style.background = 'rgba(239, 68, 68, 0.15)';
+
+      if (compRam) compRam.innerText = '88%';
+
+      banner.innerHTML = isArabic
+        ? 'âš ï¸ ØªÙ†Ø¨ÙŠÙ‡: Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ø°Ø§ÙƒØ±Ø© ÙˆØµÙ„ Ø¥Ù„Ù‰ 88% â€” Ø§Ø¶ØºØ· Ø²Ø± Turbo Boost Ù„ØªÙØ±ÙŠØºÙ‡Ø§ Ø§Ù„Ø¢Ù†!'
+        : 'âš ï¸ Alert: System RAM hit 88% â€” Click Turbo Boost to flush inactive caches now!';
+    }
+
+    // Kill Process Demo
+    function killProcess(btn, freedMb) {
+      playSound('sfxClick', 650);
+      const row = btn.closest('.proc-item');
+      row.style.transition = 'all 0.3s ease';
+      row.style.opacity = '0';
+      row.style.transform = isArabic ? 'translateX(-25px)' : 'translateX(25px)';
+      setTimeout(() => {
+        row.remove();
+        if (ramPercentage > 32) {
+          ramPercentage -= 8;
+          document.getElementById('valRam').innerText = ramPercentage + '%';
+          document.getElementById('barRam').style.width = ramPercentage + '%';
+          const compRam = document.getElementById('compRam');
+          if (compRam) compRam.innerText = ramPercentage + '%';
+        }
+      }, 300);
+    }
+
+    // Companion Capsule Modes
+    function toggleCapsuleMode(mode) {
+      playSound('sfxClick', 720);
+      const img = document.getElementById('compPreviewImg');
+      if (mode === 'top') {
+        img.src = 'assets/screen_toolbar_top.png';
+      } else {
+        img.src = 'assets/screen_toolbar_side.png';
+      }
+    }
+
+    // Gallery Showcase Switcher
+    const galleryData = {
+      overview: {
+        img: 'assets/screen_overview.png',
+        descAr: 'Ù„ÙˆØ­Ø© Ø§Ù„ØªØ´Ø®ÙŠØµ Ø§Ù„Ø´Ø§Ù…Ù„Ø©: Ù‚Ø±Ø§Ø¡Ø§Øª Ù„Ø­Ø¸ÙŠØ© Ù„Ù„Ù…Ø¹Ø§Ù„Ø¬ØŒ ÙˆØ§Ù„Ø°Ø§ÙƒØ±Ø©ØŒ ÙˆÙ…Ø¹Ø¯Ù„Ø§Øª Ù†Ù‚Ù„ Ø§Ù„Ø´Ø¨ÙƒØ©ØŒ ÙˆØ­Ø§Ù„Ø© Ø§Ù„Ù‚Ø±Øµ Ø¨Ø¯ÙˆÙ† Ø£ÙŠ Ù…Ø­Ø§ÙƒØ§Ø© ÙˆÙ‡Ù…ÙŠØ©.',
+        descEn: 'Diagnostic Dashboard: Real-time telemetry for CPU clock, memory, network I/O, and storage health via Win32 APIs.',
+        badge: 'Win32 Telemetry'
+      },
+      processes: {
+        img: 'assets/screen_processes.png',
+        descAr: 'Ù…Ø¯ÙŠØ± Ø§Ù„Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„Ù†Ø´Ø·Ø©: ØªØ¬Ù…ÙŠØ¹ Ø°ÙƒÙŠ Ù„Ù„Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„ÙØ±Ø¹ÙŠØ© (Child-process rollup) Ù…Ø¹ ØªØ­Ø¯ÙŠØ« ÙƒÙ„ 4 Ø«ÙˆØ§Ù†Ù ÙˆØ¥Ù†Ù‡Ø§Ø¡ ÙÙˆØ±ÙŠ Ù„Ù„Ù…Ù‡Ø§Ù….',
+        descEn: 'Active Apps Manager: Intelligent child-process rollup with 4s refresh and single-click termination.',
+        badge: 'Process Rollup'
+      },
+      optimize: {
+        img: 'assets/screen_optimize.png',
+        descAr: 'ÙˆØ­Ø¯Ø§Øª Ø§Ù„ØªÙ†Ø¸ÙŠÙ Ø§Ù„Ø°ÙƒÙŠØ©: ÙØ­Øµ Ø£Ù…Ø§Ù† ØµØ§Ø±Ù… Ù„Ù„Ù…Ø³Ø§Ø±Ø§Øª (IsSafePath)ØŒ ØªØ®Ø·ÙŠ ÙˆØµÙ„Ø§Øª NTFSØŒ ÙˆØªÙØ±ÙŠØº Ø§Ù„ÙƒØ§Ø´ Ø§Ù„Ù…Ø¤Ù‚Øª Ø¨Ø£Ù…Ø§Ù†.',
+        descEn: 'Smart Cleaning Modules: Hardened boundary safety (IsSafePath), NTFS junction skipping, and cache purge.',
+        badge: 'Safety First'
+      },
+      diagnostic: {
+        img: 'assets/screen_diagnostic.png',
+        descAr: 'ØªØ´Ø®ÙŠØµ Ø§Ù„Ù‡Ø§Ø±Ø¯ÙˆÙŠØ± Ùˆ SSD TRIM: ÙƒØ´Ù Ø¯Ù‚ÙŠÙ‚ Ù„Ù†ÙˆØ¹ ÙˆØ³Ø§Ø¦Ø· Ø§Ù„ØªØ®Ø²ÙŠÙ† ÙˆØ¥Ø±Ø³Ø§Ù„ Ø£ÙˆØ§Ù…Ø± TRIM Ø§Ù„Ù…Ø¹Ø²Ø²Ø© Ù„Ù„Ø­ÙØ§Ø¸ Ø¹Ù„Ù‰ Ø¹Ù…Ø± Ø§Ù„Ø£Ù‚Ø±Ø§Øµ.',
+        descEn: 'Hardware Diagnostics & TRIM: Accurate media type detection and elevated SSD TRIM commands.',
+        badge: 'Hardware Aware'
+      },
+      startup: {
+        img: 'assets/screen_startup.png',
+        descAr: 'Ø¥Ø¯Ø§Ø±Ø© Ø¨Ø±Ø§Ù…Ø¬ Ø¨Ø¯Ø¡ Ø§Ù„ØªØ´ØºÙŠÙ„: ØªØ³Ø±ÙŠØ¹ Ø¥Ù‚Ù„Ø§Ø¹ ÙˆÙŠÙ†Ø¯ÙˆØ² Ø¹Ø¨Ø± Ø§Ù„ØªØ­ÙƒÙ… ÙÙŠ Ø§Ù„Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„ØªÙŠ ØªØ¨Ø¯Ø£ ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹ ÙˆØªØ­Ø¯ÙŠØ¯ ØªØ£Ø«ÙŠØ±Ù‡Ø§.',
+        descEn: 'Startup Apps Manager: Accelerate Windows boot times by analyzing and disabling startup apps.',
+        badge: 'Boot Optimizer'
+      },
+      feedback: {
+        img: 'assets/screen_feedback.png',
+        descAr: 'Ø§Ù„Ù…Ù‚ØªØ±Ø­Ø§Øª ÙˆØ§Ù„Ø¯Ø¹Ù… Ø§Ù„Ù…Ø¨Ø§Ø´Ø±: Ø¥Ø±Ø³Ø§Ù„ Ø§Ù„Ù…Ù„Ø§Ø­Ø¸Ø§Øª ÙˆØ·Ù„Ø¨Ø§Øª Ø§Ù„Ù…ÙŠØ²Ø§Øª ÙˆØªÙ‚Ø§Ø±ÙŠØ± Ø§Ù„Ø£Ø®Ø·Ø§Ø¡ Ù„Ù„Ù…Ø·ÙˆØ± Ù…Ø¨Ø§Ø´Ø±Ø© Ø¨Ù†Ù‚Ø±Ø© ÙˆØ§Ø­Ø¯Ø©.',
+        descEn: 'Direct Feedback: Seamlessly report bugs and submit feature requests with optional diagnostics.',
+        badge: 'User Driven'
+      }
+    };
+
+    function switchGallery(key, btnEl) {
+      playSound('sfxClick', 680);
+      document.querySelectorAll('.gallery-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      const data = galleryData[key];
+      if (!data) return;
+
+      const img = document.getElementById('galleryImg');
+      const desc = document.getElementById('galleryDesc');
+      const badge = document.getElementById('galleryBadge');
+
+      img.style.opacity = '0';
+      setTimeout(() => {
+        img.src = data.img;
+        desc.innerText = isArabic ? data.descAr : data.descEn;
+        badge.innerText = data.badge;
+        img.style.opacity = '1';
+      }, 200);
+    }
+
+    // Copy Hash Verification Command
+    function copyCommand() {
+      playSound('sfxClick', 920);
+      const cmd = "Get-FileHash .\\Tempo-Setup-v2.2.8.exe -Algorithm SHA256";
+      navigator.clipboard.writeText(cmd).then(() => {
+        const c = document.getElementById('copyTxt');
+        c.innerText = isArabic ? 'ØªÙ… Ø§Ù„Ù†Ø³Ø® Ø¨Ù†Ø¬Ø§Ø­!' : 'Copied!';
+        setTimeout(() => {
+          c.innerText = isArabic ? 'Ù†Ø³Ø® Ø§Ù„Ø£Ù…Ø±' : 'Copy Command';
+        }, 2200);
+      });
+    }
+
+    // Live Ticking Numbers Simulation
+    setInterval(() => {
+      const cpu = Math.floor(11 + Math.random() * 7);
+      document.getElementById('valCpu').innerText = cpu + '%';
+      document.getElementById('barCpu').style.width = cpu + '%';
+      const compCpu = document.getElementById('compCpu');
+      if (compCpu) compCpu.innerText = cpu + '%';
+
+      const up = (0.9 + Math.random() * 0.9).toFixed(1);
+      const down = (9.2 + Math.random() * 5.8).toFixed(1);
+      document.getElementById('valNet').innerText = `â–² ${up} MB/s â–¼ ${down} MB/s`;
+    }, 2800);
+
+    // Language Toggle (Arabic / English)
+    function toggleLanguage() {
+      playSound('sfxClick', 820);
+      isArabic = !isArabic;
+      document.body.dir = isArabic ? 'rtl' : 'ltr';
+      document.getElementById('langTxt').innerText = isArabic ? 'English (LTR)' : 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ© (RTL)';
+
+      if (isArabic) {
+        document.getElementById('txtPill').innerText = 'Ø¥Ø¹Ù„Ø§Ù† Ù…ÙˆØ´Ù† Ø¬Ø±Ø§ÙÙŠÙƒ Ø±Ø³Ù…ÙŠ â€¢ ØªØ¬Ø±Ø¨Ø© ØªÙØ§Ø¹Ù„ÙŠØ© Ø­ÙŠØ© v2.2.8';
+        document.getElementById('txtHeroTitle').innerHTML = 'Ø£Ø¯Ø§Ø© Ù‡Ù†Ø¯Ø³ÙŠØ© Ø­Ù‚ÙŠÙ‚ÙŠØ© <span class="grad">Ù„ØªØ´Ø®ÙŠØµ ÙˆØªØ³Ø±ÙŠØ¹ ÙˆÙŠÙ†Ø¯ÙˆØ²</span>';
+        document.getElementById('txtHeroDesc').innerText = 'ÙˆØ¯Ø§Ø¹Ø§Ù‹ Ù„Ù„Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„ÙˆÙ‡Ù…ÙŠØ© ÙˆØ§Ù„Ø¥Ø¹Ù„Ø§Ù†Ø§Øª Ø§Ù„Ù…Ø²Ø¹Ø¬Ø©. Ø´Ø§Ù‡Ø¯ Ø§Ù„Ø¢Ù† ÙÙŠØ¯ÙŠÙˆ Ø§Ù„Ù…ÙˆØ´Ù† Ø§Ù„Ø¥Ø¹Ù„Ø§Ù†ÙŠ Ø¨Ø¬ÙˆØ¯Ø© 1080pØŒ ÙˆØ§Ø®ØªØ¨Ø± Ù…ÙŠØ²Ø© Turbo RAM Boost Ø§Ù„Ø­ÙŠØ© ÙÙŠ Ø§Ù„Ù…Ø­Ø§ÙƒÙŠ Ø§Ù„ØªÙØ§Ø¹Ù„ÙŠ!';
+        document.getElementById('tabVid').innerText = 'ÙÙŠØ¯ÙŠÙˆ Ø§Ù„Ù…ÙˆØ´Ù† Ø§Ù„Ø¥Ø¹Ù„Ø§Ù†ÙŠ (1080p)';
+        document.getElementById('tabSim').innerText = 'Ø§Ù„Ù…Ø­Ø§ÙƒÙŠ Ø§Ù„ØªÙØ§Ø¹Ù„ÙŠ Ø§Ù„Ø­ÙŠ';
+        document.getElementById('tabComp').innerText = 'Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ù…ØµØ§Ø­Ø¨ (Mini Bar)';
+        document.getElementById('tabGall').innerText = 'Ù…Ø¹Ø±Ø¶ Ø§Ù„Ø´Ø§Ø´Ø§Øª ÙˆØ§Ù„Ù…ÙŠØ²Ø§Øª';
+        document.getElementById('tabDown').innerText = 'Ø§Ù„ØªØ­Ù…ÙŠÙ„ ÙˆØ¨ØµÙ…Ø© SHA256';
+        document.getElementById('lblCpu').innerText = 'Ø§Ù„Ù…Ø¹Ø§Ù„Ø¬ (CPU)';
+        document.getElementById('lblRam').innerText = 'Ø§Ù„Ø°Ø§ÙƒØ±Ø© Ø§Ù„Ø¹Ø´ÙˆØ§Ø¦ÙŠØ© (RAM)';
+        document.getElementById('lblNet').innerText = 'Ø´Ø¨ÙƒØ© Ø§Ù„Ø§ØªØµØ§Ù„ (Network I/O)';
+        document.getElementById('lblSsd').innerText = 'Ù…Ø­Ø±Ùƒ Ø§Ù„ØªØ®Ø²ÙŠÙ† (SSD TRIM)';
+        document.getElementById('txtBoostHead').innerText = 'Ø¬Ø±Ù‘Ø¨ ØªÙØ±ÙŠØº Ø§Ù„Ø°Ø§ÙƒØ±Ø© ÙØ§Ø¦Ù‚ Ø§Ù„Ø³Ø±Ø¹Ø© (Sub-150ms Turbo RAM Boost)';
+        document.getElementById('txtBoostSub').innerText = 'Ø§Ø¶ØºØ· Ø¹Ù„Ù‰ Ø§Ù„Ø²Ø± Ø£Ø¯Ù†Ø§Ù‡ Ù„ØªÙØ±ÙŠØº Working Sets Ù„Ù„ØªØ·Ø¨ÙŠÙ‚Ø§Øª Ø§Ù„Ø®Ø§Ù…Ù„Ø© ÙÙˆØ±Ø§Ù‹ØŒ Ù…Ø¹ Ø¶Ù…Ø§Ù† Ø­Ù…Ø§ÙŠØ© ÙƒØ§Ù…Ù„Ø© Ù„Ù†ÙˆØ§Ø© ÙˆÙŠÙ†Ø¯ÙˆØ² ÙˆØ§Ù„Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ù€ 37 Ø§Ù„Ø­ÙŠÙˆÙŠØ©.';
+        document.getElementById('txtBtnBoost').innerText = 'Turbo RAM Boost (ØªÙØ±ÙŠØº ÙÙˆØ±ÙŠ)';
+        document.getElementById('txtBtnStress').innerText = 'Ù…Ø­Ø§ÙƒØ§Ø© Ø¶ØºØ· Ø¹Ù„Ù‰ Ø§Ù„Ø¬Ù‡Ø§Ø² (88%)';
+        document.getElementById('txtBoostReady').innerText = 'Ø§Ø¶ØºØ· Ø§Ù„Ø²Ø± Ù„ØªØ¬Ø±Ø¨Ø© ØªØ­Ø±ÙŠØ± Ø§Ù„Ø°Ø§ÙƒØ±Ø© Ø§Ù„ÙØ¹Ù„ÙŠ ÙˆØ³Ù…Ø§Ø¹ Ø§Ù„Ù†Ø¨Ø¶Ø©';
+        document.getElementById('txtProtLabel').innerText = 'Ø§Ù„Ø®Ø¯Ù…Ø§Øª Ø§Ù„Ù…Ø­Ù…ÙŠØ© ØªÙ„Ù‚Ø§Ø¦ÙŠØ§Ù‹:';
+        document.getElementById('txtProcTitle').innerText = 'Ø§Ù„Ø¨Ø±Ø§Ù…Ø¬ Ø§Ù„Ù†Ø´Ø·Ø© ÙˆÙ…Ø¬Ù…Ù‘Ø¹ Ø§Ù„Ø¹Ù…Ù„ÙŠØ§Øª Ø§Ù„Ø°ÙƒÙŠ (Child-Process Rollup)';
+        document.getElementById('txtProcRefresh').innerText = 'ØªØ­Ø¯ÙŠØ« ØªÙ„Ù‚Ø§Ø¦ÙŠ ÙƒÙ„ 4 Ø«ÙˆØ§Ù†Ù';
+        document.getElementById('txtCompTitle').innerText = 'Ø§Ù„Ø´Ø±ÙŠØ· Ø§Ù„Ù…ØµØ§Ø­Ø¨ Ø§Ù„Ø¹Ø§Ø¦Ù… Ù„Ø³Ø·Ø­ Ø§Ù„Ù…ÙƒØªØ¨ (Companion Mini Bar)';
+        document.getElementById('txtCompDesc').innerText = 'ØµØºÙ‘Ø± Ø§Ù„ØªØ·Ø¨ÙŠÙ‚ Ø¨Ø¶ØºØ·Ø© Ø²Ø± Ø¥Ù„Ù‰ ÙƒØ¨Ø³ÙˆÙ„Ø© Ø£ÙÙ‚ÙŠØ© Ø£Ù†ÙŠÙ‚Ø© (42px) Ø£Ùˆ Ø´Ø±ÙŠØ· Ø¬Ø§Ù†Ø¨ÙŠ Ù†Ø­ÙŠÙ (34px) ÙŠÙ„ØªØµÙ‚ Ø¨Ø­Ø§ÙØ© Ø§Ù„Ø´Ø§Ø´Ø© ÙˆÙŠØ¹Ø±Ø¶ Ù‚ÙŠØ§Ø³Ø§Øª Ø§Ù„Ø¹ØªØ§Ø¯ Ø¯ÙˆÙ† Ø­Ø¬Ø¨ Ù…Ø³Ø§Ø­Ø© Ø§Ù„Ø¹Ù…Ù„ Ø£Ùˆ Ø³Ø±Ù‚Ø© ØªØ±ÙƒÙŠØ² Ø§Ù„ÙØ£Ø±Ø©.';
+        document.getElementById('txtVidFooterTitle').innerText = 'ÙÙŠØ¯ÙŠÙˆ Ù…ÙˆØ´Ù† Ø¥Ø¹Ù„Ø§Ù†ÙŠ Ø±Ø³Ù…ÙŠ Ø¹Ø§Ù„ÙŠ Ø§Ù„Ø¬ÙˆØ¯Ø© (1080p Full HD)';
+        document.getElementById('txtVidFooterMeta').innerText = 'Ø§Ù„Ù…Ø¯Ø©: 20 Ø«Ø§Ù†ÙŠØ© â€¢ Ø®Ø· Cairo Ø§Ù„Ø¹Ø±Ø¨ÙŠ Ø§Ù„Ø³ÙŠÙ†Ù…Ø§Ø¦ÙŠ â€¢ ØµÙˆØª ÙˆÙ…ÙˆØ³ÙŠÙ‚Ù‰ Ù…Ø¯Ù…Ø¬Ø© â€¢ Ù…ØªØ²Ø§Ù…Ù† 100% Ù…Ø¹ Ù…ÙŠØ²Ø§Øª Ø§Ù„ØªØ·Ø¨ÙŠÙ‚';
+        document.getElementById('txtBtnPlay').innerText = 'ØªØ´ØºÙŠÙ„ / Ø¥ÙŠÙ‚Ø§Ù';
+        document.getElementById('txtBtnDlVid').innerText = 'ØªØ­Ù…ÙŠÙ„ Ø§Ù„ÙÙŠØ¯ÙŠÙˆ (MP4)';
+        document.getElementById('txtBtnDlPost').innerText = 'ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¨ÙˆØ³ØªØ±';
+        document.getElementById('navDlTxt').innerText = 'ØªØ­Ù…ÙŠÙ„ Ù…Ø¬Ø§Ù†ÙŠ';
+      } else {
+        document.getElementById('txtPill').innerText = 'Official Motion Ad â€¢ Interactive Experience v2.2.8';
+        document.getElementById('txtHeroTitle').innerHTML = 'Precision Engineering <span class="grad">to Diagnose & Boost Windows</span>';
+        document.getElementById('txtHeroDesc').innerText = 'Say goodbye to bloated cleaners and fake numbers. Watch the 1080p motion trailer now, and test the sub-150ms Turbo RAM Boost live in the interactive simulator!';
+        document.getElementById('tabVid').innerText = 'Motion Commercial (1080p)';
+        document.getElementById('tabSim').innerText = 'Live Interactive Simulator';
+        document.getElementById('tabComp').innerText = 'Companion Mini Bar';
+        document.getElementById('tabGall').innerText = 'Feature & UI Gallery';
+        document.getElementById('tabDown').innerText = 'Download & Integrity';
+        document.getElementById('lblCpu').innerText = 'Processor (CPU)';
+        document.getElementById('lblRam').innerText = 'System Memory (RAM)';
+        document.getElementById('lblNet').innerText = 'Network Throughput (I/O)';
+        document.getElementById('lblSsd').innerText = 'Storage Media (SSD TRIM)';
+        document.getElementById('txtBoostHead').innerText = 'Sub-150ms Surgical Memory Optimization';
+        document.getElementById('txtBoostSub').innerText = 'Flush inactive application working sets instantaneously while strictly safeguarding core Windows NT kernel services.';
+        document.getElementById('txtBtnBoost').innerText = 'Turbo RAM Boost (Purge)';
+        document.getElementById('txtBtnStress').innerText = 'Simulate High Load (88%)';
+        document.getElementById('txtBoostReady').innerText = 'Click above to trigger real memory flush simulation';
+        document.getElementById('txtProtLabel').innerText = 'Protected Kernel Services:';
+        document.getElementById('txtProcTitle').innerText = 'Active Apps & Process Rollup Manager';
+        document.getElementById('txtProcRefresh').innerText = 'Auto-refreshes every 4 seconds';
+        document.getElementById('txtCompTitle').innerText = 'Fluid Desktop Companion Mini Bar';
+        document.getElementById('txtCompDesc').innerText = 'Dock unobtrusively into a 42px top capsule or 34px slim side dock that stays docked to your screen edge without stealing focus.';
+        document.getElementById('txtVidFooterTitle').innerText = 'Official Launch Motion Trailer (1080p Full HD)';
+        document.getElementById('txtVidFooterMeta').innerText = 'Duration: 20s â€¢ Cairo & Inter Cinematic Typography â€¢ Integrated audio & sound bed';
+        document.getElementById('txtBtnPlay').innerText = 'Play / Pause';
+        document.getElementById('txtBtnDlVid').innerText = 'Download Video (MP4)';
+        document.getElementById('txtBtnDlPost').innerText = 'Download Poster';
+        document.getElementById('navDlTxt').innerText = 'Free Download';
+      }
+    }
+  </script>
+</body>
+</html>
+

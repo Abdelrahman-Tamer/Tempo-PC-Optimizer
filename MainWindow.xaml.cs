@@ -533,6 +533,12 @@ namespace Tempo
 
         private void OnLanguageChanged(string lang) => ApplyLanguageUi(lang);
 
+        internal void PauseBackgroundTimers()
+        {
+            _telemetryTimer?.Stop();
+            _processesRefreshTimer?.Stop();
+        }
+
         private void Window_Closed(object? sender, EventArgs e)
         {
             LocalizationManager.LanguageChanged -= OnLanguageChanged;
@@ -1008,7 +1014,7 @@ namespace Tempo
             if (ToolbarPulseDotV != null) ToolbarPulseDotV.Fill = pulseBrush;
         }
 
-        private static PathGeometry CreateArcGeometry(double centerX, double centerY, double radius, double percent)
+        internal static PathGeometry CreateArcGeometry(double centerX, double centerY, double radius, double percent)
         {
             var geom = new PathGeometry();
             if (percent <= 0.5) return geom;
@@ -2626,10 +2632,30 @@ namespace Tempo
             ApplyLanguageUi("ar");
         }
 
-        private void ApplyLanguageUi(string lang)
+        public void ApplyLanguageUi(string lang)
         {
             bool isAr = string.Equals(lang, "ar", StringComparison.OrdinalIgnoreCase);
             var dir = isAr ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+
+            try
+            {
+                string dictUri = isAr
+                    ? "pack://application:,,,/Tempo;component/Resources/Strings.ar.xaml"
+                    : "pack://application:,,,/Tempo;component/Resources/Strings.en.xaml";
+                var newDict = new ResourceDictionary { Source = new Uri(dictUri, UriKind.RelativeOrAbsolute) };
+                var existing = this.Resources.MergedDictionaries
+                    .FirstOrDefault(d => d.Source != null && d.Source.OriginalString.Contains("Strings."));
+                if (existing != null)
+                {
+                    int idx = this.Resources.MergedDictionaries.IndexOf(existing);
+                    this.Resources.MergedDictionaries[idx] = newDict;
+                }
+                else
+                {
+                    this.Resources.MergedDictionaries.Add(newDict);
+                }
+            }
+            catch { }
 
             // Keep Window Chrome Header stable (Window controls stay anchored on the right)
             if (DashboardHeader != null) DashboardHeader.FlowDirection = FlowDirection.LeftToRight;

@@ -26,7 +26,7 @@ namespace Tempo.Services
                 var app = Application.Current;
                 if (app != null)
                 {
-                    string dictUriString = $"pack://application:,,,/Resources/Strings.{CurrentLanguage}.xaml";
+                    string dictUriString = $"pack://application:,,,/Tempo;component/Resources/Strings.{CurrentLanguage}.xaml";
                     var newDict = new ResourceDictionary { Source = new Uri(dictUriString, UriKind.RelativeOrAbsolute) };
 
                     // Find existing Strings dictionary if any

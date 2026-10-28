@@ -79,6 +79,11 @@ const i18nData = {
     cta_title: "جاهز لتسريع أداء جهازك؟",
     cta_desc: "حمّل ملف التثبيت الرسمي الآن بنقرة واحدة واستمتع بتجربة فحص وتحسين نظيفة وسريعة.",
     cta_btn_zip: "تحميل حزمة Portable (ZIP)",
+    tab_overview: "نظرة عامة",
+    tab_processes: "البرامج والذاكرة",
+    tab_optimize: "التنظيف",
+    tab_diagnostic: "العتاد",
+    tab_feedback: "الملاحظات",
     lang_btn_text: "English"
   },
   en: {
@@ -160,11 +165,51 @@ const i18nData = {
     cta_title: "Ready to optimize your PC?",
     cta_desc: "Download the official installer now and experience a fast, clean Windows diagnostic utility.",
     cta_btn_zip: "Download Portable (ZIP)",
+    tab_overview: "Overview",
+    tab_processes: "Apps & RAM",
+    tab_optimize: "Clean",
+    tab_diagnostic: "Hardware",
+    tab_feedback: "Feedback",
     lang_btn_text: "العربية"
   }
 };
 
 let currentLang = localStorage.getItem('tempo_lang') || 'ar';
+let currentShowcaseScreen = 'overview';
+
+const showcaseTitles = {
+  ar: {
+    overview: "Tempo — نظرة عامة وتشخيص سريع",
+    processes: "Tempo — إدارة التطبيقات النشطة والذاكرة",
+    optimize: "Tempo — مركز التنظيف وتسريع النظام",
+    diagnostic: "Tempo — فحص العتاد ومؤشرات التشغيل",
+    feedback: "Tempo — الملاحظات والاقتراحات"
+  },
+  en: {
+    overview: "Tempo — System Overview",
+    processes: "Tempo — Active Applications & RAM",
+    optimize: "Tempo — Clean & Optimize",
+    diagnostic: "Tempo — Hardware Diagnostics",
+    feedback: "Tempo — Feedback & Suggestions"
+  }
+};
+
+function updateShowcaseMedia() {
+  const img = document.getElementById("showcaseImg");
+  const title = document.getElementById("windowTitleText");
+  const companionImg = document.getElementById("companionBarImg");
+
+  const langSub = (currentLang === 'ar') ? 'ar' : 'en';
+  if (img) {
+    img.src = `assets/${langSub}/screen_${currentShowcaseScreen}.png`;
+  }
+  if (title && showcaseTitles[langSub] && showcaseTitles[langSub][currentShowcaseScreen]) {
+    title.innerText = showcaseTitles[langSub][currentShowcaseScreen];
+  }
+  if (companionImg) {
+    companionImg.src = `assets/${langSub}/screen_toolbar_top.png`;
+  }
+}
 
 function applyLanguage(lang) {
   currentLang = lang;
@@ -196,13 +241,14 @@ function applyLanguage(lang) {
   if (langLabel) {
     langLabel.textContent = t.lang_btn_text;
   }
+
+  // Update showcase and toolbar images to match the new language
+  updateShowcaseMedia();
 }
 
 // Showcase Switcher
 function switchShowcase(screen, btn) {
-  const img = document.getElementById("showcaseImg");
-  const title = document.getElementById("windowTitleText");
-  if (!img) return;
+  currentShowcaseScreen = screen;
 
   document.querySelectorAll(".window-tabs .wtab").forEach(b => {
     b.style.background = "rgba(255,255,255,0.05)";
@@ -215,18 +261,7 @@ function switchShowcase(screen, btn) {
     btn.style.color = "#93C5FD";
   }
 
-  const screens = {
-    overview: { src: "assets/screen_overview.png", title: "Tempo — Overview" },
-    processes: { src: "assets/screen_processes.png", title: "Tempo — Active Applications & RAM" },
-    optimize: { src: "assets/screen_optimize.png", title: "Tempo — Clean & Optimize" },
-    diagnostic: { src: "assets/screen_diagnostic.png", title: "Tempo — Hardware Diagnostics" },
-    feedback: { src: "assets/screen_feedback.png", title: "Tempo — Feedback & Suggestions" }
-  };
-
-  if (screens[screen]) {
-    img.src = screens[screen].src;
-    if (title) title.innerText = screens[screen].title;
-  }
+  updateShowcaseMedia();
 }
 
 // Category Selector

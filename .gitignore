@@ -28,3 +28,6 @@ TempoVerifyStartup.csproj
 dist/*
 !dist/*.md
 .playwright-mcp/
+
+brag-output/
+
